@@ -32,6 +32,7 @@ function clone {
     popd
     #cp ../ubuntu_20.10-config-5.8.0-1007-raspi .config
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
+    cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 }
 
 function compile {
@@ -42,43 +43,59 @@ function compile {
     make -j 8 ARCH=arm64 CROSS_COMPILE="${CCACHE} aarch64-linux-gnu-" Image modules dtbs
     make ARCH=arm64 CROSS_COMPILE="${CCACHE} aarch64-linux-gnu-" INSTALL_MOD_PATH=../images/modules modules_install
     make ARCH=arm64 CROSS_COMPILE="${CCACHE} aarch64-linux-gnu-" INSTALL_PATH=../images/boot install
-    # RUN in docker end 
+    # RUN in docker end
 
     popd # linux
 }
 
+devices="dev proc sys dev/pts"
+function mount_chroot {
+    echo "nount for chroot"
+    for i in $devices
+    do
+        mount -o bind /$i $MNT_DIR/ext4/$i
+    done
+}
+
+function umount_chroot {
+    echo "umount chroot"
+    for i in $devices
+    do
+        umount $MNT_DIR/ext4/$i
+    done
+}
+
 function update {
+    is_root=`whoami`
+    if [ "$is_root" != "root" ];
+    then
+        echo "Run update command with sudo rights"
+        exit 1
+    fi
+
     echo "Copying libs.."
     cp -r images/modules/lib/* $MNT_DIR/ext4/lib/
 
     echo "Copying dtbs.."
-    #cp linux/arch/arm64/boot/dts/broadcom/*.dtb $MNT_DIR/fat32/
-    #cp linux/arch/arm64/boot/dts/overlays/*.dtb* $MNT_DIR/fat32/overlays/
+    cp linux/arch/arm64/boot/dts/broadcom/*.dtb $MNT_DIR/fat32/
+    cp linux/arch/arm64/boot/dts/overlays/*.dtb* $MNT_DIR/fat32/overlays/
     cp linux/arch/arm64/boot/dts/overlays/README $MNT_DIR/fat32/overlays/
     echo "Copying vmlinuz"
     cp images/boot/vmlinuz-5.9.6+ $MNT_DIR/fat32/vmlinuz
 
     cp images/boot/* $MNT_DIR/ext4/boot/
-    echo "Syncing.."
 
-set -x
-    for i in dev proc sys dev/pts
-    do
-        mount -o bind /$i $MNT_DIR/ext4/$i
-    done
+    mount_chroot
 cat << EOF | chroot $MNT_DIR/ext4
 set -x
 #update-initramfs -c -t -k "5.9.6+"
 EOF
-#    
+#
+    umount_chroot
 
-    for i in dev/pts proc sys dev
-    do
-        umount $MNT_DIR/ext4/$i
-    done
+    echo "Syncing.."
     sync
 }
-
 
 function usdcard {
     sudo umount $MNT_DIR/fat32

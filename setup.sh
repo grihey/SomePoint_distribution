@@ -44,6 +44,7 @@ function clone {
 }
 
 function compile {
+    mkdir -p images/boot
     pushd linux
 
     # RUN in docker

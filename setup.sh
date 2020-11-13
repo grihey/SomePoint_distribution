@@ -36,9 +36,6 @@ function clone {
     git submodule update -f
     cp ~/.gitconfig docker/gitconfig
 
-    pushd linux
-    git checkout -b origin/rpi-5.9.y
-    popd
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 }

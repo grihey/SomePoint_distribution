@@ -1,16 +1,14 @@
 [submodule "docker"]
     path = docker
-    url = git clone git@github.com:tiiuae/docker.git
+    url = git@github.com:tiiuae/docker.git
     branch = xen
-
 [submodule "linux"]
     path = linux
     url = git@github.com:raspberrypi/linux.git
-
+    branch = rpi-5.9.y
 [submodule "imagebuilder"]
     path = imagebuilder
     url = https://gitlab.com/ViryaOS/imagebuilder.git
-
 [submodule "u-boot"]
     path = uboot
     url = git@github.com:u-boot/u-boot.git

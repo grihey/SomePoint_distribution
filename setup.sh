@@ -36,7 +36,6 @@ function clone {
     pushd linux
     git checkout -b origin/rpi-5.9.y
     popd
-    #cp ../ubuntu_20.10-config-5.8.0-1007-raspi .config
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 }
@@ -101,7 +100,7 @@ function update {
     mount_chroot
 cat << EOF | chroot $MNT_DIR/ext4
 set -x
-#update-initramfs -c -t -k "5.9.6+"
+update-initramfs -c -t -k "5.9.6+"
 EOF
 #
     umount_chroot

@@ -3,7 +3,7 @@ MEMORY_END="0x80000000"
 
 DEVICE_TREE="bcm2711-rpi-4-b.dtb"
 XEN="xen"
-XEN_CMD="console=dtuart dtuart=serial0 sync_console dom0_mem=1G dom0_max_vcpus=1 bootscrub=0 vwfi=native sched=null"
+XEN_CMD="console=dtuart dtuart=serial0 sync_console dom0_mem=4G dom0_max_vcpus=2 bootscrub=0 vwfi=native sched=null"
 DOM0_KERNEL="vmlinuz"
 DOM0_CMD="dwc_otg.lpm_enable=0 console=hvc0 earlycon=xen earlyprintk=xen root=LABEL=writable root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait fixrtc quiet splash"
 #DOM0_RAMDISK="dom0-ramdisk.cpio"

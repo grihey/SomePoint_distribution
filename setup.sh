@@ -25,6 +25,12 @@ function sdcard {
     sudo mount /dev/sda2 $MNT_DIR/ext4
 }
 
+function usdcard {
+    sync
+    sudo umount $MNT_DIR/fat32
+    sudo umount $MNT_DIR/ext4
+}
+
 function clone {
     git clone git@github.com:raspberrypi/linux.git
     pushd linux
@@ -66,6 +72,13 @@ function umount_chroot {
 }
 
 function update {
+    mounted=`mount |grep mnt\/fat32`
+    if ! [ "$mounted" != "" ];
+    then
+        echo "Sdcard not mounted"
+        exit -1
+    fi
+
     is_root=`whoami`
     if [ "$is_root" != "root" ];
     then
@@ -97,9 +110,29 @@ EOF
     sync
 }
 
-function usdcard {
-    sudo umount $MNT_DIR/fat32
-    sudo umount $MNT_DIR/ext4
+function uboot_src {
+    cp xen images/xen/
+    pushd images/xen
+    cp ../../linux/arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb .
+    cp ../boot/vmlinuz-5.9.6+ vmlinuz
+    ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config -t "fatload mmc 0:1" -d .
+    popd
 }
+
+function uboot_update {
+    mounted=`mount |grep mnt\/fat32`
+    if ! [ "$mounted" != "" ];
+    then
+        echo "Sdcard not mounted"
+        exit -1
+    fi
+    cp configs/config.txt $MNT_DIR/fat32/
+    cp u-boot.bin $MNT_DIR/fat32/
+    pushd images/xen
+    cp xen $MNT_DIR/fat32/
+    cp boot.scr $MNT_DIR/fat32/boot.scr
+    popd
+}
+
 
 $1

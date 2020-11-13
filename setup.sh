@@ -32,12 +32,10 @@ function usdcard {
 }
 
 function clone {
-    git clone git@github.com:tiiuae/docker.git
+    git submodule init
+    git submodule update -f
     cp ~/.gitconfig docker/gitconfig
 
-    git clone https://gitlab.com/ViryaOS/imagebuilder.git
-    git clone git@github.com:raspberrypi/linux.git
-    git clone git@github.com:u-boot/u-boot.git
     pushd linux
     git checkout -b origin/rpi-5.9.y
     popd

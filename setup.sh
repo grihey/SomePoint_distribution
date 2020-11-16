@@ -16,6 +16,49 @@ fi
 
 MNT_DIR=`pwd`/mnt
 
+function umountimg {
+    if [ -f .mountimg ]; then
+	IMG=`cat .mountimg`
+	sudo umount mnt/fat32
+	sudo umount mnt/ext4
+	sudo sync
+	sudo kpartx -d $IMG
+	rm -f .mountimg
+    else
+	echo "No image currently mounted"
+	exit 4
+    fi
+}
+
+function mountimg {
+
+    if [ -f .mountimg ]; then
+        echo "Seems that image is currently mounted, please unmount previous image (or delete .mountimg if left over)"
+	exit 6
+    fi
+
+    if [ "$1x" == "x" ]; then
+	echo Please specify image file
+	exit 5
+    fi
+
+    mkdir -p $MNT_DIR
+    mkdir -p $MNT_DIR/fat32
+    mkdir -p $MNT_DIR/ext4
+
+    KPARTXOUT=`sudo kpartx -l $1 2> /dev/null`
+
+    LOOP1=`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    LOOP2=`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
+
+    sudo kpartx -a $1 2> /dev/null
+
+    sudo mount /dev/mapper/$LOOP1 mnt/fat32
+    sudo mount /dev/mapper/$LOOP2 mnt/ext4
+
+    echo $1 > .mountimg
+}
+
 
 function sdcard {
     mkdir -p $MNT_DIR
@@ -104,6 +147,8 @@ set -x
 update-initramfs -c -t -k "5.9.6+"
 EOF
 #
+    sync
+
     umount_chroot
 
     echo "Syncing.."
@@ -134,5 +179,4 @@ function uboot_update {
     popd
 }
 
-
-$1
+$*

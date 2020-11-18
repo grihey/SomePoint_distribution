@@ -61,17 +61,22 @@ function mountimg {
 
 
 function sdcard {
+    if [ "$1x" == "x" ]; then
+	SDCARD=/dev/sda
+    else
+	SDCARD=$1
+    fi
     mkdir -p $MNT_DIR
     mkdir -p $MNT_DIR/fat32
     mkdir -p $MNT_DIR/ext4
-    sudo mount /dev/sda1 $MNT_DIR/fat32
-    sudo mount /dev/sda2 $MNT_DIR/ext4
+    sudo mount ${SDCARD}1 $MNT_DIR/fat32
+    sudo mount ${SDCARD}2 $MNT_DIR/ext4
 }
 
 function usdcard {
-    sync
     sudo umount $MNT_DIR/fat32
     sudo umount $MNT_DIR/ext4
+    sync
 }
 
 function clone {
@@ -97,20 +102,19 @@ function compile {
     popd # linux
 }
 
-devices="dev proc sys dev/pts"
+devices=("dev" "proc" "sys" "dev/pts")
 function mount_chroot {
-    echo "nount for chroot"
-    for i in $devices
-    do
+    echo "mount for chroot"
+    for i in ${devices[@]}; do
         mount -o bind /$i $MNT_DIR/ext4/$i
     done
 }
 
 function umount_chroot {
     echo "umount chroot"
-    for i in $devices
-    do
-        umount $MNT_DIR/ext4/$i
+    #Unmounting needs to be done in reverse order (otherwise umount of dev is tried before dev/pts)
+    for ((j=${#devices[@]}-1; j>=0; j--)); do
+        umount $MNT_DIR/ext4/${devices[$j]}
     done
 }
 
@@ -147,8 +151,6 @@ set -x
 update-initramfs -c -t -k "5.9.6+"
 EOF
 #
-    sync
-
     umount_chroot
 
     echo "Syncing.."

@@ -142,8 +142,10 @@ function update {
     cp linux/arch/arm64/boot/dts/overlays/README $MNT_DIR/fat32/overlays/
     echo "Copying vmlinuz"
     cp images/boot/vmlinuz-5.9.6+ $MNT_DIR/fat32/vmlinuz
-
     cp images/boot/* $MNT_DIR/ext4/boot/
+    echo "Copying USB boot fixes"
+    cp usbfix/start4.elf usbfix/fixup4.dat $MNT_DIR/fat32/
+    cp usbfix/start4.elf usbfix/fixup4.dat $MNT_DIR/ext4/boot
 
     mount_chroot
 cat << EOF | chroot $MNT_DIR/ext4

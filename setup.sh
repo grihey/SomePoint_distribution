@@ -80,6 +80,8 @@ function usdcard {
 }
 
 function clone {
+    set -e
+
     git submodule init
     git submodule update -f
     cp ~/.gitconfig docker/gitconfig
@@ -89,6 +91,8 @@ function clone {
 }
 
 function compile {
+    set -e
+
     mkdir -p images/boot
     pushd linux
 
@@ -100,6 +104,17 @@ function compile {
     # RUN in docker end
 
     popd # linux
+}
+
+function compile_xen {
+    set -e
+
+    pushd xen-hyp/xen
+    #./configure --build=x86_64-unknown-linux-gnu --host=aarch64-linux-gnu
+    make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+    make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+        DESTDIR=../images/xen/ install
+    popd
 }
 
 devices=("dev" "proc" "sys" "dev/pts")
@@ -119,6 +134,8 @@ function umount_chroot {
 }
 
 function update {
+    set -e
+
     mounted=`mount |grep mnt\/fat32`
     if ! [ "$mounted" != "" ];
     then
@@ -160,6 +177,8 @@ EOF
 }
 
 function uboot_src {
+    set -e
+
     cp xen images/xen/
     pushd images/xen
     cp ../../linux/arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb .
@@ -169,6 +188,8 @@ function uboot_src {
 }
 
 function uboot_update {
+    set -e
+
     mounted=`mount |grep mnt\/fat32`
     if ! [ "$mounted" != "" ];
     then

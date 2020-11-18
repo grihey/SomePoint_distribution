@@ -12,3 +12,9 @@
 [submodule "u-boot"]
     path = uboot
     url = git@github.com:u-boot/u-boot.git
+[submodule "xen"]
+	path = xen-hyp
+	url = git://xenbits.xen.org/xen.git
+[submodule "buildroot"]
+	path = buildroot
+	url = git://git.buildroot.net/buildroot

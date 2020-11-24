@@ -2,3 +2,4 @@
 images/
 mnt/
 .mountimg
+.buildroot-ccache/

@@ -1,0 +1,41 @@
+hid_logitech_hidpp
+brcmfmac
+brcmutil
+sha256_generic
+bcm2835_codec
+bcm2835_isp
+bcm2835_v4l2
+hid_logitech_dj
+joydev
+v4l2_mem2mem
+vc4 266240
+bcm2835_mmal_vchiq
+videobuf2_dma_contig
+videobuf2_vmalloc
+videobuf2_memops
+cec
+videobuf2_v4l2
+videobuf2_common
+drm_kms_helper
+v3d
+cfg80211
+gpu_sched
+videodev
+raspberrypi_hwmon
+snd_soc_core
+rfkill
+raspberrypi_ts
+vc_sm_cma
+mc 57344
+snd_compress
+drm
+snd_pcm_dmaengine
+snd_pcm
+drm_panel_orientation_quirks
+snd_timer
+rpivid_mem
+snd 102400
+rpi_backlight
+backlight
+uio_pdrv_genirq
+uio 24576

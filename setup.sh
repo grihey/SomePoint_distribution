@@ -2,6 +2,14 @@
 
 #set -x
 
+if [ "$AUTOMOUNT" == "" ];
+then
+    AUTOMOUNT=0
+else
+    AUTOMOUNT=1
+fi
+
+
 CCACHE=
 
 if ! [ -x "$(command -v ccache)" ]; then
@@ -176,18 +184,41 @@ EOF
     sync
 }
 
+#KERNEL_IMAGE=images/boot/vmlinuz-5.9.6+
+IMAGES=`pwd`/buildroot/output/images
+KERNEL_IMAGE=$IMAGES/Image
+
 function uboot_src {
     set -e
 
     cp xen images/xen/
+    cp $KERNEL_IMAGE images/vmlinuz
+
     pushd images/xen
-    cp ../../linux/arch/arm64/boot/dts/broadcom/bcm2711-rpi-4-b.dtb .
-    cp ../boot/vmlinuz-5.9.6+ vmlinuz
+    cp $IMAGES/bcm2711-rpi-4-b.dtb .
     ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config -t "fatload mmc 0:1" -d .
     popd
 }
 
-function uboot_update {
+# call set -e after this
+function is_mounted {
+    mounted=`mount | grep "mnt\/ext4"`
+    if [ "$mounted" == "" ];
+    then
+        if [ "$AUTOMOUNT" == "1" ];
+        then
+            echo "Block device is not mounted. Automounting is set. Mounting!"
+            sdcard
+        else
+            echo "Block device is not mounted."
+            exit -1
+        fi
+    fi
+}
+
+function bootfs {
+    is_mounted
+
     set -e
 
     mounted=`mount |grep mnt\/fat32`
@@ -196,12 +227,60 @@ function uboot_update {
         echo "Sdcard not mounted"
         exit -1
     fi
-    cp configs/config.txt $MNT_DIR/fat32/
-    cp u-boot.bin $MNT_DIR/fat32/
-    pushd images/xen
-    cp xen $MNT_DIR/fat32/
-    cp boot.scr $MNT_DIR/fat32/boot.scr
+
+    pushd $MNT_DIR/fat32/
+    sudo rm -fr *
     popd
+
+    sudo cp configs/config.txt $MNT_DIR/fat32/
+    sudo cp u-boot.bin $MNT_DIR/fat32/
+    sudo cp $KERNEL_IMAGE $MNT_DIR/fat32/vmlinuz
+    pushd images/xen
+    sudo cp xen $MNT_DIR/fat32/
+    sudo cp boot.scr $MNT_DIR/fat32/boot.scr
+    popd
+
+    sudo cp $IMAGES/xen $MNT_DIR/fat32/
+    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $MNT_DIR/fat32/
+    sudo cp -r $IMAGES/Image $MNT_DIR/fat32/vmlinuz
+    sudo cp -r $IMAGES/rpi-firmware/overlays $MNT_DIR/fat32/
+    sudo cp $IMAGES/rpi-firmware/fixup.dat $MNT_DIR/fat32/
+    sudo cp $IMAGES/rpi-firmware/start.elf $MNT_DIR/fat32/
+}
+
+function rootfs {
+    is_mounted
+
+    # set exit on error here. grep causes error if text not found
+    set -e
+
+    pushd $MNT_DIR/ext4/
+    echo "Updating $MNT_DIR/ext4/"
+    sudo rm -fr *
+    sudo tar xvf $IMAGES/rootfs.tar > /dev/null
+    popd
+
+    if ! [ -a "images/rasp_id_rsa" ]; then
+        ssh-keygen -t rsa -q -f "images/rasp_id_rsa" -N ""
+    fi
+
+    sudo mkdir -p $MNT_DIR/ext4/root/.ssh
+    cat images/rasp_id_rsa.pub | sudo tee -a $MNT_DIR/ext4/root/.ssh/authorized_keys > /dev/null
+    sudo chmod 600 $MNT_DIR/ext4/root/.ssh/authorized_keys
+    sudo chmod 600 $MNT_DIR/ext4/root/.ssh
+
+    sudo cp configs/interfaces $MNT_DIR/ext4/etc/network/interfaces
+    sudo cp configs/wpa_supplicant.conf $MNT_DIR/ext4/etc/wpa_supplicant.conf
+    sudo cp configs/modules $MNT_DIR/ext4/etc/modules
+    sudo cp configs/loadmodules.sh $MNT_DIR/ext4/etc/init.d/S35modules
+    }
+
+if [ "$DUT_IP" == "" ];
+then
+    DUT_IP=192.168.1.170
+fi
+function ssh_dut {
+    ssh -i images/rasp_id_rsa root@$DUT_IP
 }
 
 $*

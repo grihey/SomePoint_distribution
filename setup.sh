@@ -96,6 +96,13 @@ function clone {
 
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
+
+    cp buildroot_config buildroot/.config
+
+    # Needed for buildroot to be able to checkout xen branch
+    pushd linux
+    git checkout xen
+    popd
 }
 
 function compile {
@@ -191,8 +198,10 @@ KERNEL_IMAGE=$IMAGES/Image
 function uboot_src {
     set -e
 
-    cp xen images/xen/
-    cp $KERNEL_IMAGE images/vmlinuz
+    mkdir -p images/xen
+
+    cp $IMAGES/xen images/xen/
+    cp $KERNEL_IMAGE images/xen/vmlinuz
 
     pushd images/xen
     cp $IMAGES/bcm2711-rpi-4-b.dtb .
@@ -236,7 +245,6 @@ function bootfs {
     sudo cp u-boot.bin $MNT_DIR/fat32/
     sudo cp $KERNEL_IMAGE $MNT_DIR/fat32/vmlinuz
     pushd images/xen
-    sudo cp xen $MNT_DIR/fat32/
     sudo cp boot.scr $MNT_DIR/fat32/boot.scr
     popd
 

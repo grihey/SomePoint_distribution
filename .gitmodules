@@ -4,8 +4,8 @@
     branch = xen
 [submodule "linux"]
     path = linux
-    url = git@github.com:raspberrypi/linux.git
-    branch = rpi-5.9.y
+    url = git@github.com:tiiuae/linux.git
+    branch = xen
 [submodule "imagebuilder"]
     path = imagebuilder
     url = https://gitlab.com/ViryaOS/imagebuilder.git

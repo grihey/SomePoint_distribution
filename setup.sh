@@ -285,6 +285,8 @@ function rootfs {
     #sudo cp configs/modules $MNT_DIR/ext4/etc/modules
     #sudo cp configs/loadmodules.sh $MNT_DIR/ext4/etc/init.d/S35modules
 
+    sudo cp configs/domu0_network.sh $MNT_DIR/ext4/root/
+    sudo cp configs/domu0.cfg $MNT_DIR/ext4/root/
     sudo cp $KERNEL_IMAGE $MNT_DIR/ext4/root/Image
 
     sudo cp buildroot/package/busybox/S10mdev $MNT_DIR/ext4/etc/init.d/S10mdev

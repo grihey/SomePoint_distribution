@@ -254,6 +254,8 @@ function bootfs {
     sudo cp -r $IMAGES/rpi-firmware/overlays $MNT_DIR/fat32/
     sudo cp $IMAGES/rpi-firmware/fixup.dat $MNT_DIR/fat32/
     sudo cp $IMAGES/rpi-firmware/start.elf $MNT_DIR/fat32/
+    sudo cp $IMAGES/rpi-firmware/cmdline.txt $MNT_DIR/fat32/
+
 }
 
 function rootfs {
@@ -269,6 +271,7 @@ function rootfs {
     popd
 
     if ! [ -a "images/rasp_id_rsa" ]; then
+        echo "Generate ssh key"
         ssh-keygen -t rsa -q -f "images/rasp_id_rsa" -N ""
     fi
 
@@ -279,9 +282,15 @@ function rootfs {
 
     sudo cp configs/interfaces $MNT_DIR/ext4/etc/network/interfaces
     sudo cp configs/wpa_supplicant.conf $MNT_DIR/ext4/etc/wpa_supplicant.conf
-    sudo cp configs/modules $MNT_DIR/ext4/etc/modules
-    sudo cp configs/loadmodules.sh $MNT_DIR/ext4/etc/init.d/S35modules
-    }
+    #sudo cp configs/modules $MNT_DIR/ext4/etc/modules
+    #sudo cp configs/loadmodules.sh $MNT_DIR/ext4/etc/init.d/S35modules
+
+    sudo cp $KERNEL_IMAGE $MNT_DIR/ext4/root/Image
+
+    sudo cp buildroot/package/busybox/S10mdev $MNT_DIR/ext4/etc/init.d/S10mdev
+    sudo chmod 755 $MNT_DIR/ext4/etc/init.d/S10mdev
+    sudo cp buildroot/package/busybox/mdev.conf $MNT_DIR/ext4/etc/mdev.conf
+}
 
 if [ "$DUT_IP" == "" ];
 then

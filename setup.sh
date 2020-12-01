@@ -19,7 +19,7 @@ else
     export CCACHE_DIR=`pwd`/.ccache
     export CCACHE_MAXSIZE=10G
 
-    ccache -s
+    #ccache -s
 fi
 
 MNT_DIR=`pwd`/mnt
@@ -77,13 +77,16 @@ function sdcard {
     mkdir -p $MNT_DIR
     mkdir -p $MNT_DIR/fat32
     mkdir -p $MNT_DIR/ext4
+    mkdir -p $MNT_DIR/ext4_domu
     sudo mount ${SDCARD}1 $MNT_DIR/fat32
     sudo mount ${SDCARD}2 $MNT_DIR/ext4
+    sudo mount ${SDCARD}3 $MNT_DIR/ext4_domu
 }
 
 function usdcard {
     sudo umount $MNT_DIR/fat32
     sudo umount $MNT_DIR/ext4
+    sudo umount $MNT_DIR/ext4_domu
     sync
 }
 
@@ -292,6 +295,22 @@ function rootfs {
     sudo cp buildroot/package/busybox/S10mdev $MNT_DIR/ext4/etc/init.d/S10mdev
     sudo chmod 755 $MNT_DIR/ext4/etc/init.d/S10mdev
     sudo cp buildroot/package/busybox/mdev.conf $MNT_DIR/ext4/etc/mdev.conf
+
+    sudo cp $MNT_DIR/ext4/lib/firmware/brcm/brcmfmac43455-sdio.txt $MNT_DIR/ext4/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
+}
+
+function domu {
+    set -x
+    echo "Copying libs.."
+    sudo cp -r images/modules/lib/* $MNT_DIR/ext4_domu/lib/
+    sudo cp buildroot/package/busybox/S10mdev $MNT_DIR/ext4_domu/etc/init.d/S10mdev
+    sudo chmod 755 $MNT_DIR/ext4_domu/etc/init.d/S10mdev
+    sudo cp buildroot/package/busybox/mdev.conf $MNT_DIR/ext4_domu/etc/mdev.conf
+
+    sudo cp linux/arch/arm64/boot/Image $MNT_DIR/ext4_domu/boot/Image
+    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $MNT_DIR/ext4_domu/boot/
+
+    echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $MNT_DIR/ext4_domu/etc/inittab  > /dev/null
 }
 
 if [ "$DUT_IP" == "" ];

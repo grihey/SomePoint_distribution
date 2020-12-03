@@ -29,6 +29,7 @@ function umountimg {
 	IMG=`cat .mountimg`
 	sudo umount mnt/fat32
 	sudo umount mnt/ext4
+	sudo umount mnt/ext4_domu
 	sudo sync
 	sudo kpartx -d $IMG
 	rm -f .mountimg
@@ -53,16 +54,19 @@ function mountimg {
     mkdir -p $MNT_DIR
     mkdir -p $MNT_DIR/fat32
     mkdir -p $MNT_DIR/ext4
+    mkdir -p $MNT_DIR/ext4_domu
 
     KPARTXOUT=`sudo kpartx -l $1 2> /dev/null`
 
     LOOP1=`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
     LOOP2=`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    LOOP3=`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
 
     sudo kpartx -a $1 2> /dev/null
 
     sudo mount /dev/mapper/$LOOP1 mnt/fat32
     sudo mount /dev/mapper/$LOOP2 mnt/ext4
+    sudo mount /dev/mapper/$LOOP3 mnt/ext4_domu
 
     echo $1 > .mountimg
 }
@@ -214,7 +218,7 @@ function uboot_src {
 
 # call set -e after this
 function is_mounted {
-    mounted=`mount | grep "mnt\/ext4"`
+    mounted=`mount | grep "$MNT_DIR\/$1"`
     if [ "$mounted" == "" ];
     then
         if [ "$AUTOMOUNT" == "1" ];
@@ -229,46 +233,48 @@ function is_mounted {
 }
 
 function bootfs {
-    is_mounted
+    if [ "$1x" == "x" ]; then
+        BOOTFS=$MNT_DIR/fat32
+        is_mounted fat32
+    else
+	BOOTFS=`realpath $1`
+    fi
 
     set -e
 
-    mounted=`mount |grep mnt\/fat32`
-    if ! [ "$mounted" != "" ];
-    then
-        echo "Sdcard not mounted"
-        exit -1
-    fi
-
-    pushd $MNT_DIR/fat32/
+    pushd $BOOTFS/
     sudo rm -fr *
     popd
 
-    sudo cp configs/config.txt $MNT_DIR/fat32/
-    sudo cp u-boot.bin $MNT_DIR/fat32/
-    sudo cp $KERNEL_IMAGE $MNT_DIR/fat32/vmlinuz
+    sudo cp configs/config.txt $BOOTFS/
+    sudo cp u-boot.bin $BOOTFS/
+    sudo cp $KERNEL_IMAGE $BOOTFS/vmlinuz
     pushd images/xen
-    sudo cp boot.scr $MNT_DIR/fat32/boot.scr
+    sudo cp boot.scr $BOOTFS/boot.scr
     popd
 
-    sudo cp $IMAGES/xen $MNT_DIR/fat32/
-    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $MNT_DIR/fat32/
-    sudo cp -r $IMAGES/Image $MNT_DIR/fat32/vmlinuz
-    sudo cp -r $IMAGES/rpi-firmware/overlays $MNT_DIR/fat32/
-    sudo cp $IMAGES/rpi-firmware/fixup.dat $MNT_DIR/fat32/
-    sudo cp $IMAGES/rpi-firmware/start.elf $MNT_DIR/fat32/
-    sudo cp $IMAGES/rpi-firmware/cmdline.txt $MNT_DIR/fat32/
-
+    sudo cp $IMAGES/xen $BOOTFS/
+    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
+    sudo cp -r $IMAGES/Image $BOOTFS/vmlinuz
+    sudo cp -r $IMAGES/rpi-firmware/overlays $BOOTFS/
+    sudo cp $IMAGES/rpi-firmware/fixup.dat $BOOTFS/
+    sudo cp $IMAGES/rpi-firmware/start.elf $BOOTFS/
+    sudo cp $IMAGES/rpi-firmware/cmdline.txt $BOOTFS/
 }
 
 function rootfs {
-    is_mounted
+    if [ "$1x" == "x" ]; then
+        ROOTFS=$MNT_DIR/ext4
+        is_mounted ext4
+    else
+        ROOTFS=`realpath $1`
+    fi
 
     # set exit on error here. grep causes error if text not found
     set -e
 
-    pushd $MNT_DIR/ext4/
-    echo "Updating $MNT_DIR/ext4/"
+    pushd $ROOTFS/
+    echo "Updating $ROOTFS/"
     sudo rm -fr *
     sudo tar xvf $IMAGES/rootfs.tar > /dev/null
     popd
@@ -278,39 +284,46 @@ function rootfs {
         ssh-keygen -t rsa -q -f "images/rasp_id_rsa" -N ""
     fi
 
-    sudo mkdir -p $MNT_DIR/ext4/root/.ssh
-    cat images/rasp_id_rsa.pub | sudo tee -a $MNT_DIR/ext4/root/.ssh/authorized_keys > /dev/null
-    sudo chmod 600 $MNT_DIR/ext4/root/.ssh/authorized_keys
-    sudo chmod 600 $MNT_DIR/ext4/root/.ssh
+    sudo mkdir -p $ROOTFS/root/.ssh
+    cat images/rasp_id_rsa.pub | sudo tee -a $ROOTFS/root/.ssh/authorized_keys > /dev/null
+    sudo chmod 600 $ROOTFS/root/.ssh/authorized_keys
+    sudo chmod 600 $ROOTFS/root/.ssh
 
-    sudo cp configs/interfaces $MNT_DIR/ext4/etc/network/interfaces
-    sudo cp configs/wpa_supplicant.conf $MNT_DIR/ext4/etc/wpa_supplicant.conf
-    #sudo cp configs/modules $MNT_DIR/ext4/etc/modules
-    #sudo cp configs/loadmodules.sh $MNT_DIR/ext4/etc/init.d/S35modules
+    sudo cp configs/interfaces $ROOTFS/etc/network/interfaces
+    sudo cp configs/wpa_supplicant.conf $ROOTFS/etc/wpa_supplicant.conf
+    #sudo cp configs/modules $ROOTFS/etc/modules
+    #sudo cp configs/loadmodules.sh $ROOTFS/etc/init.d/S35modules
 
-    sudo cp configs/domu0_network.sh $MNT_DIR/ext4/root/
-    sudo cp configs/domu0.cfg $MNT_DIR/ext4/root/
-    sudo cp $KERNEL_IMAGE $MNT_DIR/ext4/root/Image
+    sudo cp configs/domu0_network.sh $ROOTFS/root/
+    sudo cp configs/domu0.cfg $ROOTFS/root/
+    sudo cp $KERNEL_IMAGE $ROOTFS/root/Image
 
-    sudo cp buildroot/package/busybox/S10mdev $MNT_DIR/ext4/etc/init.d/S10mdev
-    sudo chmod 755 $MNT_DIR/ext4/etc/init.d/S10mdev
-    sudo cp buildroot/package/busybox/mdev.conf $MNT_DIR/ext4/etc/mdev.conf
+    sudo cp buildroot/package/busybox/S10mdev $ROOTFS/etc/init.d/S10mdev
+    sudo chmod 755 $ROOTFS/etc/init.d/S10mdev
+    sudo cp buildroot/package/busybox/mdev.conf $ROOTFS/etc/mdev.conf
 
-    sudo cp $MNT_DIR/ext4/lib/firmware/brcm/brcmfmac43455-sdio.txt $MNT_DIR/ext4/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
+    sudo cp $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
 }
 
 function domu {
+    if [ "$1x" == "x" ]; then
+        DOMUFS=$MNT_DIR/ext4_domu
+        is_mounted ext4_domu
+    else
+         DOMUFS=`realpath $1`
+    fi
+
     set -x
     echo "Copying libs.."
-    sudo cp -r images/modules/lib/* $MNT_DIR/ext4_domu/lib/
-    sudo cp buildroot/package/busybox/S10mdev $MNT_DIR/ext4_domu/etc/init.d/S10mdev
-    sudo chmod 755 $MNT_DIR/ext4_domu/etc/init.d/S10mdev
-    sudo cp buildroot/package/busybox/mdev.conf $MNT_DIR/ext4_domu/etc/mdev.conf
+    sudo cp -r images/modules/lib/* $DOMUFS/lib/
+    sudo cp buildroot/package/busybox/S10mdev $DOMUFS/etc/init.d/S10mdev
+    sudo chmod 755 $DOMUFS/etc/init.d/S10mdev
+    sudo cp buildroot/package/busybox/mdev.conf $DOMUFS/etc/mdev.conf
 
-    sudo cp linux/arch/arm64/boot/Image $MNT_DIR/ext4_domu/boot/Image
-    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $MNT_DIR/ext4_domu/boot/
+    sudo cp linux/arch/arm64/boot/Image $DOMUFS/boot/Image
+    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $DOMUFS/boot/
 
-    echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $MNT_DIR/ext4_domu/etc/inittab  > /dev/null
+    echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $DOMUFS/etc/inittab  > /dev/null
 }
 
 if [ "$DUT_IP" == "" ];

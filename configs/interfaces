@@ -2,9 +2,7 @@ auto lo
 iface lo inet loopback
 
 auto eth0
-iface eth0 inet static
-    address 10.0.0.2
-    netmask 255.255.255.0
+iface eth0 inet manual
 
 #iface br0 inet static
 #    address 10.0.0.1
@@ -13,10 +11,17 @@ iface eth0 inet static
 #    bridge_fd 0
 #    bridge_maxwait 0
 
-auto wlan0
-iface wlan0 inet dhcp
-    pre-up wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
-    post-down killall -q wpa_supplicant
-    wait-delay 15
+#auto wlan0
+#iface wlan0 inet dhcp
+#    pre-up wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
+#    post-down killall -q wpa_supplicant
+#    wait-delay 15
+
+auto xenbr0
+iface xenbr0 inet manual
+    bridge_ports eth0
+    bridge_stp off
+    bridge_fd 0
+    bridge_maxwait 0
 
 iface default inet dhcp

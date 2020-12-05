@@ -1,0 +1,19 @@
+#!/bin/bash
+
+IPTABLES=`command -v iptables`
+if [ -n "$IPTABLES" ]; then
+    $IPTABLES -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+fi
+
+ifconfig | grep -sq eth0
+if [ $? -ne 0 ]; then
+    ifconfig eth0 up
+fi
+
+echo "1" > /proc/sys/net/ipv4/ip_forward
+
+killall -SIGUSR2 udhcpc > /dev/null 2>&1 # release your existing DHCP lease
+brctl addbr xenbr0 # create a new bridge called “xenbr0”
+brctl addif xenbr0 eth0 # put eth0 onto xenbr0
+killall udhcpc > /dev/null 2>&1 # terminate the DHCP client daemon
+udhcpc -R -b -p /var/run/udhcpc.xenbr0.pid -i xenbr0 # restart the DHCP client daemon on the new bridge

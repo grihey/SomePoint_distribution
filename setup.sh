@@ -88,6 +88,11 @@ function sdcard {
 }
 
 function usdcard {
+    if [ "$1" == "mark" ]; then
+        echo 'THIS_IS_BOOTFS' | sudo tee -a $MNT_DIR/fat32/THIS_IS_BOOTFS > /dev/null
+        echo 'THIS_IS_ROOTFS' | sudo tee -a $MNT_DIR/ext4/THIS_IS_ROOTFS > /dev/null
+        echo 'THIS_IS_DOMUFS' | sudo tee -a $MNT_DIR/ext4_domu/THIS_IS_DOMUFS > /dev/null
+    fi
     sudo umount $MNT_DIR/fat32
     sudo umount $MNT_DIR/ext4
     sudo umount $MNT_DIR/ext4_domu
@@ -294,7 +299,7 @@ function rootfs {
     #sudo cp configs/modules $ROOTFS/etc/modules
     #sudo cp configs/loadmodules.sh $ROOTFS/etc/init.d/S35modules
 
-    sudo cp configs/domu0_network.sh $ROOTFS/root/
+    sudo cp configs/network $ROOTFS/root/
     sudo cp configs/domu0.cfg $ROOTFS/root/
     sudo cp $KERNEL_IMAGE $ROOTFS/root/Image
 
@@ -303,6 +308,7 @@ function rootfs {
     sudo cp buildroot/package/busybox/mdev.conf $ROOTFS/etc/mdev.conf
 
     sudo cp $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
+    sudo cp configs/inittab.dom0 $ROOTFS/etc/inittab
 }
 
 function domu {
@@ -313,17 +319,22 @@ function domu {
          DOMUFS=`realpath $1`
     fi
 
+    rootfs $DOMUFS
+
     set -x
-    echo "Copying libs.."
-    sudo cp -r images/modules/lib/* $DOMUFS/lib/
-    sudo cp buildroot/package/busybox/S10mdev $DOMUFS/etc/init.d/S10mdev
-    sudo chmod 755 $DOMUFS/etc/init.d/S10mdev
-    sudo cp buildroot/package/busybox/mdev.conf $DOMUFS/etc/mdev.conf
+    sudo cp configs/inittab.domu $DOMUFS/etc/inittab
+    sudo cp configs/hostname.domu $DOMUFS/etc/hostname
 
-    sudo cp linux/arch/arm64/boot/Image $DOMUFS/boot/Image
-    sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $DOMUFS/boot/
+    #echo "Copying libs.."
+    #sudo cp -r images/modules/lib/* $DOMUFS/lib/
+    #sudo cp buildroot/package/busybox/S10mdev $DOMUFS/etc/init.d/S10mdev
+    #sudo chmod 755 $DOMUFS/etc/init.d/S10mdev
+    #sudo cp buildroot/package/busybox/mdev.conf $DOMUFS/etc/mdev.conf
 
-    echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $DOMUFS/etc/inittab  > /dev/null
+    #sudo cp linux/arch/arm64/boot/Image $DOMUFS/boot/Image
+    #sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $DOMUFS/boot/
+
+    #echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $DOMUFS/etc/inittab  > /dev/null
 }
 
 if [ "$DUT_IP" == "" ];

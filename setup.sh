@@ -29,16 +29,16 @@ MNT_DIR=`pwd`/mnt
 function umountimg {
     set +e
     if [ -f .mountimg ]; then
-	IMG=`cat .mountimg`
-	sudo umount mnt/fat32
-	sudo umount mnt/ext4
-	sudo umount mnt/ext4_domu
-	sudo sync
-	sudo kpartx -d $IMG
-	rm -f .mountimg
+        IMG=`cat .mountimg`
+        sudo umount mnt/fat32
+        sudo umount mnt/ext4
+        sudo umount mnt/ext4_domu
+        sudo sync
+        sudo kpartx -d $IMG
+        rm -f .mountimg
     else
-	echo "No image currently mounted"
-	exit 4
+        echo "No image currently mounted"
+        exit 4
     fi
 }
 
@@ -47,12 +47,12 @@ function mountimg {
 
     if [ -f .mountimg ]; then
         echo "Seems that image is currently mounted, please unmount previous image (or delete .mountimg if left over)"
-	exit 6
+        exit 6
     fi
 
     if [ "$1x" == "x" ]; then
-	echo Please specify image file
-	exit 5
+        echo Please specify image file
+        exit 5
     fi
 
     mkdir -p $MNT_DIR
@@ -80,9 +80,9 @@ function sdcard {
     set +e
 
     if [ "$1x" == "x" ]; then
-	SDCARD=/dev/sda
+        SDCARD=/dev/sda
     else
-	SDCARD=$1
+        SDCARD=$1
     fi
     mkdir -p $MNT_DIR
     mkdir -p $MNT_DIR/fat32
@@ -251,7 +251,7 @@ function bootfs {
         BOOTFS=$MNT_DIR/fat32
         is_mounted fat32
     else
-	BOOTFS=`realpath $1`
+    BOOTFS=`realpath $1`
     fi
 
 

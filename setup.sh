@@ -1,22 +1,16 @@
 #!/bin/bash
 
-#set -x
 set -e
 
-
-if [ "$AUTOMOUNT" == "" ];
-then
+if [ "$AUTOMOUNT" == "" ]; then
     AUTOMOUNT=0
 else
     AUTOMOUNT=1
 fi
 
-
 CCACHE=
 
-if ! [ -x "$(command -v ccache)" ]; then
-    echo 'Info: ccache is not installed.' >&2
-else
+if [ -x "$(command -v ccache)" ]; then
     CCACHE="ccache"
     export CCACHE_DIR=`pwd`/.ccache
     export CCACHE_MAXSIZE=10G
@@ -124,7 +118,6 @@ function clone {
 }
 
 function compile {
-
     mkdir -p images/boot
     pushd linux
 
@@ -222,7 +215,6 @@ function uboot_src {
     popd
 }
 
-# call set -e after this
 function is_mounted {
     set +e
 
@@ -253,7 +245,6 @@ function bootfs {
     else
     BOOTFS=`realpath $1`
     fi
-
 
     pushd $BOOTFS/
     sudo rm -fr *
@@ -327,20 +318,9 @@ function domu {
 
     rootfs $DOMUFS
 
-    set -x
     sudo cp configs/inittab.domu $DOMUFS/etc/inittab
     sudo cp configs/hostname.domu $DOMUFS/etc/hostname
 
-    #echo "Copying libs.."
-    #sudo cp -r images/modules/lib/* $DOMUFS/lib/
-    #sudo cp buildroot/package/busybox/S10mdev $DOMUFS/etc/init.d/S10mdev
-    #sudo chmod 755 $DOMUFS/etc/init.d/S10mdev
-    #sudo cp buildroot/package/busybox/mdev.conf $DOMUFS/etc/mdev.conf
-
-    #sudo cp linux/arch/arm64/boot/Image $DOMUFS/boot/Image
-    #sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $DOMUFS/boot/
-
-    #echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $DOMUFS/etc/inittab  > /dev/null
 }
 
 if [ "$DUT_IP" == "" ];

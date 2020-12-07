@@ -115,7 +115,7 @@ sudo partprobe ${DEVICE}
 sudo mkdosfs -F 32 ${DEVICE}1
 
 # Create EXT4 root FS
-sudo mkfs.ext4 -q -F ${DEVICE}2
+sudo mkfs.ext4 -F ${DEVICE}2
 
 # Create EXT4 domu FS
-sudo mkfs.ext4 -q -F ${DEVICE}3
+sudo mkfs.ext4 -F ${DEVICE}3

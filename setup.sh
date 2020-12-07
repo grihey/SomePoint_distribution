@@ -20,6 +20,35 @@ fi
 
 MNT_DIR=`pwd`/mnt
 
+function sanitycheck {
+    set +e
+
+    local TPATH=`realpath -e $1 2>/dev/null`
+
+    case $TPATH in
+    /)
+        echo "Will not touch host root directory" >&2
+        exit 2
+        ;;
+    `pwd`)
+        echo "Will not touch current directory" >&2
+        exit 3
+        ;;
+    "")
+        echo "Path does not exist" >&2
+        exit 4
+        ;;
+    $HOME)
+        echo "Will not touch user home directory" >&2
+        exit 5
+        ;;
+    *)
+        echo $TPATH
+        exit 0
+        ;;
+    esac
+}
+
 function umountimg {
     set +e
     if [ -f .mountimg ]; then
@@ -216,19 +245,21 @@ function uboot_src {
 }
 
 function is_mounted {
+    #Save flags
+    local FLAGS=$-
+
+    #disable exit on status != 0 for grep
     set +e
 
-    if [ "$1x" == "x" ];
-    then
-        echo "is_mounted: parameter missing"
-        exit -1
+    local MOUNTED=`mount | grep "$MNT_DIR\/$1"`
+
+    #restore flags
+    if [[ "$FLAGS" =~ "e" ]]; then
+        set -e
     fi
 
-    mounted=`mount | grep "$MNT_DIR\/$1"`
-    if [ "$mounted" == "" ];
-    then
-        if [ "$AUTOMOUNT" == "1" ];
-        then
+    if [ "$MOUNTED" == "" ]; then
+        if [ "$AUTOMOUNT" == "1" ]; then
             echo "Block device is not mounted. Automounting is set. Mounting!"
             sdcard
         else
@@ -243,10 +274,10 @@ function bootfs {
         BOOTFS=$MNT_DIR/fat32
         is_mounted fat32
     else
-    BOOTFS=`realpath $1`
+        BOOTFS=`sanitycheck $1`
     fi
 
-    pushd $BOOTFS/
+    pushd $BOOTFS
     sudo rm -fr *
     popd
 
@@ -271,13 +302,10 @@ function rootfs {
         ROOTFS=$MNT_DIR/ext4
         is_mounted ext4
     else
-        ROOTFS=`realpath $1`
+        ROOTFS=`sanitycheck $1`
     fi
 
-    # set exit on error here. grep causes error if text not found
-    set -e
-
-    pushd $ROOTFS/
+    pushd $ROOTFS
     echo "Updating $ROOTFS/"
     sudo rm -fr *
     sudo tar xvf $IMAGES/rootfs.tar > /dev/null
@@ -313,7 +341,7 @@ function domu {
         DOMUFS=$MNT_DIR/ext4_domu
         is_mounted ext4_domu
     else
-         DOMUFS=`realpath $1`
+        DOMUFS=`sanitycheck $1`
     fi
 
     rootfs $DOMUFS

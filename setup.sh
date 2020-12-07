@@ -1,6 +1,8 @@
 #!/bin/bash
 
 #set -x
+set -e
+
 
 if [ "$AUTOMOUNT" == "" ];
 then
@@ -25,6 +27,7 @@ fi
 MNT_DIR=`pwd`/mnt
 
 function umountimg {
+    set +e
     if [ -f .mountimg ]; then
 	IMG=`cat .mountimg`
 	sudo umount mnt/fat32
@@ -40,6 +43,7 @@ function umountimg {
 }
 
 function mountimg {
+    set +e
 
     if [ -f .mountimg ]; then
         echo "Seems that image is currently mounted, please unmount previous image (or delete .mountimg if left over)"
@@ -73,6 +77,8 @@ function mountimg {
 
 
 function sdcard {
+    set +e
+
     if [ "$1x" == "x" ]; then
 	SDCARD=/dev/sda
     else
@@ -88,6 +94,8 @@ function sdcard {
 }
 
 function usdcard {
+    set +e
+
     if [ "$1" == "mark" ]; then
         echo 'THIS_IS_BOOTFS' | sudo tee -a $MNT_DIR/fat32/THIS_IS_BOOTFS > /dev/null
         echo 'THIS_IS_ROOTFS' | sudo tee -a $MNT_DIR/ext4/THIS_IS_ROOTFS > /dev/null
@@ -100,8 +108,6 @@ function usdcard {
 }
 
 function clone {
-    set -e
-
     git submodule init
     git submodule update -f
     cp ~/.gitconfig docker/gitconfig
@@ -118,7 +124,6 @@ function clone {
 }
 
 function compile {
-    set -e
 
     mkdir -p images/boot
     pushd linux
@@ -134,8 +139,6 @@ function compile {
 }
 
 function compile_xen {
-    set -e
-
     pushd xen-hyp/xen
     #./configure --build=x86_64-unknown-linux-gnu --host=aarch64-linux-gnu
     make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
@@ -146,6 +149,8 @@ function compile_xen {
 
 devices=("dev" "proc" "sys" "dev/pts")
 function mount_chroot {
+    set +e
+
     echo "mount for chroot"
     for i in ${devices[@]}; do
         mount -o bind /$i $MNT_DIR/ext4/$i
@@ -161,8 +166,6 @@ function umount_chroot {
 }
 
 function update {
-    set -e
-
     mounted=`mount |grep mnt\/fat32`
     if ! [ "$mounted" != "" ];
     then
@@ -208,8 +211,6 @@ IMAGES=`pwd`/buildroot/output/images
 KERNEL_IMAGE=$IMAGES/Image
 
 function uboot_src {
-    set -e
-
     mkdir -p images/xen
 
     cp $IMAGES/xen images/xen/
@@ -223,6 +224,14 @@ function uboot_src {
 
 # call set -e after this
 function is_mounted {
+    set +e
+
+    if [ "$1x" == "x" ];
+    then
+        echo "is_mounted: parameter missing"
+        exit -1
+    fi
+
     mounted=`mount | grep "$MNT_DIR\/$1"`
     if [ "$mounted" == "" ];
     then
@@ -245,7 +254,6 @@ function bootfs {
 	BOOTFS=`realpath $1`
     fi
 
-    set -e
 
     pushd $BOOTFS/
     sudo rm -fr *
@@ -296,8 +304,6 @@ function rootfs {
 
     sudo cp configs/interfaces $ROOTFS/etc/network/interfaces
     sudo cp configs/wpa_supplicant.conf $ROOTFS/etc/wpa_supplicant.conf
-    #sudo cp configs/modules $ROOTFS/etc/modules
-    #sudo cp configs/loadmodules.sh $ROOTFS/etc/init.d/S35modules
 
     sudo cp configs/network $ROOTFS/root/
     sudo cp configs/domu0.cfg $ROOTFS/root/

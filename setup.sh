@@ -1,22 +1,16 @@
 #!/bin/bash
 
-#set -x
 set -e
 
-
-if [ "$AUTOMOUNT" == "" ];
-then
+if [ "$AUTOMOUNT" == "" ]; then
     AUTOMOUNT=0
 else
     AUTOMOUNT=1
 fi
 
-
 CCACHE=
 
-if ! [ -x "$(command -v ccache)" ]; then
-    echo 'Info: ccache is not installed.' >&2
-else
+if [ -x "$(command -v ccache)" ]; then
     CCACHE="ccache"
     export CCACHE_DIR=`pwd`/.ccache
     export CCACHE_MAXSIZE=10G
@@ -26,19 +20,48 @@ fi
 
 MNT_DIR=`pwd`/mnt
 
+function sanitycheck {
+    set +e
+
+    local TPATH=`realpath -e $1 2>/dev/null`
+
+    case $TPATH in
+    /)
+        echo "Will not touch host root directory" >&2
+        exit 2
+        ;;
+    `pwd`)
+        echo "Will not touch current directory" >&2
+        exit 3
+        ;;
+    "")
+        echo "Path does not exist" >&2
+        exit 4
+        ;;
+    $HOME)
+        echo "Will not touch user home directory" >&2
+        exit 5
+        ;;
+    *)
+        echo $TPATH
+        exit 0
+        ;;
+    esac
+}
+
 function umountimg {
     set +e
     if [ -f .mountimg ]; then
-	IMG=`cat .mountimg`
-	sudo umount mnt/fat32
-	sudo umount mnt/ext4
-	sudo umount mnt/ext4_domu
-	sudo sync
-	sudo kpartx -d $IMG
-	rm -f .mountimg
+        IMG=`cat .mountimg`
+        sudo umount mnt/fat32
+        sudo umount mnt/ext4
+        sudo umount mnt/ext4_domu
+        sudo sync
+        sudo kpartx -d $IMG
+        rm -f .mountimg
     else
-	echo "No image currently mounted"
-	exit 4
+        echo "No image currently mounted"
+        exit 4
     fi
 }
 
@@ -47,12 +70,12 @@ function mountimg {
 
     if [ -f .mountimg ]; then
         echo "Seems that image is currently mounted, please unmount previous image (or delete .mountimg if left over)"
-	exit 6
+        exit 6
     fi
 
     if [ "$1x" == "x" ]; then
-	echo Please specify image file
-	exit 5
+        echo Please specify image file
+        exit 5
     fi
 
     mkdir -p $MNT_DIR
@@ -80,9 +103,9 @@ function sdcard {
     set +e
 
     if [ "$1x" == "x" ]; then
-	SDCARD=/dev/sda
+        SDCARD=/dev/sda
     else
-	SDCARD=$1
+        SDCARD=$1
     fi
     mkdir -p $MNT_DIR
     mkdir -p $MNT_DIR/fat32
@@ -124,7 +147,6 @@ function clone {
 }
 
 function compile {
-
     mkdir -p images/boot
     pushd linux
 
@@ -222,21 +244,22 @@ function uboot_src {
     popd
 }
 
-# call set -e after this
 function is_mounted {
+    #Save flags
+    local FLAGS=$-
+
+    #disable exit on status != 0 for grep
     set +e
 
-    if [ "$1x" == "x" ];
-    then
-        echo "is_mounted: parameter missing"
-        exit -1
+    local MOUNTED=`mount | grep "$MNT_DIR\/$1"`
+
+    #restore flags
+    if [[ "$FLAGS" =~ "e" ]]; then
+        set -e
     fi
 
-    mounted=`mount | grep "$MNT_DIR\/$1"`
-    if [ "$mounted" == "" ];
-    then
-        if [ "$AUTOMOUNT" == "1" ];
-        then
+    if [ "$MOUNTED" == "" ]; then
+        if [ "$AUTOMOUNT" == "1" ]; then
             echo "Block device is not mounted. Automounting is set. Mounting!"
             sdcard
         else
@@ -251,11 +274,10 @@ function bootfs {
         BOOTFS=$MNT_DIR/fat32
         is_mounted fat32
     else
-	BOOTFS=`realpath $1`
+        BOOTFS=`sanitycheck $1`
     fi
 
-
-    pushd $BOOTFS/
+    pushd $BOOTFS
     sudo rm -fr *
     popd
 
@@ -280,13 +302,10 @@ function rootfs {
         ROOTFS=$MNT_DIR/ext4
         is_mounted ext4
     else
-        ROOTFS=`realpath $1`
+        ROOTFS=`sanitycheck $1`
     fi
 
-    # set exit on error here. grep causes error if text not found
-    set -e
-
-    pushd $ROOTFS/
+    pushd $ROOTFS
     echo "Updating $ROOTFS/"
     sudo rm -fr *
     sudo tar xvf $IMAGES/rootfs.tar > /dev/null
@@ -322,25 +341,14 @@ function domu {
         DOMUFS=$MNT_DIR/ext4_domu
         is_mounted ext4_domu
     else
-         DOMUFS=`realpath $1`
+        DOMUFS=`sanitycheck $1`
     fi
 
     rootfs $DOMUFS
 
-    set -x
     sudo cp configs/inittab.domu $DOMUFS/etc/inittab
     sudo cp configs/hostname.domu $DOMUFS/etc/hostname
 
-    #echo "Copying libs.."
-    #sudo cp -r images/modules/lib/* $DOMUFS/lib/
-    #sudo cp buildroot/package/busybox/S10mdev $DOMUFS/etc/init.d/S10mdev
-    #sudo chmod 755 $DOMUFS/etc/init.d/S10mdev
-    #sudo cp buildroot/package/busybox/mdev.conf $DOMUFS/etc/mdev.conf
-
-    #sudo cp linux/arch/arm64/boot/Image $DOMUFS/boot/Image
-    #sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $DOMUFS/boot/
-
-    #echo "X0:12345:respawn:/sbin/getty 115200 hvc0" | sudo tee -a $DOMUFS/etc/inittab  > /dev/null
 }
 
 if [ "$DUT_IP" == "" ];

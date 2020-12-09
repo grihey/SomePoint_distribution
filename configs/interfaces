@@ -10,13 +10,15 @@ iface xenbr0 inet dhcp
     bridge_stp off
     bridge_fd 0
     bridge_maxwait 0
+# This may be useful if dual-pair (100Mbit) cable is in use
+#    pre-up sleep 20 
     pre-up ifconfig eth0 down
-    pre-up brctl addbr br0
-    pre-up brctl addif br0 eth0
+    pre-up brctl addbr xenbr0
+    pre-up brctl addif xenbr0 eth0
     pre-up ifconfig eth0 up
     post-down ifconfig eth0 down
-    post-down brctl delif br0 eth0
-
+    post-down brctl delif xenbr0 eth0
+    post-down brctl delbr xenbr0
 
 #auto wlan0
 #iface wlan0 inet dhcp

@@ -71,7 +71,8 @@ echo "Root FS size = ${ROOTSIZ}"
 echo "Domu FS size = ${DOMUSIZ:-fill device}"
 
 if [ "$CONFIRM" == "Y" ]; then
-    read -p "Do you want to continue? (y/N): " I
+    echo "THIS WILL DESTROY ANY DATA ON SELECTED DEVICE!"
+    read -p " Do you really want to continue? (y/N): " I
     if [ "$I" != "y" -a "$I" != "Y" ]; then
 	echo Canceled
         exit 1

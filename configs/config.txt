@@ -5,8 +5,8 @@ enable_uart=1
 [all]
 arm_64bit=1
 kernel=u-boot.bin
-cmdline=cmdline.txt
-initramfs initrd.img followkernel
+#cmdline=cmdline.txt
+#initramfs initrd.img followkernel
 
 
 # Enable the audio output, I2C and SPI interfaces on the GPIO header

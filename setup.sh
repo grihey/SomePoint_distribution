@@ -8,6 +8,10 @@ else
     AUTOMOUNT=1
 fi
 
+if [ "${USBBUILD}x" == "x" ]; then
+    USBBUILD=0
+fi
+
 CCACHE=
 
 if [ -x "$(command -v ccache)" ]; then
@@ -240,7 +244,11 @@ function uboot_src {
 
     pushd images/xen
     cp $IMAGES/bcm2711-rpi-4-b.dtb .
-    ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config -t "fatload mmc 0:1" -d .
+    if [ $USBBUILD -eq 0 ]; then
+        ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config.sd -t "fatload mmc 0:1" -d .
+    else
+        ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config.usb -t "fatload usb 0:1" -d .
+    fi
     popd
 }
 
@@ -284,17 +292,14 @@ function bootfs {
     sudo cp configs/config.txt $BOOTFS/
     sudo cp u-boot.bin $BOOTFS/
     sudo cp $KERNEL_IMAGE $BOOTFS/vmlinuz
-    pushd images/xen
-    sudo cp boot.scr $BOOTFS/boot.scr
-    popd
+    sudo cp images/xen/boot.scr $BOOTFS/boot.scr
 
     sudo cp $IMAGES/xen $BOOTFS/
     sudo cp -r $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
     sudo cp -r $IMAGES/Image $BOOTFS/vmlinuz
     sudo cp -r $IMAGES/rpi-firmware/overlays $BOOTFS/
-    sudo cp $IMAGES/rpi-firmware/fixup.dat $BOOTFS/
-    sudo cp $IMAGES/rpi-firmware/start.elf $BOOTFS/
-    sudo cp $IMAGES/rpi-firmware/cmdline.txt $BOOTFS/
+    sudo cp usbfix/fixup4.dat $BOOTFS/
+    sudo cp usbfix/start4.elf $BOOTFS/
 }
 
 function rootfs {
@@ -325,7 +330,11 @@ function rootfs {
     sudo cp configs/wpa_supplicant.conf $ROOTFS/etc/wpa_supplicant.conf
 
     sudo cp configs/network $ROOTFS/root/
-    sudo cp configs/domu0.cfg $ROOTFS/root/
+    if [ $USBBUILD -eq 0 ]; then
+        sudo cp configs/domu0.cfg.sd $ROOTFS/root/domu0.cfg
+    else
+        sudo cp configs/domu0.cfg.usb $ROOTFS/root/domu0.cfg
+    fi    
     sudo cp $KERNEL_IMAGE $ROOTFS/root/Image
 
     sudo cp buildroot/package/busybox/S10mdev $ROOTFS/etc/init.d/S10mdev

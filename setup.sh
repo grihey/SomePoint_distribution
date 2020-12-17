@@ -2,15 +2,19 @@
 
 set -e
 
-if [ "$AUTOMOUNT" == "" ]; then
-    AUTOMOUNT=0
-else
-    AUTOMOUNT=1
+if [ ! -f .setup_sh_config ]; then
+    echo ".setup_sh_config not found, creating with defaults"
+    cat << EOF > .setup_sh_config
+AUTOMOUNT=0
+USBBUILD=0
+MNT_DIR=\`pwd\`/mnt
+IMAGES=\`pwd\`/buildroot/output/images
+KERNEL_IMAGE=\$IMAGES/Image
+DUT_IP=192.168.1.170
+EOF
 fi
 
-if [ "${USBBUILD}x" == "x" ]; then
-    USBBUILD=0
-fi
+. .setup_sh_config
 
 CCACHE=
 
@@ -22,8 +26,10 @@ if [ -x "$(command -v ccache)" ]; then
     #ccache -s
 fi
 
-MNT_DIR=`pwd`/mnt
-
+# sanitycheck function will return the clean path or exit with an error
+# usage example: CLEANPATH=`sanitycheck <path to check>`
+#   on error error message is printed to stderr and CLEANPATH is empty
+#   on success CLEANPATH is the cleaned up path to <path to check>
 function sanitycheck {
     set +e
 
@@ -232,10 +238,6 @@ EOF
     sync
 }
 
-#KERNEL_IMAGE=images/boot/vmlinuz-5.9.6+
-IMAGES=`pwd`/buildroot/output/images
-KERNEL_IMAGE=$IMAGES/Image
-
 function uboot_src {
     mkdir -p images/xen
 
@@ -360,10 +362,6 @@ function domu {
 
 }
 
-if [ "$DUT_IP" == "" ];
-then
-    DUT_IP=192.168.1.170
-fi
 function ssh_dut {
     ssh -i images/rasp_id_rsa root@$DUT_IP
 }

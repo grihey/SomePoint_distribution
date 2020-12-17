@@ -2,15 +2,15 @@
 
 set -e
 
-if [ "$AUTOMOUNT" == "" ]; then
-    AUTOMOUNT=0
-else
-    AUTOMOUNT=1
+if [ ! -f .setup_sh_config ]; then
+    echo ".setup_sh_config not found, creating with defaults"
+    cat << EOF > .setup_sh_config
+AUTOMOUNT=0
+USBBUILD=0
+EOF
 fi
 
-if [ "${USBBUILD}x" == "x" ]; then
-    USBBUILD=0
-fi
+. .setup_sh_config
 
 CCACHE=
 

@@ -79,6 +79,7 @@ function prepare_compile_env {
     sudo cp $(which qemu-aarch64-static) ${ROOTFS_DIR}usr/bin/
 
     # /etc/resolv.conf is required set up network for chroot.
+    sudo chroot ${ROOTFS_DIR} rm /etc/resolv.conf
     sudo chroot ${ROOTFS_DIR} bash -c 'echo "nameserver 1.1.1.1" > /etc/resolv.conf'
 
     sudo sed -i -e "s/# deb /deb /" ${ROOTFS_DIR}etc/apt/sources.list

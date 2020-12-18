@@ -4,6 +4,21 @@
 # Usage . helpers.sh
 # compile <args>
 
+function defconfig {
+    echo "Creating .setup_sh_config with defaults"
+    cp -f default_setup_sh_config .setup_sh_config
+}
+
+# returns 0 if function exists, 1 if not
+function fn_exists {
+    if [ "x$(LC_ALL=C type -t $1)" == "xfunction" ]; then
+       return 0
+    else
+       echo "$1: Unknown function" >&2
+       return 1
+    fi
+}
+
 function check_param_exist {
     if [ "$1x" == "x" ]; then
         echo "Parameter not defined"
@@ -101,8 +116,8 @@ function umount_image {
 
 # sanitycheck function will return the clean path or exit with an error
 # usage example: CLEANPATH=`sanitycheck <path to check>`
-#   on error error message is printed to stderr and CLEANPATH is empty
-#   on success CLEANPATH is the cleaned up path to <path to check>
+#   on error an error message is printed to stderr and CLEANPATH is empty and return value is nonzero
+#   on success CLEANPATH is the cleaned up path to <path to check> and return value is zero
 function sanitycheck {
     set +e
 

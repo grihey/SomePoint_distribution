@@ -1,0 +1,45 @@
+# Automount sd/usb if not mounted when doing e.g. rootfs (0=off, 1=on)
+AUTOMOUNT=0
+
+# BUILDOPT defines type of build 0=SD, 1=USB, 2=TFTP/NFS/DHCP 3=TFTP/NFS/static
+BUILDOPT=0
+
+# Directories where partitions are mounted
+MNT_DIR=`pwd`/mnt
+BOOTMNT=$MNT_DIR/bootfs
+ROOTMNT=$MNT_DIR/rootfs
+DOMUMNT=$MNT_DIR/domufs
+
+# Where buildroot is storing images
+IMAGES=`pwd`/buildroot/output/images
+KERNEL_IMAGE=$IMAGES/Image
+
+# RasPi static IP Configuration (dom0)
+RASPIP=192.168.1.170
+RASPNM=255.255.255.0
+RASPGW=192.168.1.1
+RASPDNS=1.1.1.1
+RASPHN=raspi
+
+# TFTP and NFS server settings
+TFTPSERVER=192.168.1.145
+TFTPPATH=/srv/tftp
+NFSSERVER=$TFTPSERVER
+NFSDOM0=/srv/nfsdom0
+NFSDOMU=/srv/nfsdomu
+
+# IPCONFRASPI defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
+case $BUILDOPT in
+2)
+    # dhcp configuration
+    IPCONFRASPI="::::${RASPHN}:eth0:dhcp"
+;;
+3)
+    # static IP configuration
+    IPCONFRASPI="${RASPIP}::${RASPGW}:${RASPNM}:${RASPHN}:eth0:off:${RASPDNS}"
+;;
+*)
+    # IP configuration not used at boot time (SD/USB)
+    IPCONFRASPI="invalid"
+;;
+esac

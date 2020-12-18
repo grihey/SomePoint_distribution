@@ -1,0 +1,13 @@
+diff --git a/tools/libxl/Makefile b/tools/libxl/Makefile
+index 38cd43abae..53d15539f7 100644
+--- a/tools/libxl/Makefile
++++ b/tools/libxl/Makefile
+@@ -12,7 +12,7 @@ XLUMAJOR = 4.14
+ XLUMINOR = 0
+ 
+ CFLAGS += -Werror -Wno-format-zero-length -Wmissing-declarations \
+-	-Wno-declaration-after-statement -Wformat-nonliteral
++	-Wno-declaration-after-statement -Wformat-nonliteral -Wno-stringop-truncation -Wno-maybe-uninitialized
+ CFLAGS += -I. -fPIC
+ 
+ ifeq ($(CONFIG_Linux),y)

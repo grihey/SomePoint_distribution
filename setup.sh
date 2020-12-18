@@ -2,6 +2,8 @@
 
 set -e
 
+. helpers.sh
+
 if [ ! -f .setup_sh_config ]; then
     echo ".setup_sh_config not found, creating with defaults"
     cat << EOF > .setup_sh_config
@@ -25,39 +27,6 @@ if [ -x "$(command -v ccache)" ]; then
 
     #ccache -s
 fi
-
-# sanitycheck function will return the clean path or exit with an error
-# usage example: CLEANPATH=`sanitycheck <path to check>`
-#   on error error message is printed to stderr and CLEANPATH is empty
-#   on success CLEANPATH is the cleaned up path to <path to check>
-function sanitycheck {
-    set +e
-
-    local TPATH=`realpath -e $1 2>/dev/null`
-
-    case $TPATH in
-    /)
-        echo "Will not touch host root directory" >&2
-        exit 2
-        ;;
-    `pwd`)
-        echo "Will not touch current directory" >&2
-        exit 3
-        ;;
-    "")
-        echo "Path does not exist" >&2
-        exit 4
-        ;;
-    $HOME)
-        echo "Will not touch user home directory" >&2
-        exit 5
-        ;;
-    *)
-        echo $TPATH
-        exit 0
-        ;;
-    esac
-}
 
 function umountimg {
     set +e
@@ -108,7 +77,6 @@ function mountimg {
     echo $1 > .mountimg
 }
 
-
 function sdcard {
     set +e
 
@@ -153,29 +121,6 @@ function clone {
     # Needed for buildroot to be able to checkout xen branch
     pushd linux
     git checkout xen
-    popd
-}
-
-function compile {
-    mkdir -p images/boot
-    pushd linux
-
-    # RUN in docker
-    make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- ubuntu2010_defconfig
-    make -j 8 ARCH=arm64 CROSS_COMPILE="${CCACHE} aarch64-linux-gnu-" Image modules dtbs
-    make ARCH=arm64 CROSS_COMPILE="${CCACHE} aarch64-linux-gnu-" INSTALL_MOD_PATH=../images/modules modules_install
-    make ARCH=arm64 CROSS_COMPILE="${CCACHE} aarch64-linux-gnu-" INSTALL_PATH=../images/boot install
-    # RUN in docker end
-
-    popd # linux
-}
-
-function compile_xen {
-    pushd xen-hyp/xen
-    #./configure --build=x86_64-unknown-linux-gnu --host=aarch64-linux-gnu
-    make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
-    make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
-        DESTDIR=../images/xen/ install
     popd
 }
 
@@ -336,7 +281,7 @@ function rootfs {
         sudo cp configs/domu0.cfg.sd $ROOTFS/root/domu0.cfg
     else
         sudo cp configs/domu0.cfg.usb $ROOTFS/root/domu0.cfg
-    fi    
+    fi
     sudo cp $KERNEL_IMAGE $ROOTFS/root/Image
 
     sudo cp buildroot/package/busybox/S10mdev $ROOTFS/etc/init.d/S10mdev

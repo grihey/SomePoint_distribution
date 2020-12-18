@@ -307,6 +307,20 @@ function domu {
 
 }
 
+# If you have changed for example linux/arch/arm64/configs/xen_defconfig and want buildroot to recompile kernel
+function kernel_conf_change {
+    if [ -f /usr/src/linux/.git ]; then
+        pushd buildroot/dl/linux/git
+        git branch --set-upstream-to=origin/xen xen
+        git pull
+        popd
+        rm -f buildroot/dl/linux/linux*.tar
+        rm -rf buildroot/output/build/linux-xen
+    else
+        echo "This command needs to be run in the docker environment"
+    fi
+}
+
 function ssh_dut {
     ssh -i images/rasp_id_rsa root@$DUT_IP
 }

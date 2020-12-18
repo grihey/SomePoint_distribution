@@ -4,4 +4,3 @@ mnt/
 .mountimg
 .buildroot-ccache/
 .setup_sh_config
-

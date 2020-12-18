@@ -48,19 +48,12 @@ mount_chroot_devs () {
 
     ROOTFS=$1
 
-    if [ -e ${ROOTFS}dev/console ]; then
-        echo .
-        echo "  Chroot devs already mounted"
-        echo .
-        return
-    fi
-
-    sudo mkdir -p ${ROOTFS}
-    sudo mount -o bind /dev ${ROOTFS}dev
-    sudo mount -o bind /dev/pts ${ROOTFS}dev/pts
-    sudo mount -o bind /proc ${ROOTFS}proc
-    sudo mount -o bind /sys ${ROOTFS}sys
-    sudo mount -o bind /tmp ${ROOTFS}tmp
+    sudo mkdir -p ${ROOTFS} || true
+    sudo mount -o bind /dev ${ROOTFS}dev || true
+    sudo mount -o bind /dev/pts ${ROOTFS}dev/pts || true
+    sudo mount -o bind /proc ${ROOTFS}proc || true
+    sudo mount -o bind /sys ${ROOTFS}sys || true
+    sudo mount -o bind /tmp ${ROOTFS}tmp || true
 }
 
 function prepare_compile_env {
@@ -70,8 +63,6 @@ function prepare_compile_env {
     ROOTFS_DIR=$2
 
     sudo apt install qemu-user-static pkg-config
-
-    set -x
 
     mount_image $IMAGE $ROOTFS_DIR
     mount_chroot_devs $ROOTFS_DIR
@@ -185,7 +176,6 @@ function compile_xen_tools {
     XEN_SRC=$3
 
     ROOTFS_DIR=${WORKDIR}rootfs/
-set -x
     if ! [ -f ${WORKDIR}prepare_compile_env.setup.done ]; then
         prepare_compile_env ${WORKDIR}1.img $ROOTFS_DIR
         touch ${WORKDIR}prepare_compile_env.setup.done
@@ -201,8 +191,6 @@ set -x
         echo "Arch $arch is not supported"
         exit 1
     fi
-
-    set -x
 
     # Use clean repo to build tools but make sure branch is same as the branch was used to build xen binary
     sudo chmod a+w ${ROOTFS_DIR}opt

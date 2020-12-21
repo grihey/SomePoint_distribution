@@ -143,3 +143,35 @@ function ubootsource {
     echo "setenv fdt_high 0xffffffffffffffff"
     echo "booti 0x\${xen_addr} - 0x\${fdt_addr}"
 }
+
+function net_rc_add {
+    echo "#!/bin/bash"
+    echo ""
+
+    case $BUILDOPT in
+    0|1)
+    ;;
+    2|3)
+        if [ "x$1" == "xdom0" ]; then
+            echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
+            echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"
+            echo ""
+        fi
+
+        echo "DNSS=\`dmesg | grep nameserver0\`"
+        echo "if [ \$? -eq 0 ]; then"
+        echo "    read -r _ _ DNS0 <<< \"\$DNSS\""
+        echo "    DNS0=\${DNS0##*nameserver0=}"
+        echo "    DNS0=\${DNS0%%,*}"
+        echo "else"
+        echo "    DNS0=${RASPDNS}"
+        echo "fi"
+        echo ""
+        echo "echo \"nameserver \$DNS0\" > /etc/resolv.conf"
+    ;;
+    *)
+        echo "Invalid BUILDOPT setting" >&2
+        exit 1
+    ;;
+    esac
+}

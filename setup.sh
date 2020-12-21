@@ -255,8 +255,8 @@ function rootfs {
     domu_config | sudo tee $ROOTFS/root/domu.cfg > /dev/null
     case $BUILDOPT in
     2|3)
-        sudo cp configs/S41ipforward $ROOTFS/etc/init.d/
-        sudo chmod 755 $ROOTFS/etc/init.d/S41ipforward
+        net_rc_add dom0 | sudo tee $ROOTFS/etc/init.d/S41netadditions > /dev/null
+        sudo chmod 755 $ROOTFS/etc/init.d/S41netadditions
         echo 'vif.default.script="vif-nat"' | sudo tee -a $ROOTFS/etc/xen/xl.conf > /dev/null
     ;;
     *)
@@ -271,6 +271,7 @@ function rootfs {
 
     sudo cp $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
     sudo cp configs/inittab.dom0 $ROOTFS/etc/inittab
+    echo "${RASPHN}-dom0" | sudo tee $ROOTFS/etc/hostname > /dev/null
 }
 
 function domu {
@@ -283,10 +284,10 @@ function domu {
 
     rootfs $DOMUFS
 
+    net_rc_add domu | sudo tee $DOMUFS/etc/init.d/S41netadditions > /dev/null
     domu_interfaces | sudo tee $DOMUFS/etc/network/interfaces > /dev/null
     sudo cp configs/inittab.domu $DOMUFS/etc/inittab
-    sudo cp configs/hostname.domu $DOMUFS/etc/hostname
-
+    echo "${RASPHN}-domu" | sudo tee $DOMUFS/etc/hostname > /dev/null
 }
 
 function nfsupdate {

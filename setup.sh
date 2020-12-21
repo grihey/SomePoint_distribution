@@ -295,65 +295,6 @@ function clone {
     popd
 }
 
-devices=("dev" "proc" "sys" "dev/pts")
-function mount_chroot {
-    set +e
-
-    echo "mount for chroot"
-    for i in ${devices[@]}; do
-        mount -o bind /$i $ROOTMNT/$i
-    done
-}
-
-function umount_chroot {
-    echo "umount chroot"
-    #Unmounting needs to be done in reverse order (otherwise umount of dev is tried before dev/pts)
-    for ((j=${#devices[@]}-1; j>=0; j--)); do
-        umount $ROOTMNT/${devices[$j]}
-    done
-}
-
-function update {
-    mounted=`mount | grep $BOOTMNT`
-    if ! [ "$mounted" != "" ];
-    then
-        echo "Boot partition not mounted"
-        exit -1
-    fi
-
-    is_root=`whoami`
-    if [ "$is_root" != "root" ];
-    then
-        echo "Run update command with sudo rights"
-        exit 1
-    fi
-
-    echo "Copying libs.."
-    cp -r images/modules/lib/* $ROOTMNT/lib/
-
-    echo "Copying dtbs.."
-    cp linux/arch/arm64/boot/dts/broadcom/*.dtb $BOOTMNT/
-    cp linux/arch/arm64/boot/dts/overlays/*.dtb* $BOOTMNT/overlays/
-    cp linux/arch/arm64/boot/dts/overlays/README $BOOTMNT/overlays/
-    echo "Copying vmlinuz"
-    cp images/boot/vmlinuz-5.9.6+ $BOOTMNT/vmlinuz
-    cp images/boot/* $ROOTMNT/boot/
-    echo "Copying USB boot fixes"
-    cp usbfix/start4.elf usbfix/fixup4.dat $BOOTMNT/
-    cp usbfix/start4.elf usbfix/fixup4.dat $ROOTMNT/boot
-
-    mount_chroot
-cat << EOF | chroot $ROOTMNT
-set -x
-update-initramfs -c -t -k "5.9.6+"
-EOF
-#
-    umount_chroot
-
-    echo "Syncing.."
-    sync
-}
-
 function uboot_src {
     mkdir -p images/xen
 

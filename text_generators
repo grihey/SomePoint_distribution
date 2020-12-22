@@ -11,13 +11,13 @@ function domu_config {
     ;;
     2|3)
         echo "kernel = \"/root/Image\""
-        echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:raspi-domu:eth0:off:${RASPDNS}\""
+        echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:${RASPHN}-domu:eth0:off:${RASPDNS}\""
         echo "memory = \"1024\""
         echo "name = \"rpi4-xen-guest\""
         echo "vcpus = 2"
         echo "cpus = \"3-4\""
         echo "serial=\"pty\""
-        echo "disk = [ 'phy:/dev/mmcblk0p3,xvda,w' ]"
+        echo "disk = [  ]"
         echo "vif=[ 'mac=FA:CE:C0:FF:EE:00,ip=10.123.123.2' ]"
         echo "vfb = [ 'type=vnc,vncdisplay=10,vncpasswd=raspberry' ]"
         echo "type = \"pvh\""
@@ -154,6 +154,7 @@ function net_rc_add {
     2|3)
         if [ "x$1" == "xdom0" ]; then
             echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
+            echo "iptables -t nat -A PREROUTING -p tcp --dport 222 -j DNAT --to-destination 10.123.123.2:22"
             echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"
             echo ""
         fi

@@ -271,6 +271,8 @@ function rootfs {
 
     sudo cp $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
     sudo cp configs/inittab.dom0 $ROOTFS/etc/inittab
+    echo '. .bashrc' | sudo tee $ROOTFS/root/.profile > /dev/null
+    echo 'PS1="\h# "' | sudo tee $ROOTFS/root/.bashrc > /dev/null
     echo "${RASPHN}-dom0" | sudo tee $ROOTFS/etc/hostname > /dev/null
 }
 
@@ -295,7 +297,9 @@ function nfsupdate {
     2|3)
         bootfs "$TFTPPATH"
         rootfs "$NFSDOM0"
+        echo "DOM0_NFSROOT" | sudo tee $NFSDOM0/DOM0_NFSROOT > /dev/null
         domu "$NFSDOMU"
+        echo "DOMU_NFSROOT" | sudo tee $NFSDOMU/DOMU_NFSROOT > /dev/null
     ;;
     *)
         echo "BUILDOPT is not set for network boot"
@@ -319,7 +323,13 @@ function kernel_conf_change {
 }
 
 function ssh_dut {
-    ssh -i images/rasp_id_rsa root@$RASPIP
+    case "$1" in
+    domu)
+        ssh -i images/rasp_id_rsa -p 222 root@$RASPIP
+    ;;
+    *)
+        ssh -i images/rasp_id_rsa root@$RASPIP
+    esac
 }
 
 fn_exists $1

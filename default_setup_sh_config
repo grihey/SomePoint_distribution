@@ -14,10 +14,12 @@ DOMUMNT=$MNT_DIR/domufs
 IMAGES=`pwd`/buildroot/output/images
 KERNEL_IMAGE=$IMAGES/Image
 
-# RasPi static IP Configuration (dom0)
+# RasPi dom0 static IP Configuration
 RASPIP=192.168.1.170
 RASPNM=255.255.255.0
 RASPGW=192.168.1.1
+
+# These settings should be valid both in DHCP and static IP configurations
 RASPDNS=1.1.1.1
 RASPHN=raspi
 
@@ -32,11 +34,11 @@ NFSDOMU=/srv/nfsdomu
 case $BUILDOPT in
 2)
     # dhcp configuration
-    IPCONFRASPI="::::${RASPHN}:eth0:dhcp"
+    IPCONFRASPI="::::${RASPHN}-dom0:eth0:dhcp"
 ;;
 3)
     # static IP configuration
-    IPCONFRASPI="${RASPIP}::${RASPGW}:${RASPNM}:${RASPHN}:eth0:off:${RASPDNS}"
+    IPCONFRASPI="${RASPIP}::${RASPGW}:${RASPNM}:${RASPHN}-dom0:eth0:off:${RASPDNS}"
 ;;
 *)
     # IP configuration not used at boot time (SD/USB)

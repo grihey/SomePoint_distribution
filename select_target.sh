@@ -16,6 +16,9 @@ then
     dom0_wget_url=https://cdimage.ubuntu.com/releases/20.10/release/$dom0_file
     dom0_image=dom0_ubuntu20_10.img
 elif [ "${target}x" == "matex" ]; then
+    echo "Selected:"
+    echo "  Ubuntu Mate 20.10 as dom0"
+    echo "  raspOS as domU"
     dom0=ubuntu-mate-20.10-desktop-arm64+raspi
     dom0_file=${dom0}.img.xz
     dom0_wget_sha256="06e26aa197eb8e7fc8144b006aab7a011fdd03990b0bf3584a95c36d55546170"

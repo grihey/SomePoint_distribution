@@ -84,10 +84,9 @@ function mountimg {
         exit 5
     fi
 
-    mkdir -p $MNT_DIR
     mkdir -p $BOOTMNT
     mkdir -p $ROOTMNT
-    mkdir -p $DOMU_MNT
+    mkdir -p $DOMUMNT
 
     KPARTXOUT=`sudo kpartx -l $1 2> /dev/null`
 
@@ -272,7 +271,7 @@ function rootfs {
     sudo cp $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
     sudo cp configs/inittab.dom0 $ROOTFS/etc/inittab
     echo '. .bashrc' | sudo tee $ROOTFS/root/.profile > /dev/null
-    echo 'PS1="\h# "' | sudo tee $ROOTFS/root/.bashrc > /dev/null
+    echo 'PS1="\u@\h:\w# "' | sudo tee $ROOTFS/root/.bashrc > /dev/null
     echo "${RASPHN}-dom0" | sudo tee $ROOTFS/etc/hostname > /dev/null
 }
 
@@ -286,7 +285,15 @@ function domu {
 
     rootfs $DOMUFS
 
-    net_rc_add domu | sudo tee $DOMUFS/etc/init.d/S41netadditions > /dev/null
+    case $BUILDOPT in
+    2|3)
+        net_rc_add domu | sudo tee $DOMUFS/etc/init.d/S41netadditions > /dev/null
+        sudo chmod 755 $DOMUFS/etc/init.d/S41netadditions
+    ;;
+    *)
+    ;;
+    esac
+
     domu_interfaces | sudo tee $DOMUFS/etc/network/interfaces > /dev/null
     sudo cp configs/inittab.domu $DOMUFS/etc/inittab
     echo "${RASPHN}-domu" | sudo tee $DOMUFS/etc/hostname > /dev/null

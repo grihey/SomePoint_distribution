@@ -5,7 +5,7 @@ set -e
 . helpers.sh
 . text_generators
 
-if [ "x$1" == "xdefconfig" ]; then
+if [ "$1" == "defconfig" ]; then
     defconfig
     exit 0
 else
@@ -44,10 +44,10 @@ function is_mounted {
         set -e
     fi
 
-    if [ "$MOUNTED" == "" ]; then
+    if [ -z "$MOUNTED" ]; then
         if [ "$AUTOMOUNT" == "1" ]; then
             echo "Block device is not mounted. Automounting is set. Mounting!"
-            sdcard
+            domount
         else
             echo "Block device is not mounted."
             exit -1
@@ -79,7 +79,7 @@ function mountimg {
         exit 6
     fi
 
-    if [ "$1x" == "x" ]; then
+    if [ -z "$1" ]; then
         echo Please specify image file
         exit 5
     fi
@@ -94,7 +94,7 @@ function mountimg {
     LOOP2=`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
     LOOP3=`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
 
-    sudo kpartx -a $1 2> /dev/null
+    sudo kpartx -a $1
 
     sudo mount /dev/mapper/$LOOP1 $BOOTMNT
     sudo mount /dev/mapper/$LOOP2 $ROOTMNT
@@ -103,25 +103,48 @@ function mountimg {
     echo $1 > .mountimg
 }
 
-function sdcard {
+function domount {
     set +e
 
-    if [ "$1x" == "x" ]; then
-        SDCARD=/dev/sda
+    if [ -z "$1" ]; then
+        DEV=$DEFDEV
     else
-        SDCARD=$1
+        DEV=$1
     fi
 
-    mkdir -p $BOOTMNT
-    mkdir -p $ROOTMNT
-    mkdir -p $DOMUMNT
-    sudo mount ${SDCARD}1 $BOOTMNT
-    sudo mount ${SDCARD}2 $ROOTMNT
-    sudo mount ${SDCARD}3 $DOMUMNT
+    if [ -f $DEV ]; then
+        #If dev is file, mount image instead
+        mountimg $DEV
+    else
+	# Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
+    	if [[ "${DEV: -1}" =~ [0-9] ]]; then
+		MIDP="p"
+	    else
+        	MIDP=""
+	fi
+
+        mkdir -p $BOOTMNT
+        mkdir -p $ROOTMNT
+        mkdir -p $DOMUMNT
+        sudo mount ${DEV}${MIDP}1 $BOOTMNT
+        sudo mount ${DEV}${MIDP}2 $ROOTMNT
+        sudo mount ${DEV}${MIDP}3 $DOMUMNT
+    fi
 }
 
-function usdcard {
+function doumount {
     set +e
+
+    if [ -f .mountimg ]; then
+        umountimg
+        return 0
+    fi
+
+    local MOUNTED=`mount | grep "$BOOTMNT"`
+    if [ "x$MOUNTED" == "x" ]; then
+        echo "Not mounted"
+        exit 2
+    fi
 
     if [ "$1" == "mark" ]; then
         echo 'THIS_IS_BOOTFS' | sudo tee $BOOTMNT/THIS_IS_BOOTFS > /dev/null
@@ -182,7 +205,7 @@ function uboot_src {
 }
 
 function bootfs {
-    if [ "$1x" == "x" ]; then
+    if [ -z "$1" ]; then
         BOOTFS=$BOOTMNT
         is_mounted $BOOTMNT
     else
@@ -205,7 +228,7 @@ function bootfs {
 }
 
 function netboot {
-    if [ "$1x" == "x" ]; then
+    if [ -z "$1" ]; then
         BOOTFS=$BOOTMNT
         is_mounted $BOOTMNT
     else
@@ -225,7 +248,7 @@ function netboot {
 }
 
 function rootfs {
-    if [ "$1x" == "x" ]; then
+    if [ -z "$1" ]; then
         ROOTFS=$ROOTMNT
         is_mounted $ROOTMNT
     else
@@ -275,8 +298,8 @@ function rootfs {
     echo "${RASPHN}-dom0" | sudo tee $ROOTFS/etc/hostname > /dev/null
 }
 
-function domu {
-    if [ "$1x" == "x" ]; then
+function domufs {
+    if [ -z "$1" ]; then
         DOMUFS=$DOMUMNT
         is_mounted $DOMUMNT
     else
@@ -322,7 +345,7 @@ function kernel_conf_change {
         git branch --set-upstream-to=origin/xen xen
         git pull
         popd
-        rm -f buildroot/dl/linux/linux*.tar
+        rm -f buildroot/dl/linux/linux*.tar.gz
         rm -rf buildroot/output/build/linux-xen
     else
         echo "This command needs to be run in the docker environment"
@@ -339,5 +362,24 @@ function ssh_dut {
     esac
 }
 
-fn_exists $1
-$*
+# Some translations
+case "$1" in
+    mount|sdcard)
+        CMD="domount"
+    ;;
+    umount|usdcard)
+        CMD="doumount"
+    ;;
+    domu)
+        CMD="domufs"
+    ;;
+    *)
+        CMD="$1"
+    ;;
+esac
+
+shift
+
+#Check if function exists and run it if it does
+fn_exists $CMD
+$CMD $*

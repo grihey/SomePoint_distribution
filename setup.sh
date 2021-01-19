@@ -55,20 +55,41 @@ function is_mounted {
     fi
 }
 
-function umountimg {
-    set +e
+function uloopimg {
     if [ -f .mountimg ]; then
         IMG=`cat .mountimg`
-        sudo umount $BOOTMNT
-        sudo umount $ROOTMNT
-        sudo umount $DOMUMNT
         sudo sync
         sudo kpartx -d $IMG
         rm -f .mountimg
     else
+        echo "No image currently looped"
+        exit 4
+    fi
+}
+
+function umountimg {
+    set +e
+    if [ -f .mountimg ]; then
+        sudo umount $BOOTMNT
+        sudo umount $ROOTMNT
+        sudo umount $DOMUMNT
+        uloopimg
+    else
         echo "No image currently mounted"
         exit 4
     fi
+}
+
+function loopimg {
+    local KPARTXOUT=`sudo kpartx -l "$1" 2> /dev/null`
+
+    PART1=/dev/mapper/`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    PART2=/dev/mapper/`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    PART3=/dev/mapper/`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
+
+    sudo kpartx -a "$1"
+
+    echo "$1" > .mountimg
 }
 
 function mountimg {
@@ -88,19 +109,11 @@ function mountimg {
     mkdir -p $ROOTMNT
     mkdir -p $DOMUMNT
 
-    KPARTXOUT=`sudo kpartx -l $1 2> /dev/null`
+    loopimg "$1"
 
-    LOOP1=`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    LOOP2=`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    LOOP3=`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
-
-    sudo kpartx -a $1
-
-    sudo mount /dev/mapper/$LOOP1 $BOOTMNT
-    sudo mount /dev/mapper/$LOOP2 $ROOTMNT
-    sudo mount /dev/mapper/$LOOP3 $DOMUMNT
-
-    echo $1 > .mountimg
+    sudo mount $PART1 $BOOTMNT
+    sudo mount $PART2 $ROOTMNT
+    sudo mount $PART3 $DOMUMNT
 }
 
 function domount {
@@ -116,12 +129,12 @@ function domount {
         #If dev is file, mount image instead
         mountimg $DEV
     else
-	# Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
-    	if [[ "${DEV: -1}" =~ [0-9] ]]; then
-		MIDP="p"
-	    else
-        	MIDP=""
-	fi
+        # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
+        if [[ "${DEV: -1}" =~ [0-9] ]]; then
+                MIDP="p"
+            else
+                MIDP=""
+        fi
 
         mkdir -p $BOOTMNT
         mkdir -p $ROOTMNT
@@ -362,6 +375,40 @@ function ssh_dut {
     esac
 }
 
+function dofsck {
+    set +e
+
+    if [ -z "$1" ]; then
+        DEV="$DEFDEV"
+    else
+        DEV="$1"
+    fi
+
+    if [ -f "$DEV" ]; then
+        #If dev is file, get loop devices for image
+        loopimg "$DEV"
+    else
+        # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
+        if [[ "${DEV: -1}" =~ [0-9] ]]; then
+                MIDP="p"
+            else
+                MIDP=""
+        fi
+
+        PART1="${DEV}${MIDP}1"
+        PART2="${DEV}${MIDP}2"
+        PART3="${DEV}${MIDP}3"
+    fi
+
+    sudo fsck.msdos "$PART1"
+    sudo fsck.ext4 -f "$PART2"
+    sudo fsck.ext4 -f "$PART3"
+
+    if [ -f "$DEV" ]; then
+        uloopimg
+    fi
+}
+
 # Some translations
 case "$1" in
     mount|sdcard)
@@ -372,6 +419,9 @@ case "$1" in
     ;;
     domu)
         CMD="domufs"
+    ;;
+    fsck)
+        CMD="dofsck"
     ;;
     *)
         CMD="$1"

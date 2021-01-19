@@ -124,6 +124,10 @@ function sanitycheck {
     local TPATH=`realpath -e $1 2>/dev/null`
 
     case $TPATH in
+    /bin*|/boot*|/dev*|/etc*|/lib*|/opt*|/proc*|/run*|/sbin*|/snap*|/sys*|/usr*|/var*|/home)
+        echo "Will not touch host special directories" >&2
+        exit 6
+        ;;
     /)
         echo "Will not touch host root directory" >&2
         exit 2

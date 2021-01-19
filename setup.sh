@@ -409,26 +409,54 @@ function dofsck {
     fi
 }
 
-# Some translations
-case "$1" in
-    mount|sdcard)
-        CMD="domount"
-    ;;
-    umount|usdcard)
-        CMD="doumount"
-    ;;
-    domu)
-        CMD="domufs"
-    ;;
-    fsck)
-        CMD="dofsck"
-    ;;
-    *)
-        CMD="$1"
-    ;;
-esac
+function showhelp {
+    echo "Usage $0 <command> [parameters]"
+    echo ""
+    echo "Commands:"
+    echo "    defconfig                         Create new .setup_sh_config from defaults"
+    echo "    clone                             Clone the required subrepositories"
+    echo "    mount [device|image_file]         Mount given device or image file"
+    echo "    umount [mark]                     Unmount and optionally mark partitions"
+    echo "    bootfs [path]                     Copy boot fs files"
+    echo "    rootfs [path]                     Copy root fs files (dom0)"
+    echo "    domufs [path]                     Copy domu fs files"
+    echo "    fsck [device|image_file]          Check filesystems in device or image"
+    echo "    uboot_src                         Generate U-boot script"
+    echo "    netboot [path]                    Copy boot files needed for network boot"
+    echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
+    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes"
+    echo "    ssh_dut                           Open ssh session with target device"
+    echo ""
+    exit 0
+}
 
-shift
+# Some translations
+if [ -z "$1" ]; then
+    CMD="showhelp"
+else
+    case "$1" in
+        mount|sdcard)
+            CMD="domount"
+        ;;
+        umount|usdcard)
+            CMD="doumount"
+        ;;
+        domu)
+            CMD="domufs"
+        ;;
+        fsck)
+            CMD="dofsck"
+        ;;
+        ""|help|-h|--help)
+            CMD="showhelp"
+        ;;
+        *)
+            CMD="$1"
+        ;;
+    esac
+
+    shift
+fi
 
 #Check if function exists and run it if it does
 fn_exists $CMD

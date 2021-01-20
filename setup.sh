@@ -19,6 +19,7 @@ fi
 # for example .setup_sh_config could be from older revision
 . default_setup_sh_config
 . .setup_sh_config
+set_ipconfraspi
 
 CCACHE=
 

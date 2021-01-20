@@ -19,6 +19,24 @@ function fn_exists {
     fi
 }
 
+function set_ipconfraspi {
+# IPCONFRASPI defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
+case $BUILDOPT in
+2)
+    # dhcp configuration
+    IPCONFRASPI="::::${RASPHN}-dom0:eth0:dhcp"
+;;
+3)
+    # static IP configuration
+    IPCONFRASPI="${RASPIP}::${RASPGW}:${RASPNM}:${RASPHN}-dom0:eth0:off:${RASPDNS}"
+;;
+*)
+    # IP configuration not used at boot time (SD/USB)
+    IPCONFRASPI="invalid"
+;;
+esac
+}
+
 function check_param_exist {
     if [ "$1x" == "x" ]; then
         echo "Parameter not defined"

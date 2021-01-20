@@ -165,6 +165,8 @@ function clone {
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 
+    configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
+
     cp buildroot_config buildroot/.config
 
     # Needed for buildroot to be able to checkout xen branch

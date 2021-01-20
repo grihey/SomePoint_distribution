@@ -55,20 +55,41 @@ function is_mounted {
     fi
 }
 
-function umountimg {
-    set +e
+function uloopimg {
     if [ -f .mountimg ]; then
         IMG=`cat .mountimg`
-        sudo umount $BOOTMNT
-        sudo umount $ROOTMNT
-        sudo umount $DOMUMNT
         sudo sync
         sudo kpartx -d $IMG
         rm -f .mountimg
     else
+        echo "No image currently looped"
+        exit 4
+    fi
+}
+
+function umountimg {
+    set +e
+    if [ -f .mountimg ]; then
+        sudo umount $BOOTMNT
+        sudo umount $ROOTMNT
+        sudo umount $DOMUMNT
+        uloopimg
+    else
         echo "No image currently mounted"
         exit 4
     fi
+}
+
+function loopimg {
+    local KPARTXOUT=`sudo kpartx -l "$1" 2> /dev/null`
+
+    PART1=/dev/mapper/`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    PART2=/dev/mapper/`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    PART3=/dev/mapper/`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
+
+    sudo kpartx -a "$1"
+
+    echo "$1" > .mountimg
 }
 
 function mountimg {
@@ -88,19 +109,11 @@ function mountimg {
     mkdir -p $ROOTMNT
     mkdir -p $DOMUMNT
 
-    KPARTXOUT=`sudo kpartx -l $1 2> /dev/null`
+    loopimg "$1"
 
-    LOOP1=`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    LOOP2=`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    LOOP3=`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
-
-    sudo kpartx -a $1
-
-    sudo mount /dev/mapper/$LOOP1 $BOOTMNT
-    sudo mount /dev/mapper/$LOOP2 $ROOTMNT
-    sudo mount /dev/mapper/$LOOP3 $DOMUMNT
-
-    echo $1 > .mountimg
+    sudo mount $PART1 $BOOTMNT
+    sudo mount $PART2 $ROOTMNT
+    sudo mount $PART3 $DOMUMNT
 }
 
 function domount {
@@ -116,12 +129,12 @@ function domount {
         #If dev is file, mount image instead
         mountimg $DEV
     else
-	# Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
-    	if [[ "${DEV: -1}" =~ [0-9] ]]; then
-		MIDP="p"
-	    else
-        	MIDP=""
-	fi
+        # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
+        if [[ "${DEV: -1}" =~ [0-9] ]]; then
+                MIDP="p"
+            else
+                MIDP=""
+        fi
 
         mkdir -p $BOOTMNT
         mkdir -p $ROOTMNT
@@ -362,23 +375,88 @@ function ssh_dut {
     esac
 }
 
-# Some translations
-case "$1" in
-    mount|sdcard)
-        CMD="domount"
-    ;;
-    umount|usdcard)
-        CMD="doumount"
-    ;;
-    domu)
-        CMD="domufs"
-    ;;
-    *)
-        CMD="$1"
-    ;;
-esac
+function dofsck {
+    set +e
 
-shift
+    if [ -z "$1" ]; then
+        DEV="$DEFDEV"
+    else
+        DEV="$1"
+    fi
+
+    if [ -f "$DEV" ]; then
+        #If dev is file, get loop devices for image
+        loopimg "$DEV"
+    else
+        # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
+        if [[ "${DEV: -1}" =~ [0-9] ]]; then
+                MIDP="p"
+            else
+                MIDP=""
+        fi
+
+        PART1="${DEV}${MIDP}1"
+        PART2="${DEV}${MIDP}2"
+        PART3="${DEV}${MIDP}3"
+    fi
+
+    sudo fsck.msdos "$PART1"
+    sudo fsck.ext4 -f "$PART2"
+    sudo fsck.ext4 -f "$PART3"
+
+    if [ -f "$DEV" ]; then
+        uloopimg
+    fi
+}
+
+function showhelp {
+    echo "Usage $0 <command> [parameters]"
+    echo ""
+    echo "Commands:"
+    echo "    defconfig                         Create new .setup_sh_config from defaults"
+    echo "    clone                             Clone the required subrepositories"
+    echo "    mount [device|image_file]         Mount given device or image file"
+    echo "    umount [mark]                     Unmount and optionally mark partitions"
+    echo "    bootfs [path]                     Copy boot fs files"
+    echo "    rootfs [path]                     Copy root fs files (dom0)"
+    echo "    domufs [path]                     Copy domu fs files"
+    echo "    fsck [device|image_file]          Check filesystems in device or image"
+    echo "    uboot_src                         Generate U-boot script"
+    echo "    netboot [path]                    Copy boot files needed for network boot"
+    echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
+    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes"
+    echo "    ssh_dut                           Open ssh session with target device"
+    echo ""
+    exit 0
+}
+
+# Some translations
+if [ -z "$1" ]; then
+    CMD="showhelp"
+else
+    case "$1" in
+        mount|sdcard)
+            CMD="domount"
+        ;;
+        umount|usdcard)
+            CMD="doumount"
+        ;;
+        domu)
+            CMD="domufs"
+        ;;
+        fsck)
+            CMD="dofsck"
+        ;;
+        ""|help|-h|--help)
+            CMD="showhelp"
+        ;;
+        *)
+            CMD="$1"
+        ;;
+    esac
+
+    shift
+fi
 
 #Check if function exists and run it if it does
 fn_exists $CMD

@@ -30,6 +30,11 @@ if [ -x "$(command -v ccache)" ]; then
     #ccache -s
 fi
 
+function set_myids {
+    MYUID=`id -u`
+    MYGID=`id -g`
+}
+
 function is_mounted {
     #Save flags
     local FLAGS=$-
@@ -58,8 +63,8 @@ function is_mounted {
 function uloopimg {
     if [ -f .mountimg ]; then
         IMG=`cat .mountimg`
-        sudo sync
-        sudo kpartx -d $IMG
+        sync
+        sudo kpartx -d "$IMG"
         rm -f .mountimg
     else
         echo "No image currently looped"
@@ -70,9 +75,11 @@ function uloopimg {
 function umountimg {
     set +e
     if [ -f .mountimg ]; then
-        sudo umount $BOOTMNT
-        sudo umount $ROOTMNT
-        sudo umount $DOMUMNT
+        sudo umount "$BOOTMNT"
+        sudo umount "$ROOTMNT"
+        sudo umount "$DOMUMNT"
+        sudo umount "${ROOTMNT}-su"
+        sudo umount "${DOMUMNT}-su"
         uloopimg
     else
         echo "No image currently mounted"
@@ -92,6 +99,19 @@ function loopimg {
     echo "$1" > .mountimg
 }
 
+function create_mount_points {
+    mkdir -p "$BOOTMNT"
+    mkdir -p "$ROOTMNT"
+    mkdir -p "${ROOTMNT}-su"
+    mkdir -p "$DOMUMNT"
+    mkdir -p "${DOMUMNT}-su"
+}
+
+function bind_mounts {
+    sudo bindfs --map=0/$MYUID:@0/@$MYGID "${ROOTMNT}-su" "$ROOTMNT"
+    sudo bindfs --map=0/$MYUID:@0/@$MYGID "${DOMUMNT}-su" "$DOMUMNT"
+}
+
 function mountimg {
     set +e
 
@@ -105,15 +125,16 @@ function mountimg {
         exit 5
     fi
 
-    mkdir -p $BOOTMNT
-    mkdir -p $ROOTMNT
-    mkdir -p $DOMUMNT
-
     loopimg "$1"
 
-    sudo mount $PART1 $BOOTMNT
-    sudo mount $PART2 $ROOTMNT
-    sudo mount $PART3 $DOMUMNT
+    create_mount_points
+
+    set_myids
+
+    sudo mount -o uid=$MYUID,gid=$MYGID $PART1 "$BOOTMNT"
+    sudo mount $PART2 "${ROOTMNT}-su"
+    sudo mount $PART3 "${DOMUMNT}-su"
+    bind_mounts
 }
 
 function domount {
@@ -136,12 +157,14 @@ function domount {
                 MIDP=""
         fi
 
-        mkdir -p $BOOTMNT
-        mkdir -p $ROOTMNT
-        mkdir -p $DOMUMNT
-        sudo mount ${DEV}${MIDP}1 $BOOTMNT
-        sudo mount ${DEV}${MIDP}2 $ROOTMNT
-        sudo mount ${DEV}${MIDP}3 $DOMUMNT
+        create_mount_points
+
+        set_myids
+
+        sudo mount -o uid=$MYUID,gid=$MYGID "${DEV}${MIDP}1" "$BOOTMNT"
+        sudo mount "${DEV}${MIDP}2" "${ROOTMNT}-su"
+        sudo mount "${DEV}${MIDP}3" "${DOMUMNT}-su"
+        bind_mounts
     fi
 }
 
@@ -160,13 +183,15 @@ function doumount {
     fi
 
     if [ "$1" == "mark" ]; then
-        echo 'THIS_IS_BOOTFS' | sudo tee $BOOTMNT/THIS_IS_BOOTFS > /dev/null
-        echo 'THIS_IS_ROOTFS' | sudo tee $ROOTMNT/THIS_IS_ROOTFS > /dev/null
-        echo 'THIS_IS_DOMUFS' | sudo tee $DOMUMNT/THIS_IS_DOMUFS > /dev/null
+        echo 'THIS_IS_BOOTFS' > "$BOOTMNT/THIS_IS_BOOTFS"
+        echo 'THIS_IS_ROOTFS' > "$ROOTMNT/THIS_IS_ROOTFS"
+        echo 'THIS_IS_DOMUFS' > "$DOMUMNT/THIS_IS_DOMUFS"
     fi
-    sudo umount $BOOTMNT
-    sudo umount $ROOTMNT
-    sudo umount $DOMUMNT
+    sudo umount "$BOOTMNT"
+    sudo umount "$ROOTMNT"
+    sudo umount "$DOMUMNT"
+    sudo umount "${ROOTMNT}-su"
+    sudo umount "${DOMUMNT}-su"
     sync
 }
 
@@ -226,18 +251,18 @@ function bootfs {
     fi
 
     pushd $BOOTFS
-    sudo rm -fr *
+    rm -fr *
     popd
 
-    sudo cp configs/config.txt $BOOTFS/
-    sudo cp u-boot.bin $BOOTFS/
-    sudo cp $KERNEL_IMAGE $BOOTFS/vmlinuz
-    sudo cp images/xen/boot*.scr $BOOTFS
-    sudo cp $IMAGES/xen $BOOTFS/
-    sudo cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
-    sudo cp -r $IMAGES/rpi-firmware/overlays $BOOTFS/
-    sudo cp usbfix/fixup4.dat $BOOTFS/
-    sudo cp usbfix/start4.elf $BOOTFS/
+    cp configs/config.txt $BOOTFS/
+    cp u-boot.bin $BOOTFS/
+    cp $KERNEL_IMAGE $BOOTFS/vmlinuz
+    cp images/xen/boot*.scr $BOOTFS
+    cp $IMAGES/xen $BOOTFS/
+    cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
+    cp -r $IMAGES/rpi-firmware/overlays $BOOTFS/
+    cp usbfix/fixup4.dat $BOOTFS/
+    cp usbfix/start4.elf $BOOTFS/
 }
 
 function netboot {
@@ -249,29 +274,29 @@ function netboot {
     fi
 
     pushd $BOOTFS
-    sudo rm -fr *
+    rm -fr *
     popd
 
-    sudo cp configs/config.txt $BOOTFS/
-    sudo cp u-boot.bin $BOOTFS/
-    sudo cp usbfix/fixup4.dat $BOOTFS/
-    sudo cp usbfix/start4.elf $BOOTFS/
-    sudo cp images/xen/boot.scr $BOOTFS/
-    sudo cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
+    cp configs/config.txt $BOOTFS/
+    cp u-boot.bin $BOOTFS/
+    cp usbfix/fixup4.dat $BOOTFS/
+    cp usbfix/start4.elf $BOOTFS/
+    cp images/xen/boot.scr $BOOTFS/
+    cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
 }
 
 function rootfs {
     if [ -z "$1" ]; then
-        ROOTFS=$ROOTMNT
-        is_mounted $ROOTMNT
+        ROOTFS="$ROOTMNT"
+        is_mounted "$ROOTMNT"
     else
-        ROOTFS=`sanitycheck $1`
+        ROOTFS=`sanitycheck "$1"`
     fi
 
-    pushd $ROOTFS
+    pushd "$ROOTFS"
     echo "Updating $ROOTFS/"
-    sudo rm -fr *
-    sudo tar xvf $IMAGES/rootfs.tar > /dev/null
+    rm -fr *
+    fakeroot tar xf "$IMAGES/rootfs.tar" > /dev/null
     popd
 
     if ! [ -a "images/rasp_id_rsa" ]; then
@@ -279,70 +304,83 @@ function rootfs {
         ssh-keygen -t rsa -q -f "images/rasp_id_rsa" -N ""
     fi
 
-    sudo mkdir -p $ROOTFS/root/.ssh
-    cat images/rasp_id_rsa.pub | sudo tee -a $ROOTFS/root/.ssh/authorized_keys > /dev/null
-    sudo chmod 600 $ROOTFS/root/.ssh/authorized_keys
-    sudo chmod 600 $ROOTFS/root/.ssh
+    mkdir -p "$ROOTFS/root/.ssh"
+    cat images/rasp_id_rsa.pub >> "$ROOTFS/root/.ssh/authorized_keys"
+    chmod 700 "$ROOTFS/root/.ssh/authorized_keys"
+    chmod 700 "$ROOTFS/root/.ssh"
 
-    dom0_interfaces | sudo tee $ROOTFS/etc/network/interfaces > /dev/null
-    sudo cp configs/wpa_supplicant.conf $ROOTFS/etc/wpa_supplicant.conf
+    dom0_interfaces > "$ROOTFS/etc/network/interfaces"
+    cp configs/wpa_supplicant.conf "$ROOTFS/etc/wpa_supplicant.conf"
 
-    domu_config | sudo tee $ROOTFS/root/domu.cfg > /dev/null
-    case $BUILDOPT in
+    domu_config > "$ROOTFS/root/domu.cfg"
+    case "$BUILDOPT" in
     2|3)
-        net_rc_add dom0 | sudo tee $ROOTFS/etc/init.d/S41netadditions > /dev/null
-        sudo chmod 755 $ROOTFS/etc/init.d/S41netadditions
-        echo 'vif.default.script="vif-nat"' | sudo tee -a $ROOTFS/etc/xen/xl.conf > /dev/null
+        net_rc_add dom0 > "$ROOTFS/etc/init.d/S41netadditions"
+        chmod 755 "$ROOTFS/etc/init.d/S41netadditions"
+        echo 'vif.default.script="vif-nat"' >> "$ROOTFS/etc/xen/xl.conf"
     ;;
     *)
     ;;
     esac
 
-    sudo cp $KERNEL_IMAGE $ROOTFS/root/Image
+    cp "$KERNEL_IMAGE" "$ROOTFS/root/Image"
 
-    sudo cp buildroot/package/busybox/S10mdev $ROOTFS/etc/init.d/S10mdev
-    sudo chmod 755 $ROOTFS/etc/init.d/S10mdev
-    sudo cp buildroot/package/busybox/mdev.conf $ROOTFS/etc/mdev.conf
+    cp buildroot/package/busybox/S10mdev "$ROOTFS/etc/init.d/S10mdev"
+    chmod 755 "$ROOTFS/etc/init.d/S10mdev"
+    cp buildroot/package/busybox/mdev.conf "$ROOTFS/etc/mdev.conf"
 
-    sudo cp $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt $ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
-    sudo cp configs/inittab.dom0 $ROOTFS/etc/inittab
-    echo '. .bashrc' | sudo tee $ROOTFS/root/.profile > /dev/null
-    echo 'PS1="\u@\h:\w# "' | sudo tee $ROOTFS/root/.bashrc > /dev/null
-    echo "${RASPHN}-dom0" | sudo tee $ROOTFS/etc/hostname > /dev/null
+    cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+    cp configs/inittab.dom0 "$ROOTFS/etc/inittab"
+    echo '. .bashrc' > "$ROOTFS/root/.profile"
+    echo 'PS1="\u@\h:\w# "' > "$ROOTFS/root/.bashrc"
+    echo "${RASPHN}-dom0" > "$ROOTFS/etc/hostname"
 }
 
 function domufs {
     if [ -z "$1" ]; then
-        DOMUFS=$DOMUMNT
-        is_mounted $DOMUMNT
+        DOMUFS="$DOMUMNT"
+        is_mounted "$DOMUMNT"
     else
-        DOMUFS=`sanitycheck $1`
+        DOMUFS=`sanitycheck "$1"`
     fi
 
-    rootfs $DOMUFS
+    rootfs "$DOMUFS"
 
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     2|3)
-        net_rc_add domu | sudo tee $DOMUFS/etc/init.d/S41netadditions > /dev/null
-        sudo chmod 755 $DOMUFS/etc/init.d/S41netadditions
+        net_rc_add domu > "$DOMUFS/etc/init.d/S41netadditions"
+        chmod 755 "$DOMUFS/etc/init.d/S41netadditions"
     ;;
     *)
     ;;
     esac
 
-    domu_interfaces | sudo tee $DOMUFS/etc/network/interfaces > /dev/null
-    sudo cp configs/inittab.domu $DOMUFS/etc/inittab
-    echo "${RASPHN}-domu" | sudo tee $DOMUFS/etc/hostname > /dev/null
+    domu_interfaces > "$DOMUFS/etc/network/interfaces"
+    cp configs/inittab.domu "$DOMUFS/etc/inittab"
+    echo "${RASPHN}-domu" > "$DOMUFS/etc/hostname"
 }
 
 function nfsupdate {
     case $BUILDOPT in
     2|3)
-        bootfs "$TFTPPATH"
-        rootfs "$NFSDOM0"
-        echo "DOM0_NFSROOT" | sudo tee $NFSDOM0/DOM0_NFSROOT > /dev/null
-        domu "$NFSDOMU"
-        echo "DOMU_NFSROOT" | sudo tee $NFSDOMU/DOMU_NFSROOT > /dev/null
+        set_myids
+        create_mount_points
+        sudo bindfs --map=0/$MYUID:@nogroup/@$MYGID "$TFTPPATH" "$BOOTMNT"
+        sudo bindfs --map=0/$MYUID:@0/@$MYGID "$NFSDOM0" "$ROOTMNT"
+        sudo bindfs --map=0/$MYUID:@0/@$MYGID "$NFSDOMU" "$DOMUMNT"
+
+        bootfs
+        chmod -R 744 "$BOOTMNT"
+        chmod 755 "$BOOTMNT"
+        chmod 755 "$BOOTMNT/overlays"
+        rootfs
+        echo "DOM0_NFSROOT" > "${ROOTMNT}/DOM0_NFSROOT"
+        domufs
+        echo "DOMU_NFSROOT" > "${DOMUMNT}/DOMU_NFSROOT"
+
+        sudo umount "$BOOTMNT"
+        sudo umount "$ROOTMNT"
+        sudo umount "$DOMUMNT"
     ;;
     *)
         echo "BUILDOPT is not set for network boot"

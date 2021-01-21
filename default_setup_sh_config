@@ -7,6 +7,9 @@ BUILDOPT=1
 # Default device for mount operations
 DEFDEV=/dev/sda
 
+# Device tree used
+DEVTREE=bcm2711-rpi-4-b.dtb
+
 # Directories where partitions are mounted
 MNT_DIR=`pwd`/mnt
 BOOTMNT=$MNT_DIR/bootfs

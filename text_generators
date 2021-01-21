@@ -130,7 +130,7 @@ function ubootsource {
     echo "${LOAD} 0x\${xen_addr} xen"
     echo "${LOAD} 0x\${lin_addr} vmlinuz"
     echo "setenv lin_size \$filesize"
-    echo "${LOAD} 0x\${fdt_addr} bcm2711-rpi-4-b.dtb"
+    echo "${LOAD} 0x\${fdt_addr} ${DEVTREE}"
     echo "fdt addr \${fdt_addr}"
     echo "fdt resize 1024"
     echo "fdt set /chosen \\#address-cells <1>"

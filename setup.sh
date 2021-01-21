@@ -220,17 +220,11 @@ function uboot_src {
     cp $IMAGES/xen images/xen/
     cp $KERNEL_IMAGE images/xen/vmlinuz
 
-    cp $IMAGES/bcm2711-rpi-4-b.dtb images/xen
+    cp $IMAGES/$DEVTREE images/xen
     case $BUILDOPT in
-    0)
-        pushd images/xen
-        ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config.sd -t "fatload mmc 0:1" -d .
-        popd
-    ;;
-    1)
-        pushd images/xen
-        ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config.usb -t "fatload usb 0:1" -d .
-        popd
+    0|1)
+        ubootsource > images/xen/boot.source
+        mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
     ;;
     2|3)
         ubootstub > images/xen/boot.source
@@ -260,32 +254,47 @@ function bootfs {
     cp configs/config.txt $BOOTFS/
     cp u-boot.bin $BOOTFS/
     cp $KERNEL_IMAGE $BOOTFS/vmlinuz
-    cp images/xen/boot*.scr $BOOTFS
+    case $BUILDOPT in
+    0|1)
+        cp images/xen/boot.scr $BOOTFS
+    ;;
+    2|3)
+        cp images/xen/boot2.scr $BOOTFS
+    ;;
+    esac
     cp $IMAGES/xen $BOOTFS/
-    cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
+    cp $IMAGES/$DEVTREE $BOOTFS/
     cp -r $IMAGES/rpi-firmware/overlays $BOOTFS/
     cp usbfix/fixup4.dat $BOOTFS/
     cp usbfix/start4.elf $BOOTFS/
 }
 
 function netboot {
-    if [ -z "$1" ]; then
-        BOOTFS=$BOOTMNT
-        is_mounted $BOOTMNT
-    else
-        BOOTFS=`sanitycheck $1`
-    fi
+    case $BUILDOPT in
+    2|3)
+        if [ -z "$1" ]; then
+            BOOTFS=$BOOTMNT
+            is_mounted $BOOTMNT
+        else
+            BOOTFS=`sanitycheck $1`
+        fi
 
-    pushd $BOOTFS
-    rm -fr *
-    popd
+        pushd $BOOTFS
+        rm -fr *
+        popd
 
-    cp configs/config.txt $BOOTFS/
-    cp u-boot.bin $BOOTFS/
-    cp usbfix/fixup4.dat $BOOTFS/
-    cp usbfix/start4.elf $BOOTFS/
-    cp images/xen/boot.scr $BOOTFS/
-    cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
+        cp configs/config.txt $BOOTFS/
+        cp u-boot.bin $BOOTFS/
+        cp usbfix/fixup4.dat $BOOTFS/
+        cp usbfix/start4.elf $BOOTFS/
+        cp images/xen/boot.scr $BOOTFS/
+        cp $IMAGES/$DEVTREE $BOOTFS/
+    ;;
+    *)
+        echo "Not configured for network boot"
+        exit 1
+    ;;
+    esac
 }
 
 function rootfs {

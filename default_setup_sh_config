@@ -7,6 +7,9 @@ BUILDOPT=1
 # Default device for mount operations
 DEFDEV=/dev/sda
 
+# Device tree used
+DEVTREE=bcm2711-rpi-4-b.dtb
+
 # Directories where partitions are mounted
 MNT_DIR=`pwd`/mnt
 BOOTMNT=$MNT_DIR/bootfs
@@ -33,18 +36,3 @@ NFSSERVER=$TFTPSERVER
 NFSDOM0=/srv/nfsdom0
 NFSDOMU=/srv/nfsdomu
 
-# IPCONFRASPI defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
-case $BUILDOPT in
-2)
-    # dhcp configuration
-    IPCONFRASPI="::::${RASPHN}-dom0:eth0:dhcp"
-;;
-3)
-    # static IP configuration
-    IPCONFRASPI="${RASPIP}::${RASPGW}:${RASPNM}:${RASPHN}-dom0:eth0:off:${RASPDNS}"
-;;
-*)
-    # IP configuration not used at boot time (SD/USB)
-    IPCONFRASPI="invalid"
-;;
-esac

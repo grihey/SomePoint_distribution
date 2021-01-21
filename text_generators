@@ -2,7 +2,7 @@
 # Included into setup.sh
 
 function domu_config {
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     0)
         cat configs/domu.cfg.sd
     ;;
@@ -30,7 +30,7 @@ function domu_config {
 }
 
 function dom0_interfaces {
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     2)
         echo "auto lo"
         echo "iface lo inet loopback"
@@ -57,7 +57,7 @@ function dom0_interfaces {
 }
 
 function domu_interfaces {
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     2|3)
         echo "auto lo"
         echo "iface lo inet loopback"
@@ -76,7 +76,7 @@ function domu_interfaces {
 }
 
 function ubootstub {
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     0)
         echo "fatload mmc 0:1 0x100000 boot2.scr"
         echo "source 0x100000"
@@ -105,7 +105,7 @@ function ubootstub {
 }
 
 function ubootsource {
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     0)
         local LOAD="fatload mmc 0:1"
         local BOOTARGS="dwc_otg.lpm_enable=0 console=hvc0 earlycon=xen earlyprintk=xen root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait fixrtc splash"
@@ -130,7 +130,7 @@ function ubootsource {
     echo "${LOAD} 0x\${xen_addr} xen"
     echo "${LOAD} 0x\${lin_addr} vmlinuz"
     echo "setenv lin_size \$filesize"
-    echo "${LOAD} 0x\${fdt_addr} bcm2711-rpi-4-b.dtb"
+    echo "${LOAD} 0x\${fdt_addr} ${DEVTREE}"
     echo "fdt addr \${fdt_addr}"
     echo "fdt resize 1024"
     echo "fdt set /chosen \\#address-cells <1>"
@@ -148,11 +148,11 @@ function net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     0|1)
     ;;
     2|3)
-        if [ "x$1" == "xdom0" ]; then
+        if [ "$1" == "dom0" ]; then
             echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
             echo "iptables -t nat -A PREROUTING -p tcp --dport 222 -j DNAT --to-destination 10.123.123.2:22"
             echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"

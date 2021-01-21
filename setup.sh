@@ -19,6 +19,7 @@ fi
 # for example .setup_sh_config could be from older revision
 . default_setup_sh_config
 . .setup_sh_config
+set_ipconfraspi
 
 CCACHE=
 
@@ -108,8 +109,8 @@ function create_mount_points {
 }
 
 function bind_mounts {
-    sudo bindfs --map=0/$MYUID:@0/@$MYGID "${ROOTMNT}-su" "$ROOTMNT"
-    sudo bindfs --map=0/$MYUID:@0/@$MYGID "${DOMUMNT}-su" "$DOMUMNT"
+    sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${ROOTMNT}-su" "$ROOTMNT"
+    sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${DOMUMNT}-su" "$DOMUMNT"
 }
 
 function mountimg {
@@ -131,9 +132,9 @@ function mountimg {
 
     set_myids
 
-    sudo mount -o uid=$MYUID,gid=$MYGID $PART1 "$BOOTMNT"
-    sudo mount $PART2 "${ROOTMNT}-su"
-    sudo mount $PART3 "${DOMUMNT}-su"
+    sudo mount -o "uid=${MYUID},gid=$MYGID" "$PART1" "$BOOTMNT"
+    sudo mount "$PART2" "${ROOTMNT}-su"
+    sudo mount "$PART3" "${DOMUMNT}-su"
     bind_mounts
 }
 
@@ -141,14 +142,14 @@ function domount {
     set +e
 
     if [ -z "$1" ]; then
-        DEV=$DEFDEV
+        DEV="$DEFDEV"
     else
-        DEV=$1
+        DEV="$1"
     fi
 
-    if [ -f $DEV ]; then
+    if [ -f "$DEV" ]; then
         #If dev is file, mount image instead
-        mountimg $DEV
+        mountimg "$DEV"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
         if [[ "${DEV: -1}" =~ [0-9] ]]; then
@@ -161,7 +162,7 @@ function domount {
 
         set_myids
 
-        sudo mount -o uid=$MYUID,gid=$MYGID "${DEV}${MIDP}1" "$BOOTMNT"
+        sudo mount -o "uid=${MYUID},gid=$MYGID" "${DEV}${MIDP}1" "$BOOTMNT"
         sudo mount "${DEV}${MIDP}2" "${ROOTMNT}-su"
         sudo mount "${DEV}${MIDP}3" "${DOMUMNT}-su"
         bind_mounts
@@ -177,15 +178,15 @@ function doumount {
     fi
 
     local MOUNTED=`mount | grep "$BOOTMNT"`
-    if [ "x$MOUNTED" == "x" ]; then
+    if [ -z "$MOUNTED" ]; then
         echo "Not mounted"
         exit 2
     fi
 
     if [ "$1" == "mark" ]; then
-        echo 'THIS_IS_BOOTFS' > "$BOOTMNT/THIS_IS_BOOTFS"
-        echo 'THIS_IS_ROOTFS' > "$ROOTMNT/THIS_IS_ROOTFS"
-        echo 'THIS_IS_DOMUFS' > "$DOMUMNT/THIS_IS_DOMUFS"
+        echo 'THIS_IS_BOOTFS' > "${BOOTMNT}/THIS_IS_BOOTFS"
+        echo 'THIS_IS_ROOTFS' > "${ROOTMNT}/THIS_IS_ROOTFS"
+        echo 'THIS_IS_DOMUFS' > "${DOMUMNT}/THIS_IS_DOMUFS"
     fi
     sudo umount "$BOOTMNT"
     sudo umount "$ROOTMNT"
@@ -216,20 +217,14 @@ function clone {
 function uboot_src {
     mkdir -p images/xen
 
-    cp $IMAGES/xen images/xen/
-    cp $KERNEL_IMAGE images/xen/vmlinuz
+    cp "${IMAGES}/xen" images/xen/
+    cp "$KERNEL_IMAGE" images/xen/vmlinuz
 
-    cp $IMAGES/bcm2711-rpi-4-b.dtb images/xen
-    case $BUILDOPT in
-    0)
-        pushd images/xen
-        ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config.sd -t "fatload mmc 0:1" -d .
-        popd
-    ;;
-    1)
-        pushd images/xen
-        ../../imagebuilder/scripts/uboot-script-gen -c ../../configs/uboot_config.usb -t "fatload usb 0:1" -d .
-        popd
+    cp "${IMAGES}/$DEVTREE" images/xen
+    case "$BUILDOPT" in
+    0|1)
+        ubootsource > images/xen/boot.source
+        mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
     ;;
     2|3)
         ubootstub > images/xen/boot.source
@@ -246,45 +241,60 @@ function uboot_src {
 
 function bootfs {
     if [ -z "$1" ]; then
-        BOOTFS=$BOOTMNT
-        is_mounted $BOOTMNT
+        BOOTFS="$BOOTMNT"
+        is_mounted "$BOOTMNT"
     else
-        BOOTFS=`sanitycheck $1`
+        BOOTFS=`sanitycheck "$1"`
     fi
 
-    pushd $BOOTFS
+    pushd "$BOOTFS"
     rm -fr *
     popd
 
-    cp configs/config.txt $BOOTFS/
-    cp u-boot.bin $BOOTFS/
-    cp $KERNEL_IMAGE $BOOTFS/vmlinuz
-    cp images/xen/boot*.scr $BOOTFS
-    cp $IMAGES/xen $BOOTFS/
-    cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
-    cp -r $IMAGES/rpi-firmware/overlays $BOOTFS/
-    cp usbfix/fixup4.dat $BOOTFS/
-    cp usbfix/start4.elf $BOOTFS/
+    cp configs/config.txt "$BOOTFS"
+    cp u-boot.bin "$BOOTFS"
+    cp "$KERNEL_IMAGE" "${BOOTFS}/vmlinuz"
+    case "$BUILDOPT" in
+    0|1)
+        cp images/xen/boot.scr "$BOOTFS"
+    ;;
+    2|3)
+        cp images/xen/boot2.scr "$BOOTFS"
+    ;;
+    esac
+    cp "${IMAGES}/xen" "$BOOTFS"
+    cp "${IMAGES}/$DEVTREE" "$BOOTFS"
+    cp -r "${IMAGES}/rpi-firmware/overlays" "$BOOTFS"
+    cp usbfix/fixup4.dat "$BOOTFS"
+    cp usbfix/start4.elf "$BOOTFS"
 }
 
 function netboot {
-    if [ -z "$1" ]; then
-        BOOTFS=$BOOTMNT
-        is_mounted $BOOTMNT
-    else
-        BOOTFS=`sanitycheck $1`
-    fi
+    case "$BUILDOPT" in
+    2|3)
+        if [ -z "$1" ]; then
+            BOOTFS="$BOOTMNT"
+            is_mounted "$BOOTMNT"
+        else
+            BOOTFS=`sanitycheck "$1"`
+        fi
 
-    pushd $BOOTFS
-    rm -fr *
-    popd
+        pushd "$BOOTFS"
+        rm -fr *
+        popd
 
-    cp configs/config.txt $BOOTFS/
-    cp u-boot.bin $BOOTFS/
-    cp usbfix/fixup4.dat $BOOTFS/
-    cp usbfix/start4.elf $BOOTFS/
-    cp images/xen/boot.scr $BOOTFS/
-    cp $IMAGES/bcm2711-rpi-4-b.dtb $BOOTFS/
+        cp configs/config.txt "$BOOTFS"
+        cp u-boot.bin "$BOOTFS"
+        cp usbfix/fixup4.dat "$BOOTFS"
+        cp usbfix/start4.elf "$BOOTFS"
+        cp images/xen/boot.scr "$BOOTFS"
+        cp "${IMAGES}/$DEVTREE" "$BOOTFS"
+    ;;
+    *)
+        echo "Not configured for network boot"
+        exit 1
+    ;;
+    esac
 }
 
 function rootfs {
@@ -298,7 +308,7 @@ function rootfs {
     pushd "$ROOTFS"
     echo "Updating $ROOTFS/"
     rm -fr *
-    fakeroot tar xf "$IMAGES/rootfs.tar" > /dev/null
+    fakeroot tar xf "${IMAGES}/rootfs.tar" > /dev/null
     popd
 
     if ! [ -a "images/rasp_id_rsa" ]; then
@@ -306,36 +316,36 @@ function rootfs {
         ssh-keygen -t rsa -q -f "images/rasp_id_rsa" -N ""
     fi
 
-    mkdir -p "$ROOTFS/root/.ssh"
-    cat images/rasp_id_rsa.pub >> "$ROOTFS/root/.ssh/authorized_keys"
-    chmod 700 "$ROOTFS/root/.ssh/authorized_keys"
-    chmod 700 "$ROOTFS/root/.ssh"
+    mkdir -p "${ROOTFS}/root/.ssh"
+    cat images/rasp_id_rsa.pub >> "${ROOTFS}/root/.ssh/authorized_keys"
+    chmod 700 "${ROOTFS}/root/.ssh/authorized_keys"
+    chmod 700 "${ROOTFS}/root/.ssh"
 
-    dom0_interfaces > "$ROOTFS/etc/network/interfaces"
-    cp configs/wpa_supplicant.conf "$ROOTFS/etc/wpa_supplicant.conf"
+    dom0_interfaces > "${ROOTFS}/etc/network/interfaces"
+    cp configs/wpa_supplicant.conf "${ROOTFS}/etc/wpa_supplicant.conf"
 
-    domu_config > "$ROOTFS/root/domu.cfg"
+    domu_config > "${ROOTFS}/root/domu.cfg"
     case "$BUILDOPT" in
     2|3)
-        net_rc_add dom0 > "$ROOTFS/etc/init.d/S41netadditions"
-        chmod 755 "$ROOTFS/etc/init.d/S41netadditions"
-        echo 'vif.default.script="vif-nat"' >> "$ROOTFS/etc/xen/xl.conf"
+        net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
+        chmod 755 "${ROOTFS}/etc/init.d/S41netadditions"
+        echo 'vif.default.script="vif-nat"' >> "${ROOTFS}/etc/xen/xl.conf"
     ;;
     *)
     ;;
     esac
 
-    cp "$KERNEL_IMAGE" "$ROOTFS/root/Image"
+    cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
 
-    cp buildroot/package/busybox/S10mdev "$ROOTFS/etc/init.d/S10mdev"
-    chmod 755 "$ROOTFS/etc/init.d/S10mdev"
-    cp buildroot/package/busybox/mdev.conf "$ROOTFS/etc/mdev.conf"
+    cp buildroot/package/busybox/S10mdev "${ROOTFS}/etc/init.d/S10mdev"
+    chmod 755 "${ROOTFS}/etc/init.d/S10mdev"
+    cp buildroot/package/busybox/mdev.conf "${ROOTFS}/etc/mdev.conf"
 
-    cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
-    cp configs/inittab.dom0 "$ROOTFS/etc/inittab"
-    echo '. .bashrc' > "$ROOTFS/root/.profile"
-    echo 'PS1="\u@\h:\w# "' > "$ROOTFS/root/.bashrc"
-    echo "${RASPHN}-dom0" > "$ROOTFS/etc/hostname"
+    cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+    cp configs/inittab.dom0 "${ROOTFS}/etc/inittab"
+    echo '. .bashrc' > "${ROOTFS}/root/.profile"
+    echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
+    echo "${RASPHN}-dom0" > "${ROOTFS}/etc/hostname"
 }
 
 function domufs {
@@ -350,31 +360,31 @@ function domufs {
 
     case "$BUILDOPT" in
     2|3)
-        net_rc_add domu > "$DOMUFS/etc/init.d/S41netadditions"
-        chmod 755 "$DOMUFS/etc/init.d/S41netadditions"
+        net_rc_add domu > "${DOMUFS}/etc/init.d/S41netadditions"
+        chmod 755 "${DOMUFS}/etc/init.d/S41netadditions"
     ;;
     *)
     ;;
     esac
 
-    domu_interfaces > "$DOMUFS/etc/network/interfaces"
-    cp configs/inittab.domu "$DOMUFS/etc/inittab"
-    echo "${RASPHN}-domu" > "$DOMUFS/etc/hostname"
+    domu_interfaces > "${DOMUFS}/etc/network/interfaces"
+    cp configs/inittab.domu "${DOMUFS}/etc/inittab"
+    echo "${RASPHN}-domu" > "${DOMUFS}/etc/hostname"
 }
 
 function nfsupdate {
-    case $BUILDOPT in
+    case "$BUILDOPT" in
     2|3)
         set_myids
         create_mount_points
-        sudo bindfs --map=0/$MYUID:@nogroup/@$MYGID "$TFTPPATH" "$BOOTMNT"
-        sudo bindfs --map=0/$MYUID:@0/@$MYGID "$NFSDOM0" "$ROOTMNT"
-        sudo bindfs --map=0/$MYUID:@0/@$MYGID "$NFSDOMU" "$DOMUMNT"
+        sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TFTPPATH" "$BOOTMNT"
+        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOM0" "$ROOTMNT"
+        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOMU" "$DOMUMNT"
 
         bootfs
         chmod -R 744 "$BOOTMNT"
         chmod 755 "$BOOTMNT"
-        chmod 755 "$BOOTMNT/overlays"
+        chmod 755 "${BOOTMNT}/overlays"
         rootfs
         echo "DOM0_NFSROOT" > "${ROOTMNT}/DOM0_NFSROOT"
         domufs
@@ -408,10 +418,10 @@ function kernel_conf_change {
 function ssh_dut {
     case "$1" in
     domu)
-        ssh -i images/rasp_id_rsa -p 222 root@$RASPIP
+        ssh -i images/rasp_id_rsa -p 222 "root@$RASPIP"
     ;;
     *)
-        ssh -i images/rasp_id_rsa root@$RASPIP
+        ssh -i images/rasp_id_rsa "root@$RASPIP"
     esac
 }
 
@@ -499,5 +509,5 @@ else
 fi
 
 #Check if function exists and run it if it does
-fn_exists $CMD
-$CMD $*
+fn_exists "$CMD"
+"$CMD" $*

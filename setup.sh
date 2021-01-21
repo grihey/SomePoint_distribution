@@ -3,7 +3,7 @@
 set -e
 
 . helpers.sh
-. text_generators
+. text_generators.sh
 
 if [ "$1" == "defconfig" ]; then
     defconfig

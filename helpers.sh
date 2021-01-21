@@ -11,7 +11,7 @@ function defconfig {
 
 # returns 0 if function exists, 1 if not
 function fn_exists {
-    if [ "x$(LC_ALL=C type -t $1)" == "xfunction" ]; then
+    if [ "$(LC_ALL=C type -t $1)" == "function" ]; then
        return 0
     else
        echo "$1: Unknown function" >&2
@@ -21,7 +21,7 @@ function fn_exists {
 
 function set_ipconfraspi {
 # IPCONFRASPI defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
-case $BUILDOPT in
+case "$BUILDOPT" in
 2)
     # dhcp configuration
     IPCONFRASPI="::::${RASPHN}-dom0:eth0:dhcp"
@@ -139,9 +139,9 @@ function umount_image {
 function sanitycheck {
     set +e
 
-    local TPATH=`realpath -e $1 2>/dev/null`
+    local TPATH=`realpath -e "$1" 2>/dev/null`
 
-    case $TPATH in
+    case "$TPATH" in
     /bin*|/boot*|/dev*|/etc*|/lib*|/opt*|/proc*|/run*|/sbin*|/snap*|/sys*|/usr*|/var*|/home)
         echo "Will not touch host special directories" >&2
         exit 6
@@ -158,12 +158,12 @@ function sanitycheck {
         echo "Path does not exist" >&2
         exit 4
         ;;
-    $HOME)
+    "$HOME")
         echo "Will not touch user home directory" >&2
         exit 5
         ;;
     *)
-        echo $TPATH
+        echo "$TPATH"
         exit 0
         ;;
     esac

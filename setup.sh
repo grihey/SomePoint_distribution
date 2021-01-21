@@ -206,7 +206,7 @@ function clone {
 
     configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
 
-    cp buildroot_config buildroot/.config
+    cp configs/buildroot_config_xen buildroot/.config
 
     # Needed for buildroot to be able to checkout xen branch
     pushd linux

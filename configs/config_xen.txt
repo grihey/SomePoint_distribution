@@ -1,6 +1,8 @@
 [pi4]
 max_framebuffers=2
 enable_uart=1
+arm_freq=1500
+force_turbo=1
 
 [all]
 arm_64bit=1

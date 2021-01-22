@@ -204,9 +204,16 @@ function clone {
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 
-    configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
-
-    cp configs/buildroot_config_xen buildroot/.config
+    case "$HYPERVISOR" in
+    KVM)
+        configs/linux/defconfig_builder.sh -t raspi4_kvm_release -k linux
+        cp configs/buildroot_config_kvm buildroot/.config
+    ;;
+    *)
+        configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
+        cp configs/buildroot_config_xen buildroot/.config
+    ;;
+    esac
 
     # Needed for buildroot to be able to checkout xen branch
     pushd linux
@@ -251,7 +258,7 @@ function bootfs {
     rm -fr *
     popd
 
-    cp configs/config.txt "$BOOTFS"
+    config_txt > "${BOOTFS}/config.txt"
     cp u-boot.bin "$BOOTFS"
     cp "$KERNEL_IMAGE" "${BOOTFS}/vmlinuz"
     case "$BUILDOPT" in
@@ -262,7 +269,16 @@ function bootfs {
         cp images/xen/boot2.scr "$BOOTFS"
     ;;
     esac
-    cp "${IMAGES}/xen" "$BOOTFS"
+
+    case "$HYPERVISOR" in
+    KVM)
+         # Nothing to copy at this point
+    ;;
+    *)
+         cp "${IMAGES}/xen" "$BOOTFS"
+    ;;
+    esac
+
     cp "${IMAGES}/$DEVTREE" "$BOOTFS"
     cp -r "${IMAGES}/rpi-firmware/overlays" "$BOOTFS"
     cp usbfix/fixup4.dat "$BOOTFS"
@@ -283,7 +299,7 @@ function netboot {
         rm -fr *
         popd
 
-        cp configs/config.txt "$BOOTFS"
+        config_txt > "${BOOTFS}/config.txt"
         cp u-boot.bin "$BOOTFS"
         cp usbfix/fixup4.dat "$BOOTFS"
         cp usbfix/start4.elf "$BOOTFS"
@@ -342,7 +358,7 @@ function rootfs {
     cp buildroot/package/busybox/mdev.conf "${ROOTFS}/etc/mdev.conf"
 
     cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
-    cp configs/inittab.dom0 "${ROOTFS}/etc/inittab"
+    inittab dom0 > "${ROOTFS}/etc/inittab"
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
     echo "${RASPHN}-dom0" > "${ROOTFS}/etc/hostname"
@@ -368,7 +384,7 @@ function domufs {
     esac
 
     domu_interfaces > "${DOMUFS}/etc/network/interfaces"
-    cp configs/inittab.domu "${DOMUFS}/etc/inittab"
+    inittab domu > "${DOMUFS}/etc/inittab"
     echo "${RASPHN}-domu" > "${DOMUFS}/etc/hostname"
 }
 

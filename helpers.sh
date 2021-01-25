@@ -5,7 +5,7 @@
 # compile <args>
 
 function defconfig {
-    echo "Creating .setup_sh_config with defaults"
+    echo "Creating .setup_sh_config with defaults" >&2
     cp -f default_setup_sh_config .setup_sh_config
 }
 

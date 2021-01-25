@@ -104,19 +104,54 @@ function ubootstub {
     esac
 }
 
+function fdt_addr {
+    case "$FWFDT" in
+    1)
+        # No address set in this case
+    ;;
+    *)
+        echo "setenv fdt_addr ${1}"
+    ;;
+    esac
+}
+
+function fdt_load {
+    case "$FWFDT" in
+    1)
+        # No load in this case
+    ;;
+    *)
+        echo "${1} 0x\${fdt_addr} ${DEVTREE}"
+    ;;
+    esac
+}
+
 function ubootsource {
+    local BOOTARGS="dwc_otg.lpm_enable=0"
+
+    case "$HYPERVISOR" in
+    KVM)
+        local CONSOLE=" console=tty1"
+        local ADDITIONAL=""
+    ;;
+    *)
+        local CONSOLE=" console=hvc0 earlycon=xen earlyprintk=xen"
+        local ADDITIONAL=" elevator=deadline"
+    ;;
+    esac
+
     case "$BUILDOPT" in
     0)
         local LOAD="fatload mmc 0:1"
-        local BOOTARGS="dwc_otg.lpm_enable=0 console=hvc0 earlycon=xen earlyprintk=xen root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait fixrtc splash"
+        local ROOTPARM=" root=/dev/mmcblk0p2 rootfstype=ext4"
     ;;
     1)
         local LOAD="fatload usb 0:1"
-        local BOOTARGS="dwc_otg.lpm_enable=0 console=hvc0 earlycon=xen earlyprintk=xen root=/dev/sda2 rootfstype=ext4 elevator=deadline rootwait fixrtc splash"
+        local ROOTPARM=" root=/dev/sda2 rootfstype=ext4"
     ;;
     2|3)
         local LOAD="tftp"
-        local BOOTARGS="dwc_otg.lpm_enable=0 console=hvc0 earlycon=xen earlyprintk=xen root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,rw,vers=3 ip=${IPCONFRASPI} elevator=deadline rootwait fixrtc splash"
+        local ROOTPARM=" root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,rw,vers=3 ip=${IPCONFRASPI}"
     ;;
     *)
         echo "Invalid BUILDOPT setting" >&2
@@ -124,24 +159,39 @@ function ubootsource {
     ;;
     esac
 
-    echo "setenv xen_addr E00000"
-    echo "setenv lin_addr 1000000"
-    echo "setenv fdt_addr 2600000"
-    echo "${LOAD} 0x\${xen_addr} xen"
-    echo "${LOAD} 0x\${lin_addr} vmlinuz"
-    echo "setenv lin_size \$filesize"
-    echo "${LOAD} 0x\${fdt_addr} ${DEVTREE}"
+    BOOTARGS+="$CONSOLE"
+    BOOTARGS+="$ROOTPARM"
+    BOOTARGS+="$ADDITIONAL"
+    BOOTARGS+=" rootwait fixrtc splash"
+
+    fdt_addr 2600000
+    fdt_load "$LOAD"
     echo "fdt addr \${fdt_addr}"
-    echo "fdt resize 1024"
-    echo "fdt set /chosen \\#address-cells <1>"
-    echo "fdt set /chosen \\#size-cells <1>"
-    echo "fdt set /chosen xen,xen-bootargs \"console=dtuart dtuart=serial0 sync_console dom0_mem=4G dom0_max_vcpus=2 bootscrub=0 vwfi=native sched=null\""
-    echo "fdt mknod /chosen dom0"
-    echo "fdt set /chosen/dom0 compatible \"xen,linux-zimage\" \"xen,multiboot-module\""
-    echo "fdt set /chosen/dom0 reg <0x\${lin_addr} 0x\${lin_size}>"
-    echo "fdt set /chosen xen,dom0-bootargs \"${BOOTARGS}\""
-    echo "setenv fdt_high 0xffffffffffffffff"
-    echo "booti 0x\${xen_addr} - 0x\${fdt_addr}"
+    echo "setenv lin_addr 1000000"
+    echo "${LOAD} 0x\${lin_addr} vmlinuz"
+
+    case "$HYPERVISOR" in
+    KVM)
+        echo "setenv bootargs \"${BOOTARGS}\""
+        echo "setenv fdt_high 0xffffffffffffffff"
+        echo "booti 0x\${lin_addr} - 0x\${fdt_addr}"
+    ;;
+    *)
+        echo "setenv lin_size \$filesize"
+        echo "setenv xen_addr E00000"
+        echo "${LOAD} 0x\${xen_addr} xen"
+        echo "fdt resize 1024"
+        echo "fdt set /chosen \\#address-cells <1>"
+        echo "fdt set /chosen \\#size-cells <1>"
+        echo "fdt set /chosen xen,xen-bootargs \"console=dtuart dtuart=serial0 sync_console dom0_mem=4G dom0_max_vcpus=2 bootscrub=0 vwfi=native sched=null\""
+        echo "fdt mknod /chosen dom0"
+        echo "fdt set /chosen/dom0 compatible \"xen,linux-zimage\" \"xen,multiboot-module\""
+        echo "fdt set /chosen/dom0 reg <0x\${lin_addr} 0x\${lin_size}>"
+        echo "fdt set /chosen xen,dom0-bootargs \"${BOOTARGS}\""
+        echo "setenv fdt_high 0xffffffffffffffff"
+        echo "booti 0x\${xen_addr} - 0x\${fdt_addr}"
+    ;;
+    esac
 }
 
 function net_rc_add {
@@ -173,6 +223,39 @@ function net_rc_add {
     *)
         echo "Invalid BUILDOPT setting" >&2
         exit 1
+    ;;
+    esac
+}
+
+function inittab {
+    case "$1" in
+    dom0)
+        case "$HYPERVISOR" in
+        KVM)
+            cat configs/inittab.kvm
+        ;;
+        *)
+            cat configs/inittab.dom0
+        ;;
+        esac
+    ;;
+    domu)
+        cat configs/inittab.domu
+    ;;
+    *)
+        echo "Invalid inittab option" >&2
+        exit 2
+    ;;
+    esac
+}
+
+function config_txt {
+    case "$HYPERVISOR" in
+    KVM)
+        cat configs/config_kvm.txt
+    ;;
+    *)
+        cat configs/config_xen.txt
     ;;
     esac
 }

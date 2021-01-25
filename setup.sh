@@ -3,14 +3,14 @@
 set -e
 
 . helpers.sh
-. text_generators
+. text_generators.sh
 
 if [ "$1" == "defconfig" ]; then
     defconfig
     exit 0
 else
     if [ ! -f .setup_sh_config ]; then
-        echo ".setup_sh_config not found"
+        echo ".setup_sh_config not found" >&2
         defconfig
     fi
 fi
@@ -52,10 +52,10 @@ function is_mounted {
 
     if [ -z "$MOUNTED" ]; then
         if [ "$AUTOMOUNT" == "1" ]; then
-            echo "Block device is not mounted. Automounting is set. Mounting!"
+            echo "Block device is not mounted. Automounting is set. Mounting!" >&2
             domount
         else
-            echo "Block device is not mounted."
+            echo "Block device is not mounted." >&2
             exit -1
         fi
     fi
@@ -68,7 +68,7 @@ function uloopimg {
         sudo kpartx -d "$IMG"
         rm -f .mountimg
     else
-        echo "No image currently looped"
+        echo "No image currently looped" >&2
         exit 4
     fi
 }
@@ -83,7 +83,7 @@ function umountimg {
         sudo umount "${DOMUMNT}-su"
         uloopimg
     else
-        echo "No image currently mounted"
+        echo "No image currently mounted" >&2
         exit 4
     fi
 }
@@ -117,12 +117,12 @@ function mountimg {
     set +e
 
     if [ -f .mountimg ]; then
-        echo "Seems that image is currently mounted, please unmount previous image (or delete .mountimg if left over)"
+        echo "Seems that image is currently mounted, please unmount previous image (or delete .mountimg if left over)" >&2
         exit 6
     fi
 
     if [ -z "$1" ]; then
-        echo Please specify image file
+        echo "Please specify image file" >&2
         exit 5
     fi
 
@@ -204,9 +204,16 @@ function clone {
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 
-    configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
-
-    cp buildroot_config buildroot/.config
+    case "$HYPERVISOR" in
+    KVM)
+        configs/linux/defconfig_builder.sh -t raspi4_kvm_release -k linux
+        cp configs/buildroot_config_kvm buildroot/.config
+    ;;
+    *)
+        configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
+        cp configs/buildroot_config_xen buildroot/.config
+    ;;
+    esac
 
     # Needed for buildroot to be able to checkout xen branch
     pushd linux
@@ -233,7 +240,7 @@ function uboot_src {
         mkimage -A arm64 -T script -C none -a 0x100000 -e 0x100000 -d images/xen/boot2.source images/xen/boot2.scr
     ;;
     *)
-        echo "Invalid BUILDOPT setting"
+        echo "Invalid BUILDOPT setting" >&2
         exit 1
     ;;
     esac
@@ -251,7 +258,7 @@ function bootfs {
     rm -fr *
     popd
 
-    cp configs/config.txt "$BOOTFS"
+    config_txt > "${BOOTFS}/config.txt"
     cp u-boot.bin "$BOOTFS"
     cp "$KERNEL_IMAGE" "${BOOTFS}/vmlinuz"
     case "$BUILDOPT" in
@@ -262,7 +269,16 @@ function bootfs {
         cp images/xen/boot2.scr "$BOOTFS"
     ;;
     esac
-    cp "${IMAGES}/xen" "$BOOTFS"
+
+    case "$HYPERVISOR" in
+    KVM)
+         # Nothing to copy at this point
+    ;;
+    *)
+         cp "${IMAGES}/xen" "$BOOTFS"
+    ;;
+    esac
+
     cp "${IMAGES}/$DEVTREE" "$BOOTFS"
     cp -r "${IMAGES}/rpi-firmware/overlays" "$BOOTFS"
     cp usbfix/fixup4.dat "$BOOTFS"
@@ -283,7 +299,7 @@ function netboot {
         rm -fr *
         popd
 
-        cp configs/config.txt "$BOOTFS"
+        config_txt > "${BOOTFS}/config.txt"
         cp u-boot.bin "$BOOTFS"
         cp usbfix/fixup4.dat "$BOOTFS"
         cp usbfix/start4.elf "$BOOTFS"
@@ -291,7 +307,7 @@ function netboot {
         cp "${IMAGES}/$DEVTREE" "$BOOTFS"
     ;;
     *)
-        echo "Not configured for network boot"
+        echo "Not configured for network boot" >&2
         exit 1
     ;;
     esac
@@ -342,7 +358,7 @@ function rootfs {
     cp buildroot/package/busybox/mdev.conf "${ROOTFS}/etc/mdev.conf"
 
     cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
-    cp configs/inittab.dom0 "${ROOTFS}/etc/inittab"
+    inittab dom0 > "${ROOTFS}/etc/inittab"
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
     echo "${RASPHN}-dom0" > "${ROOTFS}/etc/hostname"
@@ -368,7 +384,7 @@ function domufs {
     esac
 
     domu_interfaces > "${DOMUFS}/etc/network/interfaces"
-    cp configs/inittab.domu "${DOMUFS}/etc/inittab"
+    inittab domu > "${DOMUFS}/etc/inittab"
     echo "${RASPHN}-domu" > "${DOMUFS}/etc/hostname"
 }
 
@@ -395,7 +411,7 @@ function nfsupdate {
         sudo umount "$DOMUMNT"
     ;;
     *)
-        echo "BUILDOPT is not set for network boot"
+        echo "BUILDOPT is not set for network boot" >&2
         exit 1
     ;;
     esac
@@ -411,7 +427,7 @@ function kernel_conf_change {
         rm -f buildroot/dl/linux/linux*.tar.gz
         rm -rf buildroot/output/build/linux-xen
     else
-        echo "This command needs to be run in the docker environment"
+        echo "This command needs to be run in the docker environment" >&2
     fi
 }
 
@@ -460,23 +476,23 @@ function dofsck {
 }
 
 function showhelp {
-    echo "Usage $0 <command> [parameters]"
-    echo ""
-    echo "Commands:"
-    echo "    defconfig                         Create new .setup_sh_config from defaults"
-    echo "    clone                             Clone the required subrepositories"
-    echo "    mount [device|image_file]         Mount given device or image file"
-    echo "    umount [mark]                     Unmount and optionally mark partitions"
-    echo "    bootfs [path]                     Copy boot fs files"
-    echo "    rootfs [path]                     Copy root fs files (dom0)"
-    echo "    domufs [path]                     Copy domu fs files"
-    echo "    fsck [device|image_file]          Check filesystems in device or image"
-    echo "    uboot_src                         Generate U-boot script"
-    echo "    netboot [path]                    Copy boot files needed for network boot"
-    echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
-    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes"
-    echo "    ssh_dut                           Open ssh session with target device"
-    echo ""
+    echo "Usage $0 <command> [parameters]" >&2
+    echo "" >&2
+    echo "Commands:" >&2
+    echo "    defconfig                         Create new .setup_sh_config from defaults" >&2
+    echo "    clone                             Clone the required subrepositories" >&2
+    echo "    mount [device|image_file]         Mount given device or image file" >&2
+    echo "    umount [mark]                     Unmount and optionally mark partitions" >&2
+    echo "    bootfs [path]                     Copy boot fs files" >&2
+    echo "    rootfs [path]                     Copy root fs files (dom0)" >&2
+    echo "    domufs [path]                     Copy domu fs files" >&2
+    echo "    fsck [device|image_file]          Check filesystems in device or image" >&2
+    echo "    uboot_src                         Generate U-boot script" >&2
+    echo "    netboot [path]                    Copy boot files needed for network boot" >&2
+    echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot" >&2
+    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes" >&2
+    echo "    ssh_dut                           Open ssh session with target device" >&2
+    echo "" >&2
     exit 0
 }
 

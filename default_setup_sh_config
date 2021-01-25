@@ -10,6 +10,12 @@ DEFDEV=/dev/sda
 # Device tree used
 DEVTREE=bcm2711-rpi-4-b.dtb
 
+# 0 = load device tree in u-boot, 1 = use firmware provided device tree
+FWFDT=0
+
+# Hypervisor selection (XEN or KVM)
+HYPERVISOR=XEN
+
 # Directories where partitions are mounted
 MNT_DIR=`pwd`/mnt
 BOOTMNT=$MNT_DIR/bootfs

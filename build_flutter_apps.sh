@@ -70,6 +70,11 @@ function deploy_app {
     rm -rf app
 }
 
+if [ -f /.dockerenv ]; then
+    echo "This is not supposed to be ran in Docker" >&2
+    exit 2
+fi
+
 if [ ! -e ${DIR}/mnt/rootfs ]; then
     echo "Mount rootfs first: ./setup.sh mount <device>" >&2
     exit 1

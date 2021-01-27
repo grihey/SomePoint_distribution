@@ -11,8 +11,8 @@ set -eo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 function desktop_file_text {
-    APP_NAME=$1
-    APP_PATH=$2
+    local APP_NAME=$1
+    local APP_PATH=$2
 
     cat << EOT
 #!/usr/bin/env xdg-open
@@ -26,11 +26,11 @@ EOT
 
 function create_desktop_file {
     # Creates desktop file for given app to user skeleton
-    APP_NAME=$1
-    FLAVOR=$2 # debug|release
-    DOMAIN_ROOT=$3
+    local APP_NAME=$1
+    local FLAVOR=$2 # debug|release
+    local DOMAIN_ROOT=$3
 
-    FILE_PATH=${DOMAIN_ROOT}/etc/skel/Desktop/${APP_NAME}-${FLAVOR}.desktop
+    local FILE_PATH=${DOMAIN_ROOT}/etc/skel/Desktop/${APP_NAME}-${FLAVOR}.desktop
 
     mkdir -p ${DOMAIN_ROOT}/etc/skel/Desktop
     desktop_file_text "${APP_NAME} (${FLAVOR})" /opt/flutter/${APP_NAME}-arm64-gtk-${FLAVOR} \
@@ -40,8 +40,8 @@ function create_desktop_file {
 
 function build_to {
     # Builds app to given target folder. If target exists, it's overridden.
-    MAKE_RULE=$1
-    TARGET=$2
+    local MAKE_RULE=$1
+    local TARGET=$2
 
     ./shim.sh make ${MAKE_RULE}
     [ -e ${TARGET} ] && rm -rf ${TARGET}
@@ -52,11 +52,11 @@ function build_to {
 
 function deploy_app {
     # Builds and deploys app to domain FS
-    DOMAIN=$1 # rootfs|domufs
-    APP_NAME=$2
-    SRC_PATH=$3
+    local DOMAIN=$1 # rootfs|domufs
+    local APP_NAME=$2
+    local SRC_PATH=$3
 
-    DOMAIN_ROOT=${DIR}/mnt/${DOMAIN}
+    local DOMAIN_ROOT=${DIR}/mnt/${DOMAIN}
 
     mkdir -p app
     cp -r ${SRC_PATH}/* app

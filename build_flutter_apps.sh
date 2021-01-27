@@ -11,14 +11,14 @@ set -eo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 function desktop_file_text {
-    local APP_NAME=$1
-    local APP_PATH=$2
+    local app_name="$1"
+    local app_path="$2"
 
     cat << EOT
 #!/usr/bin/env xdg-open
 [Desktop Entry]
-Name=${APP_NAME}
-Exec=${APP_PATH}/gtk-make-and-run.sh
+Name=${app_name}
+Exec=${app_path}/gtk-make-and-run.sh
 Terminal=true
 Type=Application
 EOT
@@ -26,46 +26,46 @@ EOT
 
 function create_desktop_file {
     # Creates desktop file for given app to user skeleton
-    local APP_NAME=$1
-    local FLAVOR=$2 # debug|release
-    local DOMAIN_ROOT=$3
+    local app_name="$1"
+    local flavor="$2" # debug|release
+    local domain_root="$3"
 
-    local FILE_PATH=${DOMAIN_ROOT}/etc/skel/Desktop/${APP_NAME}-${FLAVOR}.desktop
+    local file_path="${domain_root}/etc/skel/Desktop/${app_name}-${flavor}.desktop"
 
-    mkdir -p ${DOMAIN_ROOT}/etc/skel/Desktop
-    desktop_file_text "${APP_NAME} (${FLAVOR})" /opt/flutter/${APP_NAME}-arm64-gtk-${FLAVOR} \
-        > ${FILE_PATH}
-    chmod +x ${FILE_PATH}
+    mkdir -p "${domain_root}/etc/skel/Desktop"
+    desktop_file_text "${app_name} (${flavor})" "/opt/flutter/${app_name}-arm64-gtk-${flavor}" \
+        > "${file_path}"
+    chmod +x "${file_path}"
 }
 
 function build_to {
     # Builds app to given target folder. If target exists, it's overridden.
-    local MAKE_RULE=$1
-    local TARGET=$2
+    local make_rule="$1"
+    local target="$2"
 
-    ./shim.sh make ${MAKE_RULE}
-    [ -e ${TARGET} ] && rm -rf ${TARGET}
-    mv out/${MAKE_RULE} ${TARGET}
+    ./shim.sh make "${make_rule}"
+    [ -e "${target}" ] && rm -rf "${target}"
+    mv "out/${make_rule}" "${target}"
     # Write access is needed before we get the Flutter shell cross-compilation done
-    chmod a+w ${TARGET}
+    chmod a+w "${target}"
 }
 
 function deploy_app {
     # Builds and deploys app to domain FS
-    local DOMAIN=$1 # rootfs|domufs
-    local APP_NAME=$2
-    local SRC_PATH=$3
+    local domain="$1" # rootfs|domufs
+    local app_name="$2"
+    local src_path="$3"
 
-    local DOMAIN_ROOT=${DIR}/mnt/${DOMAIN}
+    local domain_root="${DIR}/mnt/${domain}"
 
     mkdir -p app
-    cp -r ${SRC_PATH}/* app
-    mkdir -p ${DOMAIN_ROOT}/opt/flutter
-    build_to app-arm64-gtk-debug ${DOMAIN_ROOT}/opt/flutter/${APP_NAME}-arm64-gtk-debug
-    build_to app-arm64-gtk-release ${DOMAIN_ROOT}/opt/flutter/${APP_NAME}-arm64-gtk-release
+    cp -r "${src_path}"/* app
+    mkdir -p "${domain_root}/opt/flutter"
+    build_to app-arm64-gtk-debug "${domain_root}/opt/flutter/${app_name}-arm64-gtk-debug"
+    build_to app-arm64-gtk-release "${domain_root}/opt/flutter/${app_name}-arm64-gtk-release"
 
-    create_desktop_file ${APP_NAME} debug ${DOMAIN_ROOT}
-    create_desktop_file ${APP_NAME} release ${DOMAIN_ROOT}
+    create_desktop_file "${app_name}" debug "${domain_root}"
+    create_desktop_file "${app_name}" release "${domain_root}"
 
     rm -rf app
 }
@@ -75,7 +75,7 @@ if [ -f /.dockerenv ]; then
     exit 2
 fi
 
-if [ ! -e ${DIR}/mnt/rootfs ]; then
+if [ ! -e "${DIR}/mnt/rootfs" ]; then
     echo "Mount rootfs first: ./setup.sh mount <device>" >&2
     exit 1
 fi

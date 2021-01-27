@@ -88,6 +88,7 @@ function prepare_compile_env {
         plymouth psmisc tar tcpd symlinks \
         bridge-utils patch git \
         openssh-sftp-server remmina
+    sudo chroot ${ROOTFS_DIR} apt-get -y install libgtk-3-dev # Required by Flutter
     sudo chroot ${ROOTFS_DIR} apt-get clean
 
     sudo chroot ${ROOTFS_DIR} apt-get -y install bin86 bcc liblzma-dev ocaml python3 python3-dev gettext acpica-tools wget ftp

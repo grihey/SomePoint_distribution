@@ -75,7 +75,7 @@ if [ -f /.dockerenv ]; then
     exit 2
 fi
 
-if [ ! -e "${DIR}/mnt/rootfs" ]; then
+if ! mountpoint -q -- "${DIR}/mnt/rootfs"; then
     echo "Mount rootfs first: ./setup.sh mount <device>" >&2
     exit 1
 fi

@@ -1,6 +1,7 @@
 # Release Defconfigs
-classification: Release_Defconfigs type: raspi4_kvm_release defconfig: bcm2711_defconfig config_file: None extra_configs: kvm.cfg
-classification: Release_Defconfigs type: raspi4_xen_release defconfig: bcm2711_defconfig config_file: None extra_configs: xen.cfg
-classification: Release_Defconfigs type: raspi4_xen_secure_release defconfig: bcm2711_defconfig config_file: None extra_configs: xen.cfg secure_os.cfg
+classification: Release_Defconfigs type: raspi4_kvm_release defconfig: bcm2711_defconfig config_file: None extra_configs: prune.cfg kvm.cfg
+classification: Release_Defconfigs type: raspi4_xen_release defconfig: bcm2711_defconfig config_file: None extra_configs: prune.cfg xen.cfg
+classification: Release_Defconfigs type: raspi4_kvm_secure_release defconfig: bcm2711_defconfig config_file: None extra_configs: prune.cfg kvm.cfg secure_os.cfg
+classification: Release_Defconfigs type: raspi4_xen_secure_release defconfig: bcm2711_defconfig config_file: None extra_configs: prune.cfg xen.cfg secure_os.cfg
 # Debug Defconfigs
-classification: Debug_Defconfigs type: arm64_debug defconfig: defconfig config_file: None extra_configs: xen.cfg secure_os.cfg debug_options.cfg
+classification: Debug_Defconfigs type: arm64_debug defconfig: defconfig config_file: None extra_configs: prune.cfg xen.cfg secure_os.cfg debug_options.cfg

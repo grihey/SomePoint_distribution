@@ -204,16 +204,23 @@ function clone {
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 
+    if [ "$SECURE_OS" = "1" ] ; then
+      os_opt="secure_"
+    else
+      os_opt=""
+    fi
+
     case "$HYPERVISOR" in
     KVM)
-        configs/linux/defconfig_builder.sh -t raspi4_kvm_release -k linux
-        cp configs/buildroot_config_kvm buildroot/.config
+	hyp_opt="kvm"
     ;;
     *)
-        configs/linux/defconfig_builder.sh -t raspi4_xen_secure_release -k linux
-        cp configs/buildroot_config_xen buildroot/.config
+	hyp_opt="xen"
     ;;
     esac
+
+    configs/linux/defconfig_builder.sh -t raspi4_${hyp_opt}_${os_opt}release -k linux
+    cp configs/buildroot_config_${hyp_opt} buildroot/.config
 
     # Needed for buildroot to be able to checkout xen branch
     pushd linux

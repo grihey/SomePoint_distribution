@@ -16,6 +16,9 @@ FWFDT=0
 # Hypervisor selection (XEN or KVM)
 HYPERVISOR=XEN
 
+# SECURE_OS defines if we are building a secure-os or not
+SECURE_OS=0
+
 # Directories where partitions are mounted
 MNT_DIR=`pwd`/mnt
 BOOTMNT=$MNT_DIR/bootfs

@@ -2,19 +2,19 @@
 
 set -e
 
-UBASEDIR=ubuntu-base-20.04.1-base-arm64
-UBASETAR=$UBASEDIR.tar.gz
+UBASEDIR="ubuntu-base-20.04.1-base-arm64"
+UBASETAR="${UBASEDIR}.tar.gz"
 
 # Create a build environment based on Ubuntu 20.04.1.
-if [ ! -f $UBASETAR ]; then
+if [ ! -f "$UBASETAR" ]; then
     echo "wget Ubuntu 20.04.1"
-    wget http://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/$UBASETAR
+    wget "http://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/$UBASETAR"
 fi
 
-if [ ! -d $UBASEDIR ]; then
+if [ ! -d "$UBASEDIR" ]; then
     echo "Extracting Ubuntu tar"
-    mkdir -p $UBASEDIR
-    tar -xzvf $UBASETAR -C $UBASEDIR
+    mkdir -p "$UBASEDIR"
+    tar -xzvf "$UBASETAR" -C "$UBASEDIR"
 fi
 
 # Get QEMU sources (https://www.qemu.org/download/#source)
@@ -22,6 +22,8 @@ if [ ! -d qemu ]; then
     echo "Cloning qemu"
     git clone https://git.qemu.org/git/qemu.git
     cd qemu
+    echo "Checking out known-working commit"
+    git checkout `cat ../qemu.commit`
     echo "Qemu git submodule init"
     git submodule init
     echo "Qemu git submodule update"
@@ -29,8 +31,8 @@ if [ ! -d qemu ]; then
     cd ..
 else
     cd qemu
-    echo "Qemu git pull"
-    git pull
+    echo "Checking out known-working commit"
+    git checkout `cat ../qemu.commit`
     echo "Qemu git submodule update"
     git submodule update --recursive
     cd ..
@@ -42,15 +44,15 @@ sudo apt install qemu binfmt-support qemu-user-static
 
 # Copy the interpreter (QEMU) to your base image folder structure
 echo "Copy host Qemu binary"
-cp /usr/bin/qemu-aarch64-static ./$UBASEDIR/usr/bin
+cp /usr/bin/qemu-aarch64-static "./${UBASEDIR}/usr/bin"
 
 # Copy resolv.conf  for chroot networking
 echo "Copy resolv.conf"
-cp /etc/resolv.conf ./$UBASEDIR/etc
+cp /etc/resolv.conf "./${UBASEDIR}/etc"
 
 # Create script for running inside chroot ---------------------------------
 echo "Create script for running inside chroot"
-cat << EOF > ./$UBASEDIR/part2.sh
+cat << EOF > "./${UBASEDIR}/part2.sh"
 #!/bin/bash
 
 set -e
@@ -81,32 +83,32 @@ EOF
 
 # Make the script executable
 echo "Make script executable"
-chmod a+x ./$UBASEDIR/part2.sh
+chmod a+x "./${UBASEDIR}/part2.sh"
 
 #Create a qemu mount point
 echo "Create qemu mount point"
-mkdir -p ./$UBASEDIR/qemu
+mkdir -p "./${UBASEDIR}/qemu"
 
 set +e
 #Start up the chroot
-findmnt ./$UBASEDIR/qemu > /dev/null
+findmnt "./${UBASEDIR}/qemu" > /dev/null
 if [ $? -ne 0 ]; then
     echo "Mounting qemu build dir under ubuntu chroot"
-    sudo mount -o bind ./qemu ./$UBASEDIR/qemu
+    sudo mount -o bind ./qemu "./${UBASEDIR}/qemu"
 fi
-findmnt ./$UBASEDIR/dev > /dev/null
+findmnt "./${UBASEDIR}/dev" > /dev/null
 if [ $? -ne 0 ]; then
     echo "Mounting devices under ubunut chroot"
-    sudo mount -o bind /dev ./$UBASEDIR/dev
+    sudo mount -o bind /dev "./${UBASEDIR}/dev"
 fi
 
 echo "Running part2.sh in chroot"
-sudo LC_ALL=C chroot ./$UBASEDIR /part2.sh
+sudo LC_ALL=C chroot "./$UBASEDIR" /part2.sh
 
 echo "Unmounting devices"
-sudo umount ./$UBASEDIR/dev
+sudo umount "./${UBASEDIR}/dev"
 echo "Unmounting qemu"
-sudo umount ./$UBASEDIR/qemu
+sudo umount "./${UBASEDIR}/qemu"
 
 echo "Copying efi-virtio.rom"
 cp -f qemu/pc-bios/efi-virtio.rom .

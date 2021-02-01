@@ -33,6 +33,14 @@ function dom0_interfaces {
     case "$HYPERVISOR" in
     KVM)
         case "$BUILDOPT" in
+        2)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet dhcp"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
         3)
             echo "auto lo"
             echo "iface lo inet loopback"
@@ -48,6 +56,7 @@ function dom0_interfaces {
             echo "auto lo"
             echo "iface lo inet loopback"
             echo ""
+            echo "auto eth0"
             echo "iface eth0 inet dhcp"
             echo ""
             echo "iface default inet dhcp"
@@ -89,6 +98,7 @@ function domu_interfaces {
         echo "auto lo"
         echo "iface lo inet loopback"
         echo ""
+        echo "auto eth0"
         echo "iface eth0 inet static"
         echo "    address 10.123.123.2"
         echo "    netmask 255.255.255.0"
@@ -240,6 +250,10 @@ function net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
+    if [ "$HYPERVISOR" == "KVM" ]; then
+        return 0
+    fi
+
     case "$BUILDOPT" in
     0|1)
     ;;
@@ -312,6 +326,22 @@ function config_txt {
     ;;
     *)
         cat configs/config_xen.txt
+    ;;
+    esac
+}
+
+function rq_sh {
+    echo "#!/bin/bash"
+    case "$BUILDOPT" in
+    0)
+        echo "./run-qemu.sh /dev/mmcblk0p3 ${RASPIP}"
+    ;;
+    2|3)
+        echo "Warning: network boot with KVM not implemented properly yet (sda3 assumed for guest root)" >&2
+        echo "./run-qemu.sh /dev/sda3 ${RASPIP}"
+    ;;
+    *)
+        echo "./run-qemu.sh /dev/sda3 ${RASPIP}"
     ;;
     esac
 }

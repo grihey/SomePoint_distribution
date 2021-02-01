@@ -372,6 +372,19 @@ function rootfs {
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
     echo "${RASPHN}-dom0" > "${ROOTFS}/etc/hostname"
+
+    case "$HYPERVISOR" in
+    KVM)
+        cp qemu/efi-virtio.rom "${ROOTFS}/root"
+        cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
+        cp qemu/run-qemu.sh "${ROOTFS}/root"
+
+        rq_sh > "${ROOTFS}/root/rq.sh"
+        chmod a+x "${ROOTFS}/root/rq.sh"
+    ;;
+    *)
+    ;;
+    esac
 }
 
 function domufs {

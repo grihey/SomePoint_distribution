@@ -211,7 +211,7 @@ function clone {
 
     case "$SECURE_OS" in
     1)
-        local os_opt="secure_"
+        local os_opt="_secure"
     ;;
     *)
         local os_opt=""
@@ -227,8 +227,8 @@ function clone {
     ;;
     esac
 
-    configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}_${os_opt}release" -k linux
-    cp "configs/buildroot_config_${hyp_opt}" buildroot/.config
+    configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${hyp_opt}${os_opt}" buildroot/.config
 }
 
 function uboot_src {

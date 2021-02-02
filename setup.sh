@@ -204,28 +204,31 @@ function clone {
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 
-    if [ "$SECURE_OS" = "1" ] ; then
-      os_opt="secure_"
-    else
-      os_opt=""
-    fi
-
-    case "$HYPERVISOR" in
-    KVM)
-	hyp_opt="kvm"
-    ;;
-    *)
-	hyp_opt="xen"
-    ;;
-    esac
-
-    configs/linux/defconfig_builder.sh -t raspi4_${hyp_opt}_${os_opt}release -k linux
-    cp configs/buildroot_config_${hyp_opt} buildroot/.config
-
     # Needed for buildroot to be able to checkout xen branch
     pushd linux
     git checkout xen
     popd
+
+    case "$SECURE_OS" in
+    1)
+        local os_opt="_secure"
+    ;;
+    *)
+        local os_opt=""
+    ;;
+    esac
+
+    case "$HYPERVISOR" in
+    KVM)
+        local hyp_opt="kvm"
+    ;;
+    *)
+        local hyp_opt="xen"
+    ;;
+    esac
+
+    configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${hyp_opt}${os_opt}" buildroot/.config
 }
 
 function uboot_src {
@@ -369,6 +372,19 @@ function rootfs {
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
     echo "${RASPHN}-dom0" > "${ROOTFS}/etc/hostname"
+
+    case "$HYPERVISOR" in
+    KVM)
+        cp qemu/efi-virtio.rom "${ROOTFS}/root"
+        cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
+        cp qemu/run-qemu.sh "${ROOTFS}/root"
+
+        rq_sh > "${ROOTFS}/root/rq.sh"
+        chmod a+x "${ROOTFS}/root/rq.sh"
+    ;;
+    *)
+    ;;
+    esac
 }
 
 function domufs {

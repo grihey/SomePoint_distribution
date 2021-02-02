@@ -1,0 +1,12 @@
+
+# Stuff to do for the 3-finger salute
+#ca::ctrlaltdel:/sbin/reboot
+
+# Stuff to do before rebooting
+shd0:06:wait:/etc/init.d/rcK
+shd1:06:wait:/sbin/swapoff -a
+shd2:06:wait:/bin/umount -a -r
+
+# The usual halt or reboot actions
+hlt0:0:wait:/sbin/halt -dhp
+reb0:6:wait:/sbin/reboot

@@ -30,38 +30,75 @@ function domu_config {
 }
 
 function dom0_interfaces {
-    case "$BUILDOPT" in
-    2)
-        echo "auto lo"
-        echo "iface lo inet loopback"
-        echo ""
-        echo "iface eth0 inet dhcp"
-        echo ""
-        echo "iface default inet dhcp"
-    ;;
-    3)
-        echo "auto lo"
-        echo "iface lo inet loopback"
-        echo ""
-        echo "iface eth0 inet static"
-        echo "    address ${RASPIP}"
-        echo "    netmask ${RASPNM}"
-        echo "    gateway ${RASPGW}"
-        echo ""
-        echo "iface default inet dhcp"
+    case "$HYPERVISOR" in
+    KVM)
+        case "$BUILDOPT" in
+        2)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet dhcp"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        3)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet static"
+            echo "    address ${RASPIP}"
+            echo "    netmask ${RASPNM}"
+            echo "    gateway ${RASPGW}"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        *)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "auto eth0"
+            echo "iface eth0 inet dhcp"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        esac
     ;;
     *)
-        cat configs/interfaces
+        case "$BUILDOPT" in
+        2)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet dhcp"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        3)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet static"
+            echo "    address ${RASPIP}"
+            echo "    netmask ${RASPNM}"
+            echo "    gateway ${RASPGW}"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        *)
+            cat configs/interfaces
+        ;;
+        esac
     ;;
     esac
 }
 
 function domu_interfaces {
-    case "$BUILDOPT" in
-    2|3)
+    case "$HYPERVISOR" in
+    KVM)
         echo "auto lo"
         echo "iface lo inet loopback"
         echo ""
+        echo "auto eth0"
         echo "iface eth0 inet static"
         echo "    address 10.123.123.2"
         echo "    netmask 255.255.255.0"
@@ -70,7 +107,22 @@ function domu_interfaces {
         echo "iface default inet dhcp"
     ;;
     *)
-        cat configs/interfaces
+        case "$BUILDOPT" in
+        2|3)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet static"
+            echo "    address 10.123.123.2"
+            echo "    netmask 255.255.255.0"
+            echo "    gateway 10.123.123.1"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        *)
+            cat configs/interfaces
+        ;;
+        esac
     ;;
     esac
 }
@@ -198,6 +250,10 @@ function net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
+    if [ "$HYPERVISOR" == "KVM" ]; then
+        return 0
+    fi
+
     case "$BUILDOPT" in
     0|1)
     ;;
@@ -230,17 +286,31 @@ function net_rc_add {
 function inittab {
     case "$1" in
     dom0)
+        cat configs/inittab.pre
+
         case "$HYPERVISOR" in
         KVM)
-            cat configs/inittab.kvm
+            echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
+            echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
         ;;
         *)
-            cat configs/inittab.dom0
+            echo "X0::respawn:/sbin/getty 115200 /dev/hvc0 # Xen virtual serial"
+            echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
         ;;
         esac
+        cat configs/inittab.post
     ;;
     domu)
-        cat configs/inittab.domu
+        cat configs/inittab.pre
+        case "$HYPERVISOR" in
+        KVM)
+            echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # KVM virtual serial"
+        ;;
+        *)
+            echo "X0::respawn:/sbin/getty 115200 /dev/hvc0 # Xen virtual serial"
+        ;;
+        esac
+        cat configs/inittab.post
     ;;
     *)
         echo "Invalid inittab option" >&2
@@ -256,6 +326,22 @@ function config_txt {
     ;;
     *)
         cat configs/config_xen.txt
+    ;;
+    esac
+}
+
+function rq_sh {
+    echo "#!/bin/bash"
+    case "$BUILDOPT" in
+    0)
+        echo "./run-qemu.sh /dev/mmcblk0p3 ${RASPIP}"
+    ;;
+    2|3)
+        echo "Warning: network boot with KVM not implemented properly yet (sda3 assumed for guest root)" >&2
+        echo "./run-qemu.sh /dev/sda3 ${RASPIP}"
+    ;;
+    *)
+        echo "./run-qemu.sh /dev/sda3 ${RASPIP}"
     ;;
     esac
 }

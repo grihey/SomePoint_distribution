@@ -141,6 +141,18 @@ function sanitycheck {
 
     local TPATH=`realpath -e "$1" 2>/dev/null`
 
+    # Explicitly allowed paths
+    case "$TPATH" in
+    /usr/src/*) # For docker environment this needs to be allowed
+        echo "$TPATH"
+        exit 0
+    ;;
+    *)
+        # Do nothing
+    ;;
+    esac
+
+    # Denied paths
     case "$TPATH" in
     /bin*|/boot*|/dev*|/etc*|/lib*|/opt*|/proc*|/run*|/sbin*|/snap*|/sys*|/usr*|/var*|/home)
         echo "Will not touch host special directories" >&2
@@ -162,7 +174,7 @@ function sanitycheck {
         echo "Will not touch user home directory" >&2
         exit 5
         ;;
-    *)
+    *)  # Path allowed
         echo "$TPATH"
         exit 0
         ;;

@@ -15,3 +15,6 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = git://git.buildroot.net/buildroot
+[submodule "flutter-shim"]
+	path = flutter-shim
+	url = git@github.com:tiiuae/flutter-shim.git

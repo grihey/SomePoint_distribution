@@ -80,10 +80,7 @@ if ! mountpoint -q -- "${DIR}/mnt/rootfs"; then
     exit 1
 fi
 
-# Use either docker/flutter-shim or ../docker/flutter-shim - latter is just a guess
-pushd docker/flutter-shim >/dev/null 2>&1 || pushd ../docker/flutter-shim >/dev/null
-
-echo "Using flutter-shim from $(pwd)"
+pushd flutter-shim >/dev/null 
 
 [ ! -e samples ] && git clone https://github.com/flutter/samples.git
 

@@ -216,6 +216,18 @@ function ubootsource {
     BOOTARGS+="$ADDITIONAL"
     BOOTARGS+=" rootwait fixrtc splash"
 
+    echo "setenv uenv_addr ff0000"
+    echo "if $LOAD 0x\${uenv_addr} uEnv.txt; then"
+    echo "	echo 'Loaded env from uEnv.txt';"
+    echo "	echo 'Importing environment from uEnv.txt';"
+    echo "	env import -t \${uenv_addr} \${filesize};"
+    echo "fi"
+    echo "if test -n \${uenvcmd}; then"
+    echo "	echo 'Running uenvcmd ...';"
+    echo "	run uenvcmd;"
+    echo "fi"
+    echo
+
     fdt_addr 2600000
     fdt_load "$LOAD"
     echo "fdt addr \${fdt_addr}"

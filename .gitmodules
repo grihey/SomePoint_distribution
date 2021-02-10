@@ -1,6 +1,6 @@
 [submodule "docker"]
     path = docker
-    url = git@github.com:tiiuae/docker.git
+    url = ../docker
     branch = xen
 [submodule "linux"]
     path = linux
@@ -17,4 +17,4 @@
 	url = git://git.buildroot.net/buildroot
 [submodule "flutter-shim"]
 	path = flutter-shim
-	url = git@github.com:tiiuae/flutter-shim.git
+	url = ../flutter-shim

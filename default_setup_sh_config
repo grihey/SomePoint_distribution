@@ -25,6 +25,9 @@ BOOTMNT=$MNT_DIR/bootfs
 ROOTMNT=$MNT_DIR/rootfs
 DOMUMNT=$MNT_DIR/domufs
 
+# Where guest kernels are built by default
+GKBUILD=`pwd`/images
+
 # Where buildroot is storing images
 IMAGES=`pwd`/buildroot/output/images
 KERNEL_IMAGE=$IMAGES/Image

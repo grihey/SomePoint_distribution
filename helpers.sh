@@ -133,13 +133,18 @@ function umount_image {
 }
 
 # sanitycheck function will return the clean path or exit with an error
-# usage example: CLEANPATH=`sanitycheck <path to check>`
+# if second argument is given, path does not need to exist
+# usage example: CLEANPATH=`sanitycheck <path to check> [non_existing]`
 #   on error an error message is printed to stderr and CLEANPATH is empty and return value is nonzero
 #   on success CLEANPATH is the cleaned up path to <path to check> and return value is zero
 function sanitycheck {
     set +e
 
-    local TPATH=`realpath -e "$1" 2>/dev/null`
+    if [ -z "$2" ]; then
+        local TPATH=`realpath -e "$1" 2>/dev/null`
+    else
+        local TPATH=`realpath "$1" 2>/dev/null`
+    fi
 
     # Explicitly allowed paths
     case "$TPATH" in

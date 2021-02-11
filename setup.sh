@@ -31,6 +31,24 @@ if [ -x "$(command -v ccache)" ]; then
     #ccache -s
 fi
 
+function build_guest_kernels {
+    if [ -n "$1" ]; then
+        local ODIR=`sanitycheck "$1" ne`
+    else
+        local ODIR=`sanitycheck "$GKBUILD" ne`
+    fi
+
+    case "$HYPERVISOR" in
+    KVM)
+        mkdir -p "${ODIR}/kvm_domu"
+        compile_kernel ./linux arm64 aarch64-linux-gnu- "${ODIR}/kvm_domu" raspi4_kvm_guest_release_defconfig
+    ;;
+    *)
+        # Atm xen buildroot uses the same kernel for host and guest
+    ;;
+    esac
+}
+
 function set_myids {
     MYUID=`id -u`
     MYGID=`id -g`
@@ -196,6 +214,30 @@ function doumount {
     sync
 }
 
+function gen_configs {
+    case "$SECURE_OS" in
+    1)
+        local os_opt="_secure"
+    ;;
+    *)
+        local os_opt=""
+    ;;
+    esac
+
+    case "$HYPERVISOR" in
+    KVM)
+        local hyp_opt="kvm"
+        configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}_guest${os_opt}_release" -k linux
+    ;;
+    *)
+        local hyp_opt="xen"
+    ;;
+    esac
+
+    configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${hyp_opt}${os_opt}" buildroot/.config
+}
+
 function clone {
     git submodule init
     git submodule update -f
@@ -209,26 +251,7 @@ function clone {
     git checkout xen
     popd
 
-    case "$SECURE_OS" in
-    1)
-        local os_opt="_secure"
-    ;;
-    *)
-        local os_opt=""
-    ;;
-    esac
-
-    case "$HYPERVISOR" in
-    KVM)
-        local hyp_opt="kvm"
-    ;;
-    *)
-        local hyp_opt="xen"
-    ;;
-    esac
-
-    configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}${os_opt}_release" -k linux
-    cp "configs/buildroot_config_${hyp_opt}${os_opt}" buildroot/.config
+    gen_configs
 }
 
 function uboot_src {
@@ -361,8 +384,6 @@ function rootfs {
     ;;
     esac
 
-    cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
-
     cp buildroot/package/busybox/S10mdev "${ROOTFS}/etc/init.d/S10mdev"
     chmod 755 "${ROOTFS}/etc/init.d/S10mdev"
     cp buildroot/package/busybox/mdev.conf "${ROOTFS}/etc/mdev.conf"
@@ -375,6 +396,7 @@ function rootfs {
 
     case "$HYPERVISOR" in
     KVM)
+        cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"
         cp qemu/efi-virtio.rom "${ROOTFS}/root"
         cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
         cp qemu/run-qemu.sh "${ROOTFS}/root"
@@ -383,6 +405,7 @@ function rootfs {
         chmod a+x "${ROOTFS}/root/rq.sh"
     ;;
     *)
+        cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
     ;;
     esac
 }

@@ -13,7 +13,7 @@ VDAGENT="-device virtio-serial-pci -device virtserialport"
 [ -z "$AUDIO" ] && AUDIO=""
 [ -z "$KERNEL" ] && KERNEL="Image"
 [ -z "$PORT" ] && PORT=$((2000 + RANDOM % 1000))
-[ -z "$NET" ] && NETOPTS="-netdev user,id=net0,host=10.123.123.1,net=10.123.123.0/24,restrict=off,hostname=guest,hostfwd=tcp:$LOCALIP:$PORT-10.123.123.2:22"
+[ -z "$NET" ] && NETOPTS="-nic user,id=net0,host=10.123.123.1,net=10.123.123.0/24,restrict=off,hostname=guest,hostfwd=tcp:$LOCALIP:$PORT-10.123.123.2:22"
 [ -z "$MEM" ] && MEM=2560
 [ -z "$SMP" ] && SMP="-smp 2"
 [ -z "$SCREEN" ] && SCREEN="-nographic -device virtio-gpu-pci $VDAGENT"

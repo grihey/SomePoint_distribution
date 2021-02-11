@@ -4,7 +4,7 @@
     branch = xen
 [submodule "linux"]
     path = linux
-    url = git@github.com:tiiuae/linux.git
+    url = ../linux
     branch = xen
 [submodule "u-boot"]
     path = uboot

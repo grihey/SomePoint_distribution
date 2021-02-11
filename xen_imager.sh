@@ -88,10 +88,13 @@ function prepare_compile_env {
         plymouth psmisc tar tcpd symlinks \
         bridge-utils patch git \
         openssh-sftp-server remmina
-    sudo chroot ${ROOTFS_DIR} apt-get -y install libgtk-3-dev # Required by Flutter
     sudo chroot ${ROOTFS_DIR} apt-get clean
 
     sudo chroot ${ROOTFS_DIR} apt-get -y install bin86 bcc liblzma-dev ocaml python3 python3-dev gettext acpica-tools wget ftp
+
+    # App dependencies
+    sudo chroot ${ROOTFS_DIR} apt-get -y install libgtk-3-dev # For Flutter
+    sudo chroot ${ROOTFS_DIR} apt-get -y install libsqlite3-dev libolm-dev # For Fluffychat (needs libolm3)
 
     umount_chroot_devs $ROOTFS_DIR
     umount_image $ROOTFS_DIR

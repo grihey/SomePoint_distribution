@@ -9,6 +9,12 @@ function defconfig {
     cp -f default_setup_sh_config .setup_sh_config
 }
 
+function kvmconfig {
+    echo "Creating .setup_sh_config with kvm configuration" >&2
+    cat default_setup_sh_config |
+            sed "s/HYPERVISOR=.*/HYPERVISOR=KVM/" > .setup_sh_config
+}
+
 # returns 0 if function exists, 1 if not
 function fn_exists {
     if [ "$(LC_ALL=C type -t $1)" == "function" ]; then

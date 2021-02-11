@@ -8,6 +8,9 @@ set -e
 if [ "$1" == "defconfig" ]; then
     defconfig
     exit 0
+elif [ "$1" == "kvmconfig" ]; then
+    kvmconfig
+    exit 0
 else
     if [ ! -f .setup_sh_config ]; then
         echo ".setup_sh_config not found" >&2

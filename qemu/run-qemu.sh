@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IMAGE=$1
-LOCALIP=$2
+LOCALIP=`ip a s eth0 | grep "inet " | cut -d" " -f6 | cut -d"/" -f1`
 USER=$(whoami)
 PORT=222
 VDAGENT="-device virtio-serial-pci -device virtserialport"

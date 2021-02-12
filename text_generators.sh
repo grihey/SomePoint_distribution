@@ -346,14 +346,14 @@ function rq_sh {
     echo "#!/bin/bash"
     case "$BUILDOPT" in
     0)
-        echo "./run-qemu.sh /dev/mmcblk0p3 ${RASPIP}"
+        echo "./run-qemu.sh /dev/mmcblk0p3"
     ;;
     2|3)
         echo "Warning: network boot with KVM not implemented properly yet (sda3 assumed for guest root)" >&2
-        echo "./run-qemu.sh /dev/sda3 ${RASPIP}"
+        echo "./run-qemu.sh /dev/sda3"
     ;;
     *)
-        echo "./run-qemu.sh /dev/sda3 ${RASPIP}"
+        echo "./run-qemu.sh /dev/sda3"
     ;;
     esac
 }

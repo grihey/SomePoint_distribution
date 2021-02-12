@@ -309,8 +309,8 @@ function gen_configs {
     ;;
     esac
 
-    configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}${os_opt}_release" -k linux
-    cp "configs/buildroot_config_${hyp_opt}${os_opt}" buildroot/.config
+    configs/linux/defconfig_builder.sh -t "${PLATFORM}_${hyp_opt}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${PLATFORM}_${hyp_opt}${os_opt}" buildroot/.config
 }
 
 function clone {

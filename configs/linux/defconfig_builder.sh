@@ -453,7 +453,8 @@ trap prepare_for_exit SIGHUP EXIT SIGINT SIGTERM
 set_working_directory
 
 SUPPORTED_ARCH=(
-"v8 ARM Architecture" "$KERNEL_PATH/arch/arm64/configs" "$SCRIPT_PATH/defconfig_map.txt")
+"v8 ARM Architecture" "$KERNEL_PATH/arch/arm64/configs" "$SCRIPT_PATH/defconfig_map.txt"
+"x86 Architecture" "$KERNEL_PATH/arch/x86/configs" "$SCRIPT_PATH/x86_defconfig_map.txt")
 
 BUILD_TYPE_FILE=$(mktemp -t $TMP_TEMPLATE)
 

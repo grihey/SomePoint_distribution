@@ -19,6 +19,9 @@ HYPERVISOR=XEN
 # SECURE_OS defines if we are building a secure-os or not
 SECURE_OS=0
 
+# Select build platform
+PLATFORM=raspi4
+
 # Directories where partitions are mounted
 MNT_DIR="`pwd`/mnt"
 BOOTMNT="$MNT_DIR/bootfs"

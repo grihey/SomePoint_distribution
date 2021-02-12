@@ -480,10 +480,10 @@ function kernel_conf_change {
 function ssh_dut {
     case "$1" in
     domu)
-        ssh -i images/rasp_id_rsa -p 222 "root@$RASPIP"
+        ssh -i images/rasp_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$RASPIP"
     ;;
     *)
-        ssh -i images/rasp_id_rsa "root@$RASPIP"
+        ssh -i images/rasp_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$RASPIP"
     esac
 }
 

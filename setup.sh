@@ -18,7 +18,7 @@ else
     fi
 fi
 
-# load defaults in case .setup_sh_config is missing any settings
+# Load defaults in case .setup_sh_config is missing any settings
 # for example .setup_sh_config could be from older revision
 . default_setup_sh_config
 . .setup_sh_config
@@ -58,15 +58,15 @@ function set_myids {
 }
 
 function is_mounted {
-    #Save flags
+    # Save flags
     local FLAGS=$-
 
-    #disable exit on status != 0 for grep
+    # Disable exit on status != 0 for grep
     set +e
 
     local MOUNTED=`mount | grep "$1"`
 
-    #restore flags
+    # Restore flags
     if [[ "$FLAGS" =~ "e" ]]; then
         set -e
     fi
@@ -169,7 +169,7 @@ function domount {
     fi
 
     if [ -f "$DEV" ]; then
-        #If dev is file, mount image instead
+        # If dev is file, mount image instead
         mountimg "$DEV"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
@@ -500,7 +500,7 @@ function dofsck {
     fi
 
     if [ -f "$DEV" ]; then
-        #If dev is file, get loop devices for image
+        # If dev is file, get loop devices for image
         loopimg "$DEV"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
@@ -573,6 +573,6 @@ else
     shift
 fi
 
-#Check if function exists and run it if it does
+# Check if function exists and run it if it does
 fn_exists "$CMD"
 "$CMD" $*

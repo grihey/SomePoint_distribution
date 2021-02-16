@@ -1,6 +1,19 @@
 #!/bin/bash
 
+function on_exit_cleanup {
+    set +e
+    popd > /dev/null
+}
+
 set -e
+
+# Get actual directory of this bash script
+SDIR=`dirname "$BASH_SOURCE[0]"`
+SDIR=`realpath "$SDIR"`
+
+# Change to the script directory and set cleanup on exit
+pushd "$SDIR" > /dev/null
+trap on_exit_cleanup EXIT
 
 . helpers.sh
 . text_generators.sh

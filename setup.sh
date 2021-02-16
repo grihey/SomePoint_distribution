@@ -5,18 +5,23 @@ set -e
 . helpers.sh
 . text_generators.sh
 
-if [ "$1" == "defconfig" ]; then
-    defconfig
-    exit 0
-elif [ "$1" == "kvmconfig" ]; then
-    kvmconfig
-    exit 0
-else
-    if [ ! -f .setup_sh_config ]; then
-        echo ".setup_sh_config not found" >&2
+# Stuff that needs to be done before loading config files
+case "$1" in
+    defconfig)
         defconfig
-    fi
-fi
+        exit 0
+    ;;
+    kvmconfig)
+        kvmconfig
+        exit 0
+    ;;
+    *)
+        if [ ! -f .setup_sh_config ]; then
+            echo ".setup_sh_config not found" >&2
+            defconfig
+        fi
+    ;;
+esac
 
 # Load defaults in case .setup_sh_config is missing any settings
 # for example .setup_sh_config could be from older revision

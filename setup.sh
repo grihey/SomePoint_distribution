@@ -2,6 +2,9 @@
 
 function on_exit_cleanup {
     set +e
+    if [ -n "$TMPDIR" ]; then
+        rm -rf "$TMPDIR"
+    fi
     popd > /dev/null
 }
 
@@ -51,6 +54,57 @@ if [ -x "$(command -v ccache)" ]; then
 
     #ccache -s
 fi
+
+function generate_disk_image {
+    if [ -n "$1" ]; then
+        local IDIR=`sanitycheck "$1" ne`
+    else
+        local IDIR=`sanitycheck "$IMGBUILD" ne`
+    fi
+
+    if [ -z "$ROOTSIZE" ]; then
+        local ROOTSIZE=$((1024*1024))
+    fi
+
+    if [ -z "$DOMUSIZE" ]; then
+        local DOMUSIZE=$((1024*1024))
+    fi
+
+    if [ -z "$BRHOSTDIR" ]; then
+        local BRHOSTDIR=./buildroot/output/host
+    fi
+
+    if [ ! -x "$BRHOSTDIR/bin/genimage" ]; then
+        echo "Buildroot must be built before generate_disk_image command can be used" >&2
+        exit 1
+    fi
+
+    local BDIR="${IDIR}/root/bootfs"
+    local RDIR="${IDIR}/root/rootfs"
+    local DDIR="${IDIR}/root/domufs"
+
+    rm -rf "$BDIR"
+    mkdir -p "$BDIR"
+    bootfs "$BDIR"
+
+    rm -rf "$RDIR"
+    mkdir -p "$RDIR"
+    rootfs "$RDIR"
+
+    rm -rf "$DDIR"
+    mkdir -p "$DDIR"
+    domufs "$DDIR"
+
+    mkdir -p "${IDIR}/input"
+    rm -f "${IDIR}/input/rootfs.ext4"
+    fakeroot mke2fs -t ext4 -d "$RDIR" "${IDIR}/input/rootfs.ext4" "$ROOTSIZE"
+
+    rm -f "${IDIR}/input/domufs.ext4"
+    fakeroot mke2fs -t ext4 -d "$DDIR" "${IDIR}/input/domufs.ext4" "$DOMUSIZE"
+
+    rm -rf "${TMPDIR}/genimage"
+    LD_LIBRARY_PATH="${BRHOSTDIR}/lib" PATH="${BRHOSTDIR}/bin:${BRHOSTDIR}/sbin:${PATH}" genimage --config ./configs/genimage-sp-distro.cfg --rootpath="${IDIR}/root" --inputpath "${IDIR}/input" --outputpath "${IDIR}/output" --tmppath "$TMPDIR/genimage"
+}
 
 function build_guest_kernels {
     if [ -n "$1" ]; then

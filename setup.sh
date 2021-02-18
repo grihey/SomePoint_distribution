@@ -31,6 +31,10 @@ case "$1" in
         kvmconfig
         exit 0
     ;;
+    x86config)
+        x86config
+        exit 0
+    ;;
     *)
         if [ ! -f .setup_sh_config ]; then
             echo ".setup_sh_config not found" >&2
@@ -619,6 +623,8 @@ function showhelp {
     echo "" >&2
     echo "Commands:" >&2
     echo "    defconfig                         Create new .setup_sh_config from defaults" >&2
+    echo "    kvmconfig                         Create new .setup_sh_config for KVM" >&2
+    echo "    x86config                         Create new .setup_sh_config for x86" >&2
     echo "    clone                             Clone the required subrepositories" >&2
     echo "    mount [device|image_file]         Mount given device or image file" >&2
     echo "    umount [mark]                     Unmount and optionally mark partitions" >&2

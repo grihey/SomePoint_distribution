@@ -15,13 +15,23 @@ function kvmconfig {
             sed "s/HYPERVISOR=.*/HYPERVISOR=KVM/" > .setup_sh_config
 }
 
+function x86config {
+    echo "Creating .setup_sh_config for x86" >&2
+    cat default_setup_sh_config | sed \
+            -e "s/HYPERVISOR=.*/HYPERVISOR=KVM/" \
+            -e "s/PLATFORM=.*/PLATFORM=x86/" \
+            -e "s/BUILDOPT=.*/BUILDOPT=2/" \
+            -e "s/KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
+            -e "s/RASPHN=.*/RASPHN=x86/" > .setup_sh_config
+}
+
 # returns 0 if function exists, 1 if not
 function fn_exists {
     if [ "$(LC_ALL=C type -t $1)" == "function" ]; then
-       return 0
+        return 0
     else
-       echo "$1: Unknown function" >&2
-       return 1
+        echo "$1: Unknown function" >&2
+        return 1
     fi
 }
 

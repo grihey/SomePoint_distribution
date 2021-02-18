@@ -262,15 +262,11 @@ function net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
-    if [ "$HYPERVISOR" == "KVM" ]; then
-        return 0
-    fi
-
     case "$BUILDOPT" in
     0|1)
     ;;
     2|3)
-        if [ "$1" == "dom0" ]; then
+        if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "XEN" ] ; then
             echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
             echo "iptables -t nat -A PREROUTING -p tcp --dport 222 -j DNAT --to-destination 10.123.123.2:22"
             echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"
@@ -304,6 +300,9 @@ function inittab {
         KVM)
             echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
             echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
+            if [ "$PLATFORM" = "x86" ] ; then
+                echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic Serial"
+            fi
         ;;
         *)
             echo "X0::respawn:/sbin/getty 115200 /dev/hvc0 # Xen virtual serial"

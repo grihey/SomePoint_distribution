@@ -380,10 +380,10 @@ function bootfs {
 
     case "$HYPERVISOR" in
     KVM)
-         # Nothing to copy at this point
+        # Nothing to copy at this point
     ;;
     *)
-         cp "${IMAGES}/xen" "$BOOTFS"
+        cp "${IMAGES}/xen" "$BOOTFS"
     ;;
     esac
 
@@ -453,7 +453,9 @@ function rootfs {
     2|3)
         net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
         chmod 755 "${ROOTFS}/etc/init.d/S41netadditions"
-        echo 'vif.default.script="vif-nat"' >> "${ROOTFS}/etc/xen/xl.conf"
+        if [ "$HYPERVISOR" == "XEN" ] ; then
+            echo 'vif.default.script="vif-nat"' >> "${ROOTFS}/etc/xen/xl.conf"
+        fi
     ;;
     *)
     ;;
@@ -463,7 +465,9 @@ function rootfs {
     chmod 755 "${ROOTFS}/etc/init.d/S10mdev"
     cp buildroot/package/busybox/mdev.conf "${ROOTFS}/etc/mdev.conf"
 
-    cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+    if [ "$PLATFORM" == "raspi4" ] ; then
+        cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+    fi
     inittab dom0 > "${ROOTFS}/etc/inittab"
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
@@ -471,10 +475,18 @@ function rootfs {
 
     case "$HYPERVISOR" in
     KVM)
-        cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"
-        cp qemu/efi-virtio.rom "${ROOTFS}/root"
-        cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
-        cp qemu/run-qemu.sh "${ROOTFS}/root"
+        case "$PLATFORM" in
+        x86)
+            cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
+            cp qemu/run-x86-qemu.sh "${ROOTFS}/root"
+        ;;
+        *)
+            cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"
+            cp qemu/efi-virtio.rom "${ROOTFS}/root"
+            cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
+            cp qemu/run-qemu.sh "${ROOTFS}/root"
+        ;;
+        esac
 
         rq_sh > "${ROOTFS}/root/rq.sh"
         chmod a+x "${ROOTFS}/root/rq.sh"
@@ -514,20 +526,26 @@ function nfsupdate {
     2|3)
         set_myids
         create_mount_points
-        sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TFTPPATH" "$BOOTMNT"
+        if [ "$PLATFORM" != "x86" ] ; then
+            sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TFTPPATH" "$BOOTMNT"
+        fi
         sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOM0" "$ROOTMNT"
         sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOMU" "$DOMUMNT"
 
-        bootfs
-        chmod -R 744 "$BOOTMNT"
-        chmod 755 "$BOOTMNT"
-        chmod 755 "${BOOTMNT}/overlays"
+        if [ "$PLATFORM" != "x86" ] ; then
+            bootfs
+            chmod -R 744 "$BOOTMNT"
+            chmod 755 "$BOOTMNT"
+            chmod 755 "${BOOTMNT}/overlays"
+        fi
         rootfs
         echo "DOM0_NFSROOT" > "${ROOTMNT}/DOM0_NFSROOT"
         domufs
         echo "DOMU_NFSROOT" > "${DOMUMNT}/DOMU_NFSROOT"
 
-        sudo umount "$BOOTMNT"
+        if [ "$PLATFORM" != "x86" ] ; then
+            sudo umount "$BOOTMNT"
+        fi
         sudo umount "$ROOTMNT"
         sudo umount "$DOMUMNT"
     ;;

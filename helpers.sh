@@ -88,6 +88,15 @@ function check_5_param_exist {
     check_param_exist "$5"
 }
 
+function check_6_param_exist {
+    check_param_exist "$1"
+    check_param_exist "$2"
+    check_param_exist "$3"
+    check_param_exist "$4"
+    check_param_exist "$5"
+    check_param_exist "$6"
+}
+
 function check_sha {
     # $1 is sha
     # $2 is file
@@ -208,21 +217,31 @@ function compile_kernel {
     local cross_compile
     local compile_dir
     local defconfig
+    local extra_configs
 
     echo "Compile kernel"
-    check_5_param_exist "$1" "$2" "$3" "$4" "$5"
+    check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
 
     kernel_src="$1"
     arch="$2"
     cross_compile="${CCACHE} $3"
     compile_dir="$4"
     defconfig="$5"
+    extra_configs="$6"
 
-    pushd "$kernel_src"
-    make "O=$compile_dir" "ARCH=$arch" "CROSS_COMPILE=$cross_compile" "$defconfig"
-    make "O=$compile_dir" -j 8 "ARCH=$arch" "CROSS_COMPILE=$cross_compile" Image modules dtbs \
-        > "${compile_dir}/kernel_compile.log"
-    popd
+    pushd $kernel_src || exit 255
+    # RUN in docker
+    make O="${compile_dir}" ARCH="${arch}" CROSS_COMPILE="$cross_compile" "$defconfig"
+    if [ -n "${extra_configs}" ]; then
+        echo "Adding extra kernel configs:"
+        echo "${extra_configs}"
+        echo "${extra_configs}" >> "${compile_dir}.config"
+    fi
+    # make O="$compile_dir" ARCH="$arch" CROSS_COMPILE="$cross_compile" menuconfig
+    make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" Image modules dtbs \
+        > "${compile_dir}"kernel_compile.log
+    popd || exit 255
+    # RUN in docker end
 }
 
 function install_kernel {
@@ -246,49 +265,51 @@ function install_kernel {
 }
 
 function install_kernel_modules {
-    local kernel_src
-    local arch
-    local cross_compile
-    local compile_dir
-    local rootfs
-    local mntrootfs
+    local KERNEL_SRC
+    local ARCH
+    local CROSS_COMPILE
+    local COMPILE_DIR
+    local ROOTFS
+    local MNTROOTFS
 
     echo "Install kernel modules"
     check_5_param_exist "$1" "$2" "$3" "$4" "$5"
 
-    kernel_src="$1"
-    arch="$2"
-    cross_compile="${CCACHE} $3"
-    compile_dir="$4"
-    rootfs="$5"
+    KERNEL_SRC="$1"
+    ARCH="$2"
+    CROSS_COMPILE="${CCACHE} $3"
+    COMPILE_DIR="$4"
+    ROOTFS="$5"
 
-    mntrootfs="$(sanitycheck "$rootfs")"
+    MNTROOTFS="$(sanitycheck "$ROOTFS")"
 
-    pushd "$kernel_src"
+    pushd "$KERNEL_SRC" || exit 255
     # RUN in docker
-    sudo make "O=$compile_dir" "ARCH=$arch" "CROSS_COMPILE=$cross_compile" "INSTALL_MOD_PATH=$mntrootfs" \
-        modules_install > "${compile_dir}/modules_install.log"
+    sudo make "O=${COMPILE_DIR}" "ARCH=${ARCH}" "CROSS_COMPILE=${CROSS_COMPILE}" "INSTALL_MOD_PATH=${MNTROOTFS}" \
+        modules_install > "${COMPILE_DIR}/modules_install.log"
     # RUN in docker end
-    popd
+    popd || exit 255
 
     # Create module deps files
     echo "Create module dep files"
-    KVERSION="$(cut -d "\"" -f 2 "${compile_dir}/include/generated/utsrelease.h")"
-    sudo chroot "$mntrootfs" depmod -a "$KVERSION"
+    KVERSION="$(cut -d "\"" -f 2 "${COMPILE_DIR}/include/generated/utsrelease.h")"
+    sudo chroot "$MNTROOTFS" depmod -a "${KVERSION}"
 }
 
 function compile_xen {
-    local src
-
     echo "Compile xen"
-    check_1_param_exist "$1"
-    check_1_param_exist "${xen_version}"
-    src="$1"
+    check_2_param_exist "$1" "$2"
+
+    local SRC
+    local VERSION
+
+    SRC="$1"
+    VERSION="$2"
 
     # Build xen
-    if [ ! -s "${src}"xen/xen ]; then
-        pushd "${src}" || exit 255
-        git checkout "${xen_version}"
+    if [ ! -s "${SRC}/xen/xen" ]; then
+        pushd "${SRC}" || exit 255
+        git checkout "${VERSION}"
 
         if [ ! -s xen/.config ]; then
             #echo "CONFIG_DEBUG=y" > xen/arch/arm/configs/arm64_defconfig

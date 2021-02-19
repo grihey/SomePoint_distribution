@@ -249,7 +249,7 @@ function ubootsource {
         echo "fdt resize 1024"
         echo "fdt set /chosen \\#address-cells <1>"
         echo "fdt set /chosen \\#size-cells <1>"
-        echo "fdt set /chosen xen,xen-bootargs \"console=dtuart dtuart=serial0 sync_console dom0_mem=4G dom0_max_vcpus=2 bootscrub=0 vwfi=native sched=null\""
+        echo "fdt set /chosen xen,xen-bootargs \"console=dtuart dtuart=serial0 sync_console dom0_mem=${XEN_DOM0_MEMORY:?} dom0_max_vcpus=${XEN_DOM0_CPUCOUNT:?} bootscrub=0 vwfi=native sched=null\""
         echo "fdt mknod /chosen dom0"
         echo "fdt set /chosen/dom0 compatible \"xen,linux-zimage\" \"xen,multiboot-module\""
         echo "fdt set /chosen/dom0 reg <0x\${lin_addr} 0x\${lin_size}>"

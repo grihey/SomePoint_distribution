@@ -17,6 +17,9 @@ FWFDT=0
 # Hypervisor selection (XEN or KVM)
 HYPERVISOR=XEN
 
+XEN_DOM0_CPUCOUNT=2
+XEN_DOM0_MEMORY=4G
+
 # SECURE_OS defines if we are building a secure-os or not
 SECURE_OS=0
 

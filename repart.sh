@@ -2,8 +2,10 @@
 
 # Calculates actual number of bytes from strings like '4G' and '23M' plain numbers are sectors (512 bytes)
 function actual_value {
-    local LCH=${1: -1}
-    case $LCH in
+    local LCH
+
+    LCH="${1: -1}"
+    case "$LCH" in
         G)
         echo "$((${1:0:-1}*1024*1024*1024))"
         ;;
@@ -40,8 +42,8 @@ function show_help {
     exit 1
 }
 
-if [ $# -eq 0 ]; then
-    show_help
+if [ "$#" -eq 0 ]; then
+    show_help >&2
 fi
 
 DEVICE=/dev/null
@@ -53,8 +55,8 @@ FORCED=N
 IMAGE_ROOT=""
 IMAGE_DOMU=""
 
-while [ $# -gt 0 ]; do
-    case $1 in
+while [ "$#" -gt 0 ]; do
+    case "$1" in
         -b|--boot)
         BOOTSIZ="$2"
         shift # past argument
@@ -92,51 +94,50 @@ while [ $# -gt 0 ]; do
         shift # past argument
         ;;
         *)    # device name
-        DEVICE=$1
+        DEVICE="$1"
         shift # past argument
         ;;
    esac
 done
 
 if [ "$FORCED" != "Y" ]; then
-    mount | grep -q $DEVICE
-    if [ $? -eq 0 ]; then
-       echo "${DEVICE} seems to be mounted, aborting"
+    if mount | grep -q "$DEVICE"; then
+       echo "${DEVICE} seems to be mounted, aborting" >&2
        exit 1
     fi
 fi
 
 if [ -d "$DEVICE" ]; then
-    echo "${DEVICE} is a directory, aborting"
+    echo "${DEVICE} is a directory, aborting" >&2
     exit 2
 fi
 
 if [ -c "$DEVICE" ]; then
-    echo "${DEVICE} is a character device, aborting"
+    echo "${DEVICE} is a character device, aborting" >&2
     exit 3
 fi
 
-if [ ! -b "$DEVICE" -a -z "$DOMUSIZ" ]; then
-    echo "Domu Fs size cannot be 'fill device' when using an image file"
+if [ ! -b "$DEVICE" ] && [ -z "$DOMUSIZ" ]; then
+    echo "Domu Fs size cannot be 'fill device' when using an image file" >&2
     exit 4
 fi
 
-AB=`actual_value $BOOTSIZ`
-if [ $AB -eq 0 ]; then
-    echo "Invalid boot fs size"
+AB="$(actual_value "$BOOTSIZ")"
+if [ "$AB" -eq 0 ]; then
+    echo "Invalid boot fs size" >&2
     exit 5
 fi
 
-AR=`actual_value $ROOTSIZ`
-if [ $AR -eq 0 ]; then
-    echo "Invalid root fs size"
+AR="$(actual_value "$ROOTSIZ")"
+if [ "$AR" -eq 0 ]; then
+    echo "Invalid root fs size" >&2
     exit 6
 fi
 
 if [ -n "$DOMUSIZ" ]; then
-    AD=`actual_value $DOMUSIZ`
-    if [ $AD -eq 0 ]; then
-        echo "Invalid domu fs size"
+    AD="$(actual_value "$DOMUSIZ")"
+    if [ "$AD" -eq 0 ]; then
+        echo "Invalid domu fs size" >&2
         exit 7
     fi
 fi
@@ -169,24 +170,24 @@ fi
 
 if [ "$CONFIRM" == "Y" ]; then
     echo "THIS WILL DESTROY ANY DATA IN SELECTED DEVICE OR IMAGE FILE!"
-    read -p " Do you really want to continue? (y/N): " I
-    if [ "$I" != "y" -a "$I" != "Y" ]; then
+    read -rp " Do you really want to continue? (y/N): " I
+    if [ "$I" != "y" ] && [ "$I" != "Y" ]; then
 	echo Canceled
         exit 8
     fi
 fi
 
 if [ ! -b "$DEVICE" ]; then
-    DEVSIZ=$(($AB+$AR+$AD))
-    truncate -s $DEVSIZ $DEVICE
+    DEVSIZ="$((AB+AR+AD))"
+    truncate -s "$DEVSIZ" "$DEVICE"
     DOMUSIZ=""
 fi
 
 if [ -n "$DOMUSIZ" ]; then
-    DOMUSIZ=+$DOMUSIZ
+    DOMUSIZ="+$DOMUSIZ"
 fi
 
-sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | sudo fdisk $DEVICE
+sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | sudo fdisk "$DEVICE"
   o # clear the in memory partition table
   n # new partition
   p # primary partition
@@ -214,7 +215,7 @@ EOF
 
 if [ -b "$DEVICE" ]; then
     # Do partition probe just in case
-    sudo partprobe $DEVICE
+    sudo partprobe "$DEVICE"
 
     # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
     if [[ "${DEVICE: -1}" =~ [0-9] ]]; then
@@ -228,36 +229,36 @@ if [ -b "$DEVICE" ]; then
     DP3="${DEVICE}${MIDP}3"
 else
     # Loop device partitions if it
-    KPARTXOUT=`sudo kpartx -l "$DEVICE" 2> /dev/null`
+    KPARTXOUT="$(sudo kpartx -l "$DEVICE" 2> /dev/null)"
 
-    DP1=/dev/mapper/`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    DP2=/dev/mapper/`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    DP3=/dev/mapper/`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    DP1="/dev/mapper/$(grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1)"
+    DP2="/dev/mapper/$(grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1)"
+    DP3="/dev/mapper/$(grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1)"
 
-    sudo kpartx -a $DEVICE
+    sudo kpartx -a "$DEVICE"
 fi
 
 # Create FAT32 boot FS
-sudo mkdosfs -F 32 $DP1
+sudo mkdosfs -F 32 "$DP1"
 
 if [ -f "$IMAGE_DOMU" ]; then
     echo "Flashing image $IMAGE_ROOT to $DP2"
-    sudo dd if="$IMAGE_ROOT" of=$DP2 bs=4k
+    sudo dd if="$IMAGE_ROOT" of="$DP2" bs=4k
 else
     # Create EXT4 root FS
-    sudo mkfs.ext4 -F $DP2
+    sudo mkfs.ext4 -F "$DP2"
 fi
 
 if [ -f "$IMAGE_DOMU" ]; then
     echo "Flashing image $IMAGE_DOMU to $DP3"
-    sudo dd if="$IMAGE_DOMU" of=$DP3 bs=4k
+    sudo dd if="$IMAGE_DOMU" of="$DP3" bs=4k
 else
     # Create EXT4 domu FS
-    sudo mkfs.ext4 -F $DP3
+    sudo mkfs.ext4 -F "$DP3"
 fi
 
 sudo sync
 
 if [ ! -b "$DEVICE" ]; then
-     sudo kpartx -d $DEVICE
+     sudo kpartx -d "$DEVICE"
 fi

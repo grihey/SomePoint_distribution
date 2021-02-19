@@ -24,23 +24,23 @@ SECURE_OS=0
 PLATFORM=raspi4
 
 # Directories where partitions are mounted
-MNT_DIR="`pwd`/mnt"
+MNT_DIR="$(pwd)/mnt"
 BOOTMNT="$MNT_DIR/bootfs"
 ROOTMNT="$MNT_DIR/rootfs"
 DOMUMNT="$MNT_DIR/domufs"
 
 # Where guest kernels are built by default
-GKBUILD="`pwd`/images"
+GKBUILD="$(pwd)/images"
 
 # Where filesystem dirs are generated to and where disk image is placed
-IMGBUILD="`pwd`/images/genimage"
+IMGBUILD="$(pwd)/images/genimage"
 
 # Temporary directory
-TMPDIR="`pwd`/images/tmp"
+TMPDIR="$(pwd)/images/tmp"
 
 # Where buildroot is storing images
-IMAGES="`pwd`/buildroot/output/images"
-KERNEL_IMAGE="$IMAGES/Image"
+IMAGES="$(pwd)/buildroot/output/images"
+KERNEL_IMAGE="${IMAGES}/Image"
 
 # RasPi dom0 static IP Configuration
 RASPIP=192.168.1.170
@@ -54,6 +54,6 @@ RASPHN=raspi
 # TFTP and NFS server settings
 TFTPSERVER=192.168.1.145
 TFTPPATH=/srv/tftp
-NFSSERVER=$TFTPSERVER
+NFSSERVER="$TFTPSERVER"
 NFSDOM0=/srv/nfsdom0
 NFSDOMU=/srv/nfsdomu

@@ -11,8 +11,8 @@ function on_exit_cleanup {
 set -e
 
 # Get actual directory of this bash script
-SDIR=`dirname "$BASH_SOURCE[0]"`
-SDIR=`realpath "$SDIR"`
+SDIR="$(dirname "${BASH_SOURCE[0]}")"
+SDIR="$(realpath "$SDIR")"
 
 # Change to the script directory and set cleanup on exit
 pushd "$SDIR" > /dev/null
@@ -53,29 +53,37 @@ CCACHE=
 
 if [ -x "$(command -v ccache)" ]; then
     CCACHE="ccache"
-    export CCACHE_DIR=`pwd`/.ccache
-    export CCACHE_MAXSIZE=10G
-
-    #ccache -s
+    CCACHE_DIR="$(pwd)/.ccache"
+    CCACHE_MAXSIZE=10G
+    export CCACHE_DIR
+    export CCACHE_MAXSIZE
 fi
 
 function generate_disk_image {
+    local IDIR
+    local BDIR
+    local RDIR
+    local DDIR
+
     if [ -n "$1" ]; then
-        local IDIR=`sanitycheck "$1" ne`
+        IDIR="$(sanitycheck "$1" ne)"
     else
-        local IDIR=`sanitycheck "$IMGBUILD" ne`
+        IDIR="$(sanitycheck "$IMGBUILD" ne)"
     fi
 
     if [ -z "$ROOTSIZE" ]; then
-        local ROOTSIZE=$((1024*1024))
+        local ROOTSIZE
+        ROOTSIZE=$((1024*1024))
     fi
 
     if [ -z "$DOMUSIZE" ]; then
-        local DOMUSIZE=$((1024*1024))
+        local DOMUSIZE
+        DOMUSIZE=$((1024*1024))
     fi
 
     if [ -z "$BRHOSTDIR" ]; then
-        local BRHOSTDIR=./buildroot/output/host
+        local BRHOSTDIR
+        BRHOSTDIR=./buildroot/output/host
     fi
 
     if [ ! -x "$BRHOSTDIR/bin/genimage" ]; then
@@ -83,9 +91,9 @@ function generate_disk_image {
         exit 1
     fi
 
-    local BDIR="${IDIR}/root/bootfs"
-    local RDIR="${IDIR}/root/rootfs"
-    local DDIR="${IDIR}/root/domufs"
+    BDIR="${IDIR}/root/bootfs"
+    RDIR="${IDIR}/root/rootfs"
+    DDIR="${IDIR}/root/domufs"
 
     rm -rf "$BDIR"
     mkdir -p "$BDIR"
@@ -107,14 +115,24 @@ function generate_disk_image {
     fakeroot mke2fs -t ext4 -d "$DDIR" "${IDIR}/input/domufs.ext4" "$DOMUSIZE"
 
     rm -rf "${TMPDIR}/genimage"
-    LD_LIBRARY_PATH="${BRHOSTDIR}/lib" PATH="${BRHOSTDIR}/bin:${BRHOSTDIR}/sbin:${PATH}" genimage --config ./configs/genimage-sp-distro.cfg --rootpath="${IDIR}/root" --inputpath "${IDIR}/input" --outputpath "${IDIR}/output" --tmppath "$TMPDIR/genimage"
+
+    LD_LIBRARY_PATH="${BRHOSTDIR}/lib" \
+    PATH="${BRHOSTDIR}/bin:${BRHOSTDIR}/sbin:${PATH}" \
+        genimage \
+            --config ./configs/genimage-sp-distro.cfg \
+            --rootpath "${IDIR}/root" \
+            --inputpath "${IDIR}/input" \
+            --outputpath "${IDIR}/output" \
+            --tmppath "$TMPDIR/genimage"
 }
 
 function build_guest_kernels {
+    local ODIR
+
     if [ -n "$1" ]; then
-        local ODIR=`sanitycheck "$1" ne`
+        ODIR="$(sanitycheck "$1" ne)"
     else
-        local ODIR=`sanitycheck "$GKBUILD" ne`
+        ODIR="$(sanitycheck "$GKBUILD" ne)"
     fi
 
     case "$HYPERVISOR" in
@@ -129,18 +147,21 @@ function build_guest_kernels {
 }
 
 function set_myids {
-    MYUID=`id -u`
-    MYGID=`id -g`
+    MYUID="$(id -u)"
+    MYGID="$(id -g)"
 }
 
 function is_mounted {
+    local FLAGS
+    local MOUNTED
+
     # Save flags
-    local FLAGS=$-
+    FLAGS="$-"
 
     # Disable exit on status != 0 for grep
     set +e
 
-    local MOUNTED=`mount | grep "$1"`
+    MOUNTED="$(mount | grep "$1")"
 
     # Restore flags
     if [[ "$FLAGS" =~ "e" ]]; then
@@ -149,18 +170,19 @@ function is_mounted {
 
     if [ -z "$MOUNTED" ]; then
         if [ "$AUTOMOUNT" == "1" ]; then
-            echo "Block device is not mounted. Automounting is set. Mounting!" >&2
+            echo "Block device is not mounted. Automounting!" >&2
             domount
         else
             echo "Block device is not mounted." >&2
-            exit -1
+            exit 1
         fi
     fi
 }
 
 function uloopimg {
     if [ -f .mountimg ]; then
-        IMG=`cat .mountimg`
+        local IMG
+        IMG="$(cat .mountimg)"
         sync
         sudo kpartx -d "$IMG"
         rm -f .mountimg
@@ -186,11 +208,13 @@ function umountimg {
 }
 
 function loopimg {
-    local KPARTXOUT=`sudo kpartx -l "$1" 2> /dev/null`
+    local KPARTXOUT
 
-    PART1=/dev/mapper/`grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    PART2=/dev/mapper/`grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1`
-    PART3=/dev/mapper/`grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1`
+    KPARTXOUT="$(sudo kpartx -l "$1" 2> /dev/null)"
+
+    PART1="/dev/mapper/$(grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1)"
+    PART2="/dev/mapper/$(grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1)"
+    PART3="/dev/mapper/$(grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1)"
 
     sudo kpartx -a "$1"
 
@@ -236,6 +260,8 @@ function mountimg {
 }
 
 function domount {
+    local DEV
+
     set +e
 
     if [ -z "$1" ]; then
@@ -267,6 +293,8 @@ function domount {
 }
 
 function doumount {
+    local MOUNTED
+
     set +e
 
     if [ -f .mountimg ]; then
@@ -274,7 +302,7 @@ function doumount {
         return 0
     fi
 
-    local MOUNTED=`mount | grep "$BOOTMNT"`
+    MOUNTED="$(mount | grep "$BOOTMNT")"
     if [ -z "$MOUNTED" ]; then
         echo "Not mounted"
         exit 2
@@ -359,15 +387,17 @@ function uboot_src {
 }
 
 function bootfs {
+    local BOOTFS
+
     if [ -z "$1" ]; then
         BOOTFS="$BOOTMNT"
         is_mounted "$BOOTMNT"
     else
-        BOOTFS=`sanitycheck "$1"`
+        BOOTFS="$(sanitycheck "$1")"
     fi
 
     pushd "$BOOTFS"
-    rm -fr *
+    rm -rf ./*
     popd
 
     config_txt > "${BOOTFS}/config.txt"
@@ -398,17 +428,19 @@ function bootfs {
 }
 
 function netboot {
+    local BOOTFS
+
     case "$BUILDOPT" in
     2|3)
         if [ -z "$1" ]; then
             BOOTFS="$BOOTMNT"
             is_mounted "$BOOTMNT"
         else
-            BOOTFS=`sanitycheck "$1"`
+            BOOTFS="$(sanitycheck "$1")"
         fi
 
         pushd "$BOOTFS"
-        rm -fr *
+        rm -rf ./*
         popd
 
         config_txt > "${BOOTFS}/config.txt"
@@ -426,16 +458,18 @@ function netboot {
 }
 
 function rootfs {
+    local ROOTFS
+
     if [ -z "$1" ]; then
         ROOTFS="$ROOTMNT"
         is_mounted "$ROOTMNT"
     else
-        ROOTFS=`sanitycheck "$1"`
+        ROOTFS="$(sanitycheck "$1")"
     fi
 
     pushd "$ROOTFS"
     echo "Updating $ROOTFS/"
-    rm -fr *
+    rm -rf ./*
     fakeroot tar xf "${IMAGES}/rootfs.tar" > /dev/null
     popd
 
@@ -502,11 +536,13 @@ function rootfs {
 }
 
 function domufs {
+    local DOMUFS
+
     if [ -z "$1" ]; then
         DOMUFS="$DOMUMNT"
         is_mounted "$DOMUMNT"
     else
-        DOMUFS=`sanitycheck "$1"`
+        DOMUFS="$(sanitycheck "$1")"
     fi
 
     rootfs "$DOMUFS"
@@ -585,6 +621,9 @@ function ssh_dut {
 }
 
 function dofsck {
+    local DEV
+    local MIDP
+
     set +e
 
     if [ -z "$1" ]; then
@@ -619,56 +658,52 @@ function dofsck {
 }
 
 function showhelp {
-    echo "Usage $0 <command> [parameters]" >&2
-    echo "" >&2
-    echo "Commands:" >&2
-    echo "    defconfig                         Create new .setup_sh_config from defaults" >&2
-    echo "    kvmconfig                         Create new .setup_sh_config for KVM" >&2
-    echo "    x86config                         Create new .setup_sh_config for x86" >&2
-    echo "    clone                             Clone the required subrepositories" >&2
-    echo "    mount [device|image_file]         Mount given device or image file" >&2
-    echo "    umount [mark]                     Unmount and optionally mark partitions" >&2
-    echo "    bootfs [path]                     Copy boot fs files" >&2
-    echo "    rootfs [path]                     Copy root fs files (dom0)" >&2
-    echo "    domufs [path]                     Copy domu fs files" >&2
-    echo "    fsck [device|image_file]          Check filesystems in device or image" >&2
-    echo "    uboot_src                         Generate U-boot script" >&2
-    echo "    netboot [path]                    Copy boot files needed for network boot" >&2
-    echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot" >&2
-    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes" >&2
-    echo "    ssh_dut                           Open ssh session with target device" >&2
-    echo "" >&2
+    echo "Usage $0 <command> [parameters]"
+    echo ""
+    echo "Commands:"
+    echo "    defconfig                         Create new .setup_sh_config from defaults"
+    echo "    kvmconfig                         Create new .setup_sh_config for KVM"
+    echo "    x86config                         Create new .setup_sh_config for x86"
+    echo "    clone                             Clone the required subrepositories"
+    echo "    mount [device|image_file]         Mount given device or image file"
+    echo "    umount [mark]                     Unmount and optionally mark partitions"
+    echo "    bootfs [path]                     Copy boot fs files"
+    echo "    rootfs [path]                     Copy root fs files (dom0)"
+    echo "    domufs [path]                     Copy domu fs files"
+    echo "    fsck [device|image_file]          Check filesystems in device or image"
+    echo "    uboot_src                         Generate U-boot script"
+    echo "    netboot [path]                    Copy boot files needed for network boot"
+    echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
+    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes"
+    echo "    ssh_dut                           Open ssh session with target device"
+    echo ""
     exit 0
 }
 
 # Some translations
-if [ -z "$1" ]; then
-    CMD="showhelp"
-else
-    case "$1" in
-        mount|sdcard)
-            CMD="domount"
-        ;;
-        umount|usdcard)
-            CMD="doumount"
-        ;;
-        domu)
-            CMD="domufs"
-        ;;
-        fsck)
-            CMD="dofsck"
-        ;;
-        ""|help|-h|--help)
-            CMD="showhelp"
-        ;;
-        *)
-            CMD="$1"
-        ;;
-    esac
+case "$1" in
+    mount|sdcard)
+        CMD="domount"
+    ;;
+    umount|usdcard)
+        CMD="doumount"
+    ;;
+    domu)
+        CMD="domufs"
+    ;;
+    fsck)
+        CMD="dofsck"
+    ;;
+    ""|help|-h|--help)
+        showhelp >&2
+    ;;
+    *)
+        CMD="$1"
+    ;;
+esac
 
-    shift
-fi
+shift
 
 # Check if function exists and run it if it does
 fn_exists "$CMD"
-"$CMD" $*
+"$CMD" "$@"

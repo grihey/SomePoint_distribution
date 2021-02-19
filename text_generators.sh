@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Configuration file text generators
 # Included into setup.sh
 
@@ -273,8 +275,8 @@ function net_rc_add {
             echo ""
         fi
 
-        echo "DNSS=\`dmesg | grep nameserver0\`"
-        echo "if [ \$? -eq 0 ]; then"
+        echo "DNSS=\$(dmesg | grep nameserver0)"
+        echo "if [ \"\$?\" -eq 0 ]; then"
         echo "    read -r _ _ DNS0 <<< \"\$DNSS\""
         echo "    DNS0=\${DNS0##*nameserver0=}"
         echo "    DNS0=\${DNS0%%,*}"

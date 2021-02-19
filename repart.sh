@@ -21,6 +21,8 @@ function actual_value {
 function show_help {
     echo "Usage:"
     echo "    $0 [-b|--boot <boot fs size>] [-r|-root <root fs size>] [-d|--domu <domu fs size>] [-y|--yes] [--force] <device>"
+    echo "       [-ir|--image-root <root image>"
+    echo "       [-id|--image-domu <domu image>"
     echo ""
     echo "Examples:"
     echo "    $0 -b 512M -r 4G -d 4G -y /dev/sda"
@@ -48,6 +50,8 @@ ROOTSIZ=1G
 DOMUSIZ=1G
 CONFIRM=Y
 FORCED=N
+IMAGE_ROOT=""
+IMAGE_DOMU=""
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -63,6 +67,16 @@ while [ $# -gt 0 ]; do
         ;;
         -d|--domu)
         DOMUSIZ="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -ir|--image-root)
+        IMAGE_ROOT="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -id|--image-domu)
+        IMAGE_DOMU="$2"
         shift # past argument
         shift # past value
         ;;
@@ -127,10 +141,31 @@ if [ -n "$DOMUSIZ" ]; then
     fi
 fi
 
+if [ -n "$IMAGE_ROOT" ]; then
+    if [ ! -f "$IMAGE_ROOT" ]; then
+        echo "Root image <$IMAGE_ROOT> not found"
+        exit 8
+    fi
+fi
+
+if [ -n "$IMAGE_DOMU" ]; then
+    if [ ! -f "$IMAGE_DOMU" ]; then
+        echo "Domu image <$IMAGE_DOMU> not found"
+        exit 9
+    fi
+fi
+
 echo "      Device = ${DEVICE}"
 echo "Boot FS size = ${BOOTSIZ}"
 echo "Root FS size = ${ROOTSIZ}"
 echo "Domu FS size = ${DOMUSIZ:-fill device}"
+if [ -n "$IMAGE_ROOT" ]; then
+    echo "Root Image   = ${IMAGE_ROOT}"
+fi
+if [ -n "$IMAGE_DOMU" ]; then
+    echo "Domu Image   = ${IMAGE_DOMU}"
+fi
+
 
 if [ "$CONFIRM" == "Y" ]; then
     echo "THIS WILL DESTROY ANY DATA IN SELECTED DEVICE OR IMAGE FILE!"
@@ -205,11 +240,21 @@ fi
 # Create FAT32 boot FS
 sudo mkdosfs -F 32 $DP1
 
-# Create EXT4 root FS
-sudo mkfs.ext4 -F $DP2
+if [ -f "$IMAGE_DOMU" ]; then
+    echo "Flashing image $IMAGE_ROOT to $DP2"
+    sudo dd if="$IMAGE_ROOT" of=$DP2 bs=4k
+else
+    # Create EXT4 root FS
+    sudo mkfs.ext4 -F $DP2
+fi
 
-# Create EXT4 domu FS
-sudo mkfs.ext4 -F $DP3
+if [ -f "$IMAGE_DOMU" ]; then
+    echo "Flashing image $IMAGE_DOMU to $DP3"
+    sudo dd if="$IMAGE_DOMU" of=$DP3 bs=4k
+else
+    # Create EXT4 domu FS
+    sudo mkfs.ext4 -F $DP3
+fi
 
 sudo sync
 

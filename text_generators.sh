@@ -3,10 +3,10 @@
 
 function domu_config {
     case "$BUILDOPT" in
-    0)
+    0|MMC)
         cat configs/domu.cfg.sd
     ;;
-    1)
+    1|USB)
         cat configs/domu.cfg.usb
     ;;
     2|3)
@@ -129,11 +129,11 @@ function domu_interfaces {
 
 function ubootstub {
     case "$BUILDOPT" in
-    0)
+    0|MMC)
         echo "fatload mmc 0:1 0x100000 boot2.scr"
         echo "source 0x100000"
     ;;
-    1)
+    1|USB)
         echo "fatload usb 0:1 0x100000 boot2.scr"
         echo "source 0x100000"
     ;;
@@ -193,11 +193,11 @@ function ubootsource {
     esac
 
     case "$BUILDOPT" in
-    0)
+    0|MMC)
         local LOAD="fatload mmc 0:1"
         local ROOTPARM=" root=/dev/mmcblk0p2 rootfstype=ext4"
     ;;
-    1)
+    1|USB)
         local LOAD="fatload usb 0:1"
         local ROOTPARM=" root=/dev/sda2 rootfstype=ext4"
     ;;
@@ -263,7 +263,7 @@ function net_rc_add {
     echo ""
 
     case "$BUILDOPT" in
-    0|1)
+    0|1|USB|MMC)
     ;;
     2|3)
         if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "XEN" ] ; then
@@ -344,7 +344,7 @@ function config_txt {
 function rq_sh {
     echo "#!/bin/bash"
     case "$BUILDOPT" in
-    0)
+    0|MMC)
         echo "./run-qemu.sh /dev/mmcblk0p3"
     ;;
     2|3)

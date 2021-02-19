@@ -1,7 +1,8 @@
 # Automount sd/usb if not mounted when doing e.g. rootfs (0=off, 1=on)
 AUTOMOUNT=0
 
-# BUILDOPT defines type of build 0=SD, 1=USB, 2=TFTP/NFS/DHCP 3=TFTP/NFS/static
+# BUILDOPT defines type of build 0=SD, 1=USB, 2=TFTP/NFS/DHCP, 3=TFTP/NFS/static
+# USB and MMC keywords are also supported
 BUILDOPT=1
 
 # Default device for mount operations

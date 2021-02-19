@@ -257,25 +257,27 @@ function install_kernel_modules {
     popd
 
     # Create module deps files
-    sudo chroot $mntrootfs depmod -a 5.9.6-v8+
+    echo "Create module dep files"
+    KVERSION=`cut -d "\"" -f 2 ${compile_dir}/include/generated/utsrelease.h`
+    sudo chroot $mntrootfs depmod -a $KVERSION
 }
 
 function compile_xen {
     echo "Compile xen"
-    check_1_param_exist $1
-    check_1_param_exist ${xen_version}
+    check_1_param_exist "$1"
+    check_1_param_exist "${xen_version}"
     src=$1
 
     # Build xen
-    if [ ! -s ${src}xen/xen ]; then
-        pushd ${src}
-        git checkout ${xen_version}
+    if [ ! -s "${src}"xen/xen ]; then
+        pushd "${src}" || exit 255
+        git checkout "${xen_version}"
         if [ ! -s xen/.config ]; then
             #echo "CONFIG_DEBUG=y" > xen/arch/arm/configs/arm64_defconfig
             #echo "CONFIG_SCHED_ARINC653=y" >> xen/arch/arm/configs/arm64_defconfig
             make -C xen XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         fi
-        make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dist-xen -j $(nproc)
-        popd
+        make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dist-xen -j "$(nproc)"
+        popd || exit 255
     fi
 }

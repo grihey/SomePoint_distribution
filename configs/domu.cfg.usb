@@ -1,7 +1,7 @@
-kernel = "/root/Image"
+kernel = "./Image"
 cmdline = "console=hvc0 earlyprintk=xen sync_console root=/dev/xvda"
 memory = "1024"
-name = "rpi4-xen-guest"
+name = "guest"
 vcpus = 2
 cpus = "3-4"
 serial="pty"

@@ -1,7 +1,7 @@
-kernel = "/root/Image"
+kernel = "./Image"
 cmdline = "console=hvc0 earlyprintk=xen sync_console root=/dev/xvda"
 memory = "1024"
-name = "rpi4-xen-guest"
+name = "guest"
 vcpus = 1
 serial="pty"
 disk = [ 'phy:/dev/mmcblk0p3,xvda,w' ]
@@ -10,5 +10,5 @@ vfb = [ 'type=vnc,vncdisplay=10,vncpasswd=raspberry' ]
 type = "pvh"
 
 # Guest VGA console configuration, either SDL or VNC
-sdl = 1
-#vnc = 1
+#sdl = 1
+vnc = 1

@@ -657,6 +657,38 @@ function dofsck {
     fi
 }
 
+function buildall {
+    case "$1" in
+    x86|X86)
+        x86config
+    ;;
+    kvm|KVM)
+        kvmconfig
+    ;;
+    xen|XEN)
+        defconfig
+    ;;
+    "")
+        # Don't touch config unless explicitly told to
+        # On just cloned repo Xen defaults will be used
+    ;;
+    *)
+        echo "Invalid parameter: $1" >&2
+        exit 1
+    ;;
+    esac
+
+    # Reload config in case it was changed above
+    . default_setup_sh_config
+    . .setup_sh_config
+
+    clone
+    cd docker
+    make build_env
+    make ci
+    cd ..
+}
+
 function showhelp {
     echo "Usage $0 <command> [parameters]"
     echo ""
@@ -675,7 +707,10 @@ function showhelp {
     echo "    netboot [path]                    Copy boot files needed for network boot"
     echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
     echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes"
-    echo "    ssh_dut                           Open ssh session with target device"
+    echo "    ssh_dut [domu]                    Open ssh session with target device"
+    echo "    buildall [xen|kvm|x86]            Builds a disk image and filesystem tarballs"
+    echo "                                      uses selected default config if given"
+    echo "                                      (overwrites .setup_sh_config if given)"
     echo ""
     exit 0
 }

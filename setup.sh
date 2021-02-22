@@ -379,7 +379,7 @@ function uboot_src {
 
     cp "${IMAGES}/$DEVTREE" images/xen
     case "$BUILDOPT" in
-    0|1)
+    0|1|MMC|USB)
         ubootsource > images/xen/boot.source
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
     ;;
@@ -419,7 +419,7 @@ function bootfs {
     cp u-boot.bin "$BOOTFS"
     cp "$KERNEL_IMAGE" "${BOOTFS}/vmlinuz"
     case "$BUILDOPT" in
-    0|1)
+    0|1|MMC|USB)
         cp images/xen/boot.scr "$BOOTFS"
     ;;
     2|3)

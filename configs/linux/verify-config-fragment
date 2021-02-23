@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+use Getopt::Long;
+use File::Basename;
+use Pod::Usage;
+
+my $config;
+my $frag;
+my $man;
+my $help;
+
+GetOptions(
+    "help|?" => \$help,
+    "man" => \$man,
+    "config=s" => \$config,
+    "fragment=s" => \$frag)
+or pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitval => 0, -verbose => 2) if $man;
+pod2usage(2) if !$config || !$frag;
+
+die "Bad kernel config $config!\n" if ! -f $config;
+die "Bad config fragment $frag!\n" if ! -f $frag;
+
+my $kerndir = dirname($config);
+
+# Search for kernel base dir
+while (! -f $kerndir."/arch/x86/configs/x86_64_defconfig") {
+    $kerndir =~ s/\/[^\/]+$//;
+}
+
+print "Kernel config:	$config\n";
+print "Config fragment:	$frag\n";
+print "Kernel base dir:	$kerndir\n";
+
+my $diff = `$kerndir/scripts/diffconfig $config $frag`;
+
+my $delta = 0;
+
+foreach (split "\n", $diff) {
+    if (/^ ([A-Z0-9_]+) (\S+) -> (\S+)/) {
+        next if $2 eq $3;
+        print "$1 changed from $2 to $3\n";
+        $delta++;
+    }
+    if (/\+([A-Z0-9_]+) (\S+)/) {
+        next if $2 eq "n"; # Any missing options are assumed = n
+        print "Missing option: $1 = $2\n";
+        $delta++;
+    }
+}
+
+if (!$delta) {
+    print "No delta, $frag applied successfully!\n";
+} else {
+    print "$delta config options differ.\n";
+}
+
+__END__
+
+=head1 NAME
+
+verify-config-fragment - Verify config fragment options with kernel
+
+=head1 SYNOPSIS
+
+verify-config-fragment [options]
+
+    Options:
+        -help               brief help message
+        -man                full documentation
+        -config <file>      kernel config
+        -fragment <file>    config fragment to verify
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=item B<-config> <config>
+
+Specify kernel config to check.
+
+=item B<-fragment> <fragment>
+
+Specify kernel config fragment to check.
+
+=back
+
+=head1 DESCRIPTION
+
+B<This program> will read the given config fragment file and verify
+their settings against the provided kernel config.
+
+=cut

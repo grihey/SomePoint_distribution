@@ -367,6 +367,11 @@ function clone {
 }
 
 function uboot_src {
+    if [ "$PLATFORM" = "x86" ] ; then
+        echo "INFO: uboot_src generated scripts not needed for x86 build."
+        return 0
+    fi
+
     mkdir -p images/xen
 
     cp "${IMAGES}/xen" images/xen/
@@ -393,6 +398,11 @@ function uboot_src {
 
 function bootfs {
     local BOOTFS
+
+    if [ "$PLATFORM" = "x86" ] ; then
+        echo "INFO: x86 does not require bootfs setup."
+        return 0
+    fi
 
     if [ -z "$1" ]; then
         BOOTFS="$BOOTMNT"

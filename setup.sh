@@ -129,6 +129,11 @@ function generate_disk_image {
 function build_guest_kernels {
     local ODIR
 
+    if [ "$PLATFORM" = "x86" ] ; then
+        echo "INFO: x86 does not require separate guest kernel images."
+        return 0
+    fi
+
     if [ -n "$1" ]; then
         ODIR="$(sanitycheck "$1" ne)"
     else

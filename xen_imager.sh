@@ -283,10 +283,17 @@ function compile_xen_tools {
         git clone "$XEN_SRC" xen
         pushd xen || exit 255
         git checkout "${XEN_VERSION:?}"
-        # Cannot surround the whole second parameter.
-        git apply "${PATCH_DIR}"/xen_*.patch
         popd || exit 255
     fi
+
+    if [ ! -f xen/patches_applied.done ]; then
+        pushd xen || exit 255
+        # Cannot surround the whole second parameter.
+        git apply "${PATCH_DIR}"/xen_*.patch
+        touch patches_applied.done
+        popd || exit 255
+    fi
+
     popd || exit 255
 
     # TODO: This is not working at the moment. Would be much faster and preferred way to compile the tools

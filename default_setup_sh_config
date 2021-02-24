@@ -45,6 +45,11 @@ TMPDIR="$(pwd)/images/tmp"
 IMAGES="$(pwd)/buildroot/output/images"
 KERNEL_IMAGE="${IMAGES}/Image"
 
+# ccache options
+CCACHE="$(command -v ccache || true)"
+CCACHE_DIR="$(pwd)/.ccache"
+CCACHE_MAXSIZE=10G
+
 # RasPi dom0 static IP Configuration
 RASPIP=192.168.1.170
 RASPNM=255.255.255.0

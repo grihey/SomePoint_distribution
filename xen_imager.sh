@@ -4,17 +4,14 @@ ROOT_DIR="$(pwd)"
 
 set -e
 
-CCACHE=""
+. default_setup_sh_config
+if [ -f .setup_sh_config ]; then
+    . .setup_sh_config
+fi
 
-if [ -x "$(command -v ccache)" ]; then
-    CCACHE="ccache"
-    CCACHE_DIR="$(pwd)/.ccache"
-    CCACHE_MAXSIZE=10G
-
+if [ -n "$CCACHE" ]; then
     export CCACHE_DIR
     export CCACHE_MAXSIZE
-
-    #ccache -s
 fi
 
 export CCACHE
@@ -22,7 +19,7 @@ export CCACHE
 . helpers.sh
 . text_generators.sh
 
-if [ "${TARGET_DIR:?}x" == "x" ]; then
+if [ -z "$TARGET_DIR" ]; then
     echo "Missing target."
     echo "Run:"
     echo "  . select_target.sh"
@@ -469,5 +466,4 @@ EOF
     umount_image "$ROOTFS_DIR"
 }
 
-
-"$*"
+"$@"

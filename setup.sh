@@ -49,12 +49,8 @@ esac
 . .setup_sh_config
 set_ipconfraspi
 
-CCACHE=
-
-if [ -x "$(command -v ccache)" ]; then
-    CCACHE="ccache"
-    CCACHE_DIR="$(pwd)/.ccache"
-    CCACHE_MAXSIZE=10G
+if [ -n "$CCACHE" ]; then
+    export CCACHE
     export CCACHE_DIR
     export CCACHE_MAXSIZE
 fi

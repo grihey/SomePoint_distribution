@@ -276,26 +276,6 @@ function compile_xen_tools {
         exit 1
     fi
 
-    # Use clean repo to build tools but make sure branch is same as the branch was used to build xen binary
-    sudo chmod a+w "${ROOTFS_DIR}/opt"
-    pushd "${ROOTFS_DIR}/opt" || exit 255
-    if [ ! -d xen ]; then
-        git clone "$XEN_SRC" xen
-        pushd xen || exit 255
-        git checkout "${XEN_VERSION:?}"
-        popd || exit 255
-    fi
-
-    if [ ! -f xen/patches_applied.done ]; then
-        pushd xen || exit 255
-        # Cannot surround the whole second parameter.
-        git apply "${PATCH_DIR}"/xen_*.patch
-        touch patches_applied.done
-        popd || exit 255
-    fi
-
-    popd || exit 255
-
     # TODO: This is not working at the moment. Would be much faster and preferred way to compile the tools
     if [ 0 == 1 ]; then
         # Change the shared library symlinks to relative instead of absolute so they play nice with cross-compiling
@@ -303,16 +283,14 @@ function compile_xen_tools {
 
         pushd "$XEN_SRC" || exit 255
         # Ask the native compiler what system include directories it searches through.
-        SYSINCDIRS=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | gcc -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}|")
-        SYSINCDIRSCXX=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | g++ -x c++ -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}|")
-
-        CC="${CROSS_PREFIX}-gcc --sysroot=${ROOTFS_DIR} -nostdinc ${SYSINCDIRS} -B${ROOTFS_DIR}lib/${CROSS_PREFIX} -B${ROOTFS_DIR}usr/lib/${CROSS_PREFIX}"
-        CXX="${CROSS_PREFIX}-g++ --sysroot=${ROOTFS_DIR} -nostdinc ${SYSINCDIRSCXX} -B${ROOTFS_DIR}lib/${CROSS_PREFIX} -B${ROOTFS_DIR}usr/lib/${CROSS_PREFIX}"
-        LDFLAGS="-Wl,-rpath-link=${ROOTFS_DIR}lib/${CROSS_PREFIX} -Wl,-rpath-link=${ROOTFS_DIR}usr/lib/${CROSS_PREFIX}"
-
+        SYSINCDIRS=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | gcc -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}/|")
+        SYSINCDIRSCXX=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | g++ -x c++ -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}/|")
+        CC="${CROSS_PREFIX}-gcc --sysroot=${ROOTFS_DIR} -B${ROOTFS_DIR}/lib/${CROSS_PREFIX} -B${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}"
+        CXX="${CROSS_PREFIX}-g++ --sysroot=${ROOTFS_DIR} -B${ROOTFS_DIR}/lib/${CROSS_PREFIX} -B${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}"
+        LDFLAGS="-Wl,-rpath-link=${ROOTFS_DIR}/lib/${CROSS_PREFIX} -Wl,-rpath-link=${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}"
 
         PKG_CONFIG=pkg-config \
-        PKG_CONFIG_LIBDIR=${ROOTFS_DIR}usr/lib/${CROSS_PREFIX}/pkgconfig:${ROOTFS_DIR}/usr/share/pkgconfig \
+        PKG_CONFIG_LIBDIR=${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}/pkgconfig:${ROOTFS_DIR}/usr/share/pkgconfig \
         PKG_CONFIG_SYSROOT_DIR=${ROOTFS_DIR} \
         LDFLAGS="${LDFLAGS}" \
         PYTHON=/bin/python3 ./configure \
@@ -329,13 +307,12 @@ function compile_xen_tools {
             CC="${CC}" \
             CXX="${CXX}"
 
-
         PKG_CONFIG=pkg-config \
         PKG_CONFIG_LIBDIR="${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}/pkgconfig:${ROOTFS_DIR}/usr/share/pkgconfig" \
         PKG_CONFIG_SYSROOT_DIR="${ROOTFS_DIR}" \
         LDFLAGS="${LDFLAGS}" \
             make dist-tools \
-                CROSS_COMPILE="${CROSS_PREFIX}" XEN_TARGET_ARCH="${XEN_ARCH}" \
+                CROSS_COMPILE="${CROSS_PREFIX}-" XEN_TARGET_ARCH="${XEN_ARCH}" \
                 CC="${CC}" \
                 CXX="${CXX}" \
                 -j "$(nproc)"
@@ -346,12 +323,30 @@ function compile_xen_tools {
         PKG_CONFIG_SYSROOT_DIR="${ROOTFS_DIR}" \
         LDFLAGS="${LDFLAGS}" \
             make install-tools \
-                CROSS_COMPILE="${CROSS_PREFIX}" XEN_TARGET_ARCH="${XEN_ARCH}" \
+                CROSS_COMPILE="${CROSS_PREFIX}-" XEN_TARGET_ARCH="${XEN_ARCH}" \
                 CC="${CC}" \
                 CXX="${CXX}" \
                 DESTDIR="${ROOTFS_DIR}"
         popd
     else
+        # Use clean repo to build tools but make sure branch is same as the branch was used to build xen binary
+        sudo chmod a+w "${ROOTFS_DIR}/opt"
+        pushd "${ROOTFS_DIR}/opt" || exit 255
+        if [ ! -d xen ]; then
+            git clone "$XEN_SRC" xen
+            pushd xen || exit 255
+            git checkout "${XEN_VERSION:?}"
+            popd || exit 255
+        fi
+
+        if [ ! -f xen/patches_applied.done ]; then
+            pushd xen || exit 255
+            # Cannot surround the whole second parameter.
+            git apply "${PATCH_DIR}"/xen_*.patch
+            touch patches_applied.done
+            popd || exit 255
+        fi
+
         cat > "${WORKDIR}/compile_xen.sh" <<EOF
 #!/bin/bash
 
@@ -373,11 +368,9 @@ make dist-tools \
 make install-tools \
     -j $(nproc)
 EOF
-
         sudo chmod a+x "${WORKDIR}/compile_xen.sh"
         sudo cp "${WORKDIR}/compile_xen.sh" "${ROOTFS_DIR}"
         sudo chroot "${ROOTFS_DIR}" ./compile_xen.sh
-
     fi
 
     umount_image "$ROOTFS_DIR"

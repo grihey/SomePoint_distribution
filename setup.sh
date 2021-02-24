@@ -531,7 +531,8 @@ function rootfs {
         case "$PLATFORM" in
         x86)
             cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
-            cp qemu/run-x86-qemu.sh "${ROOTFS}/root"
+            run_x86_qemu > "${ROOTFS}/root/run-x86-qemu.sh"
+	    chmod a+x "${ROOTFS}/root/run-x86-qemu.sh"
         ;;
         *)
             cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"

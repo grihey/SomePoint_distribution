@@ -358,3 +358,17 @@ function rq_sh {
     ;;
     esac
 }
+
+function run_x86_qemu {
+    echo "#!/bin/sh"
+    case "$BUILDOPT" in
+    0|1|MMC|USB)
+        echo "ROOTFS_FILE=\"-drive file=rootfs.ext2,if=virtio,format=raw\""
+        echo "ROOTFS_CMD=\"root=/dev/vda\""
+    ;;
+    *)
+        echo "ROOTFS_FILE=\"\""
+        echo "ROOTFS_CMD=\"root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,vers=3,nolock ip=::::x86-domu:eth0:dhcp\""
+    esac
+    echo "qemu-system-x86_64 -m 128 -M pc -enable-kvm -kernel Image \${ROOTFS_FILE} -append \"rootwait \${ROOTFS_CMD} console=tty1 console=ttyS0\" -net nic,model=virtio -net user -nographic"
+}

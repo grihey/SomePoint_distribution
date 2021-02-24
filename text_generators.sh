@@ -375,3 +375,17 @@ function run_x86_qemu {
     esac
     echo "qemu-system-x86_64 -m 128 -M pc -enable-kvm -kernel Image \${ROOTFS_FILE} -append \"rootwait \${ROOTFS_CMD} console=tty1 console=ttyS0\" -net nic,model=virtio -net user -nographic"
 }
+
+# Azure wg server settings.
+function wg_client_config {
+    echo "[Interface]"
+    echo "Address = 10.10.10.2/24"
+    echo "DNS = 10.10.10.1"
+    echo "PrivateKey = [INSERT CLIENT PRIVATE KEY HERE FROM STEP 4]"
+    echo ""
+    echo "[Peer]"
+    echo "PublicKey = 8Rvz/ER24u/w2y4tiqpsEthEJJNAO3OGmdNpArimBjA="
+    echo "AllowedIPs = 0.0.0.0/0"
+    echo "Endpoint = 52.169.138.111:51820"
+    echo "PersistentKeepalive = 25"
+}

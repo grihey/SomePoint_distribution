@@ -265,7 +265,7 @@ function compile_kernel {
     local defconfig
     local extra_configs
 
-    echo "Compile kernel"
+    echo "compile_kernel"
     check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
 
     kernel_src="$1"
@@ -275,7 +275,7 @@ function compile_kernel {
     defconfig="$5"
     extra_configs="$6"
 
-    pushd $kernel_src || exit 255
+    pushd $kernel_src
     # RUN in docker
     make O="${compile_dir}" ARCH="${arch}" CROSS_COMPILE="$cross_compile" "$defconfig"
     if [ -n "${extra_configs}" ]; then
@@ -286,8 +286,10 @@ function compile_kernel {
     # make O="$compile_dir" ARCH="$arch" CROSS_COMPILE="$cross_compile" menuconfig
     make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" Image modules dtbs \
         > "${compile_dir}"/kernel_compile.log
-    popd || exit 255
+    popd
     # RUN in docker end
+
+    echo "compile_kernel done"
 }
 
 function install_kernel {
@@ -318,7 +320,7 @@ function install_kernel_modules {
     local ROOTFS
     local MNTROOTFS
 
-    echo "Install kernel modules"
+    echo "install_kernel_modules"
     check_5_param_exist "$1" "$2" "$3" "$4" "$5"
 
     KERNEL_SRC="$1"
@@ -339,7 +341,10 @@ function install_kernel_modules {
     # Create module deps files
     echo "Create module dep files"
     KVERSION="$(cut -d "\"" -f 2 "${COMPILE_DIR}/include/generated/utsrelease.h")"
+    echo "Compiled kernel version: ${KVERSION}"
     sudo chroot "$MNTROOTFS" depmod -a "${KVERSION}"
+
+    echo "install_kernel_modules done"
 }
 
 function compile_xen {

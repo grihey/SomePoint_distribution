@@ -66,8 +66,10 @@ mount_chroot_devs () {
     sudo mount -o bind /sys "${ROOTFS}/sys" || true
     sudo mount -o bind /tmp "${ROOTFS}/tmp" || true
 }
+XEN_TOOL_BINS="${WORK_DIR}/xen_tool_bins"
 
 function prepare_compile_env {
+    echo "prepare_compile_env"
     check_2_param_exist "$1" "$2"
 
     local IMAGE
@@ -93,7 +95,7 @@ function prepare_compile_env {
     # Install the dialog package and others first to squelch some warnings
     sudo chroot "${ROOTFS_DIR}" apt-get -y install dialog apt-utils
     sudo chroot "${ROOTFS_DIR}" apt-get -y install uuid-dev \
-        build-essential libncurses-dev pkg-config libglib2.0-dev libpixman-1-dev libc6-dev  libglib2.0-dev symlinks \
+        build-essential libncurses-dev pkg-config libglib2.0-dev libpixman-1-dev libc6-dev  libglib2.0-dev \
         libyajl-dev libfdt-dev libaio-dev libsystemd-dev libnl-route-3-dev zlib1g-dev \
         libusb-1.0-0-dev libpulse-dev libcapstone-dev \
         systemd systemd-sysv sysvinit-utils sudo udev rsyslog kmod util-linux sed netbase dnsutils ifupdown \
@@ -105,6 +107,7 @@ function prepare_compile_env {
     sudo chroot "${ROOTFS_DIR}" apt-get clean
 
     sudo chroot "${ROOTFS_DIR}" apt-get -y install bin86 bcc liblzma-dev ocaml python3 python3-dev gettext acpica-tools wget ftp
+    sudo chroot "${ROOTFS_DIR}" apt-get -y install wireguard wireguard-tools
 
     # App dependencies
     sudo chroot "${ROOTFS_DIR}" apt-get -y install libgtk-3-dev # For Flutter
@@ -112,6 +115,8 @@ function prepare_compile_env {
 
     umount_chroot_devs "$ROOTFS_DIR"
     umount_image "$ROOTFS_DIR"
+
+    echo "prepare_compile_env done"
 }
 
 function all {
@@ -127,10 +132,9 @@ function all {
     prepare_image "${DOMU0_DIR}" "${LINUX_OUT_DIR_DOMU0}"  "${XEN_DOMU0_FILE:?}" "${XEN_DOMU0_WGET_URL:?}" "${XEN_DOMU0_WGET_SHA256:?}" 1
 
     compile_xen "${XEN_SRC}" "${XEN_VERSION}"
-    compile_xen_tools "${DOM0_DIR}" arm64  "${XEN_SRC}"
+    compile_xen_tools "${DOM0_DIR}" arm64 "${XEN_SRC}"
 
     post_image_tweaks "${DOM0_DIR}"
-
     post_image_domu_tweaks "${DOMU0_DIR}"
 
     prepare_boot "$BOOT_PARTITION"
@@ -174,6 +178,7 @@ function prepare_boot {
 }
 
 function prepare_image {
+    echo "prepare_image"
     check_6_param_exist "$1" "$2" "$3" "$4" "$5" "$6"
 
     local WORKDIR
@@ -217,12 +222,12 @@ function prepare_image {
     if ! [ -f 1.img ]; then
         echo "Extract 1.img"
         decompress_image "${IMAGE_NAME}"
+    fi
 
-        # only resize dom0. Space is needed for compiling Xen.
-        if [ "$IS_DOMU" == "0" ]; then
-            e2fsck -f 1.img
-            resize2fs 1.img 10G
-        fi
+    # only resize dom0. Space is needed for compiling Xen.
+    if [ "$IS_DOMU" == "0" ]; then
+        e2fsck -f 1.img
+        resize2fs 1.img 7G
     fi
 
     ROOTFS_DIR=${WORKDIR}/rootfs
@@ -232,6 +237,7 @@ function prepare_image {
 
     umount_image "$ROOTFS_DIR"
     popd
+    echo "prepare_image done"
 }
 
 function umount_all {
@@ -243,6 +249,7 @@ function umount_all {
 }
 
 function compile_xen_tools {
+    echo "compile_xen_tools"
     check_3_param_exist "$1" "$2" "$3"
 
     local WORKDIR
@@ -274,14 +281,14 @@ function compile_xen_tools {
     fi
 
     # TODO: This is not working at the moment. Would be much faster and preferred way to compile the tools
-    if [ 0 == 1 ]; then
+    if [ 1 == 1 ]; then
         # Change the shared library symlinks to relative instead of absolute so they play nice with cross-compiling
         sudo chroot "${ROOTFS_DIR}" symlinks -c "/usr/lib/${CROSS_PREFIX:?}/"
 
-        pushd "$XEN_SRC" || exit 255
+        pushd "$XEN_SRC"
         # Ask the native compiler what system include directories it searches through.
-        SYSINCDIRS=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | gcc -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}/|")
-        SYSINCDIRSCXX=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | g++ -x c++ -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}/|")
+        #SYSINCDIRS=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | gcc -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}/|")
+        #SYSINCDIRSCXX=$(sudo chroot "${ROOTFS_DIR}" bash -c "echo | g++ -x c++ -E -Wp,-v -o /dev/null - 2>&1" | grep "^ " | sed "s|^ /| -isystem ${ROOTFS_DIR}/|")
         CC="${CROSS_PREFIX}-gcc --sysroot=${ROOTFS_DIR} -B${ROOTFS_DIR}/lib/${CROSS_PREFIX} -B${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}"
         CXX="${CROSS_PREFIX}-g++ --sysroot=${ROOTFS_DIR} -B${ROOTFS_DIR}/lib/${CROSS_PREFIX} -B${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}"
         LDFLAGS="-Wl,-rpath-link=${ROOTFS_DIR}/lib/${CROSS_PREFIX} -Wl,-rpath-link=${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}"
@@ -314,7 +321,8 @@ function compile_xen_tools {
                 CXX="${CXX}" \
                 -j "$(nproc)"
 
-        sudo --preserve-env PATH="${PATH}" \
+        #sudo --preserve-env PATH="${PATH}" \
+
         PKG_CONFIG=pkg-config \
         PKG_CONFIG_LIBDIR="${ROOTFS_DIR}/usr/lib/${CROSS_PREFIX}/pkgconfig:${ROOTFS_DIR}/usr/share/pkgconfig" \
         PKG_CONFIG_SYSROOT_DIR="${ROOTFS_DIR}" \
@@ -323,7 +331,7 @@ function compile_xen_tools {
                 CROSS_COMPILE="${CROSS_PREFIX}-" XEN_TARGET_ARCH="${XEN_ARCH}" \
                 CC="${CC}" \
                 CXX="${CXX}" \
-                DESTDIR="${ROOTFS_DIR}"
+                DESTDIR="${XEN_TOOL_BINS}"
         popd
     else
         # Use clean repo to build tools but make sure branch is same as the branch was used to build xen binary
@@ -368,22 +376,37 @@ EOF
         sudo chmod a+x "${WORKDIR}/compile_xen.sh"
         sudo cp "${WORKDIR}/compile_xen.sh" "${ROOTFS_DIR}"
         sudo chroot "${ROOTFS_DIR}" ./compile_xen.sh
+
+        popd
     fi
 
     umount_image "$ROOTFS_DIR"
+
+    echo "compile_xen_tools done"
 }
 
 
 function post_image_tweaks {
+    echo "post_image_tweaks"
     check_1_param_exist "$1"
 
     local WORKDIR
     local ROOTFS_DIR
 
     WORKDIR=$1
-    ROOTFS_DIR="${WORKDIR}/rootfs/"
+    ROOTFS_DIR="${WORKDIR}/rootfs"
 
     mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
+
+    # destination var/run is link we cannot copy the whole thing at once.
+    # TODO: Create function that can handle this.
+    pushd "${XEN_TOOL_BINS}"
+    sudo cp -r etc "${ROOTFS_DIR}"
+    sudo cp -r usr "${ROOTFS_DIR}"
+    sudo cp -r var/log "${ROOTFS_DIR}/var"
+    sudo cp -r var/lib "${ROOTFS_DIR}/var"
+    sudo cp -r var/run/* "${ROOTFS_DIR}/run/"
+    popd
 
     sudo chroot "${ROOTFS_DIR}" systemctl enable xen-qemu-dom0-disk-backend.service
     sudo chroot "${ROOTFS_DIR}" systemctl enable xen-init-dom0.service
@@ -440,10 +463,16 @@ EOF
         sudo bash -c "echo \"TimeoutStopSec=15s\" >> ${ROOTFS_DIR}/lib/systemd/system/ifup@.service"
     fi
 
-    domu_config > "${ROOTFS_DIR}/opt/domu.cfg"
+    sudo mkdir -p "${ROOTFS_DIR}/etc/wireguard"
+    wg_client_config | sudo tee "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf" > /dev/null
+    sudo chmod 600 -R "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf"
+
+    sudo chmod a+wr "${ROOTFS_DIR}/opt"
+    domu_config > tee "${ROOTFS_DIR}/opt/domu.cfg"
     install_kernel arm64 "${LINUX_OUT_DIR_DOMU0}" "$ROOTFS_DIR/opt/Image"
 
     umount_image "$ROOTFS_DIR"
+    echo "post_image_tweaks done"
 }
 
 function post_image_domu_tweaks {

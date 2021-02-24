@@ -1,3 +1,4 @@
+# These will be removed on distclean
 .ccache/
 images/
 mnt/

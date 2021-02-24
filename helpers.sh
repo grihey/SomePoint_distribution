@@ -23,13 +23,59 @@ function x86config {
         -e "s/RASPHN=.*/RASPHN=x86/" < default_setup_sh_config > .setup_sh_config
 }
 
-# returns 0 if function exists, 1 if not
+# Returns 0 if function exists, 1 if not
 function fn_exists {
     if [ "$(LC_ALL=C type -t "$1")" == "function" ]; then
         return 0
     else
         echo "$1: Unknown function" >&2
         return 1
+    fi
+}
+
+# Trims off whitespace from start and end of a string
+function trim {
+    local STR
+
+    STR="$*"
+
+    # remove whitespace from start
+    STR="${STR#"${STR%%[![:space:]]*}"}"
+
+    # remove whitespace from end
+    STR="${STR%"${STR##*[![:space:]]}"}"
+
+    printf '%s' "$STR"
+}
+
+# Slightly safer recursive deletion
+# If second parameter is 'sudo' root user is used to remove files
+function safer_rmrf {
+    local RMD
+
+    # Sanity check the path, just in case
+    RMD="$(sanitycheck "$1" ne)"
+    if [  "$2" == "sudo" ]; then
+        # Check that we actually have something to delete before using sudo
+        if [ -e "${RMD:?}" ]; then
+            sudo rm -rf "${RMD:?}"
+        fi
+    else
+        rm -rf "${RMD:?}"
+    fi
+}
+
+# Remove files and directories listed in .gitignores
+function remove_ignores {
+    local ENTRY
+
+    if [ -f .gitignore ]; then
+        while IFS= read -r ENTRY; do
+            ENTRY="$(trim "$ENTRY")"
+            if [ -n "$ENTRY" ] && [ "${ENTRY:0:1}" != "#" ]; then
+                safer_rmrf "$ENTRY" "$1"
+            fi
+        done < .gitignore
     fi
 }
 
@@ -168,7 +214,7 @@ function sanitycheck {
     if [ -z "$2" ]; then
         TPATH="$(realpath -e "$1" 2>/dev/null)"
     else
-        TPATH="$(realpath "$1" 2>/dev/null)"
+        TPATH="$(realpath -m "$1" 2>/dev/null)"
     fi
 
     # Explicitly allowed paths

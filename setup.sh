@@ -309,8 +309,7 @@ function doumount {
 
     MOUNTED="$(mount | grep "$BOOTMNT")"
     if [ -z "$MOUNTED" ]; then
-        echo "Not mounted"
-        exit 2
+        return 0
     fi
 
     if [ "$1" == "mark" ]; then
@@ -759,6 +758,29 @@ function buildall {
     cd ..
 }
 
+function distclean {
+    local ENTRY
+
+    doumount
+
+    remove_ignores
+
+    # Go through the submodule dirs, remove "path = " from the start and delete & recreate dir
+    while IFS= read -r ENTRY; do
+        ENTRY="$(trim "$ENTRY")"
+        ENTRY="${ENTRY#path = }"
+        safer_rmrf "$ENTRY"
+        mkdir -p "$ENTRY"
+    done <<< "$(grep "path = " .gitmodules)"
+
+    # Run cleanup.sh in subdirs, if available
+    for ENTRY in */ ;do
+        if [ -x "${ENTRY}/cleanup.sh" ]; then
+            ./"${ENTRY}/cleanup.sh" distclean
+        fi
+    done
+}
+
 function showhelp {
     echo "Usage $0 <command> [parameters]"
     echo ""
@@ -781,6 +803,8 @@ function showhelp {
     echo "    buildall [xen|kvm|x86]            Builds a disk image and filesystem tarballs"
     echo "                                      uses selected default config if given"
     echo "                                      (overwrites .setup_sh_config if given)"
+    echo "    distclean                         removes almost everything except main repo local changes"
+    echo "                                      (basically resets to just cloned main repo)"
     echo ""
     exit 0
 }

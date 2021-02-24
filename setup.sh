@@ -482,11 +482,13 @@ function rootfs {
         ROOTFS="$(sanitycheck "$1")"
     fi
 
-    pushd "$ROOTFS"
-    echo "Updating $ROOTFS/"
-    rm -rf ./*
-    fakeroot tar xf "${IMAGES}/rootfs.tar" > /dev/null
-    popd
+    if [ "$VDAUPDATE" != "1" ] ; then
+        pushd "$ROOTFS"
+        echo "Updating $ROOTFS/"
+        rm -rf ./*
+        fakeroot tar xf "${IMAGES}/rootfs.tar" > /dev/null
+        popd
+    fi
 
     if ! [ -a "images/rasp_id_rsa" ]; then
         echo "Generate ssh key"
@@ -610,6 +612,58 @@ function nfsupdate {
         exit 1
     ;;
     esac
+}
+
+function vdaupdate {
+    local SIZE
+
+    if [ "$PLATFORM" != "x86" ] ; then
+        echo "VDA update is only supported for x86." >&2
+        exit 1
+    fi
+
+    case "$BUILDOPT" in
+    0|1|MMC|USB)
+        set_myids
+        create_mount_points
+
+        # Create a copy of the rootfs.ext2 image for domU.
+        # The domU rootfs image gets copied inside the rootfs.ext2
+        # image so that we can boot it up via qemu, thus we must also
+        # double the size of rootfs.ext2 image.
+        if [ ! -f ${IMAGES}/rootfs-domu.ext2 ] ; then
+            cp ${IMAGES}/rootfs.ext2 ${IMAGES}/rootfs-domu.ext2
+            e2fsck -f ${IMAGES}/rootfs.ext2
+            SIZE=$(wc -c ${IMAGES}/rootfs.ext2 | cut -d " " -f 1)
+            SIZE=$((${SIZE} * 2 / 1024 / 1024))
+            echo "Resizing rootfs to ${SIZE}M bytes"
+            resize2fs ${IMAGES}/rootfs.ext2 ${SIZE}M
+        fi
+
+        sudo mount "${IMAGES}/rootfs.ext2" "${ROOTMNT}-su"
+        sudo mount "${IMAGES}/rootfs-domu.ext2" "${DOMUMNT}-su"
+        bind_mounts
+
+        VDAUPDATE=1
+
+        rootfs
+        echo "DOM0_VDAROOT" > "${ROOTMNT}/DOM0_VDAROOT"
+        domufs
+        echo "DOMU_VDAROOT" > "${DOMUMNT}/DOMU_VDAROOT"
+
+        sudo umount "$DOMUMNT"
+        sudo umount "${DOMUMNT}-su"
+
+        cp ${IMAGES}/rootfs-domu.ext2 ${ROOTMNT}/root/rootfs.ext2
+        sudo umount "$ROOTMNT"
+        sudo umount "${ROOTMNT}-su"
+    ;;
+    *)
+        echo "BUILDOPT is not set for VDA boot (USB/SD)" >&2
+        exit 1
+    ;;
+    esac
+
 }
 
 # If you have changed for example linux/arch/arm64/configs/xen_defconfig and want buildroot to recompile kernel

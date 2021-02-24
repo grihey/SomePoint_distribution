@@ -318,6 +318,9 @@ function inittab {
         case "$HYPERVISOR" in
         KVM)
             echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # KVM virtual serial"
+            if [ "$PLATFORM" = "x86" ] ; then
+                echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic serial"
+            fi
         ;;
         *)
             echo "X0::respawn:/sbin/getty 115200 /dev/hvc0 # Xen virtual serial"

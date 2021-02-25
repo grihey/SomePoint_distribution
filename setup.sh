@@ -86,7 +86,7 @@ function generate_disk_image {
         BRHOSTDIR=./buildroot/output/host
     fi
 
-    if [ ! -x "$BRHOSTDIR/bin/genimage" ]; then
+    if [ "$PLATFORM" != "x86" ] && [ ! -x "$BRHOSTDIR/bin/genimage" ]; then
         echo "Buildroot must be built before generate_disk_image command can be used" >&2
         exit 1
     fi
@@ -113,6 +113,10 @@ function generate_disk_image {
 
     rm -f "${IDIR}/input/domufs.ext4"
     fakeroot mke2fs -t ext4 -d "$DDIR" "${IDIR}/input/domufs.ext4" "$DOMUSIZE"
+
+    if [ "$PLATFORM" = "x86" ] ; then
+        return 0
+    fi
 
     rm -rf "${TMPDIR}/genimage"
 

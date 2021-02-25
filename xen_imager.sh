@@ -120,11 +120,11 @@ function prepare_compile_env {
 function all {
     mkdir -p "$BOOT_PARTITION"
 
-    compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOM0}" xen_defconfig "${DOM0_KERNEL_EXTRA_CONFIGS:?}"
+    compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOM0}" xen_defconfig "${DOM0_KERNEL_EXTRA_CONFIGS}"
     install_kernel arm64 "${LINUX_OUT_DIR_DOM0}" "${BOOT_PARTITION}/vmlinuz"
 
     # compile kernel for domu0
-    compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOMU0}" xen_defconfig ""
+    compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOMU0}" xen_defconfig "${DOMU0_KERNEL_EXTRA_CONFIGS}"
 
     prepare_image "${DOM0_DIR}"  "${LINUX_OUT_DIR_DOM0}"   "${XEN_DOM0_FILE:?}" "${XEN_DOM0_WGET_URL:?}" "${XEN_DOM0_WGET_SHA256:?}" 0
     prepare_image "${DOMU0_DIR}" "${LINUX_OUT_DIR_DOMU0}"  "${XEN_DOMU0_FILE:?}" "${XEN_DOMU0_WGET_URL:?}" "${XEN_DOMU0_WGET_SHA256:?}" 1
@@ -429,6 +429,9 @@ sudo chmod 0644 "${ROOTFS_DIR}/etc/network/interfaces.d/eth0"
 auto xenbr0
 iface xenbr0 inet dhcp
     bridge_ports eth0
+    bridge_stp off
+    bridge_fd 0
+    bridge_maxwait 0
 EOF
     sudo chmod 0644 "${ROOTFS_DIR}/etc/network/interfaces.d/xenbr0"
 

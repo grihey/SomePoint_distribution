@@ -2,8 +2,8 @@ kernel = "./Image"
 cmdline = "console=hvc0 earlyprintk=xen sync_console root=/dev/xvda"
 memory = "1024"
 name = "guest"
-vcpus = 2
-cpus = "3-4"
+vcpus = 1
+cpus = "3"
 serial="pty"
 disk = [ 'phy:/dev/sda3,xvda,w' ]
 vif=[ 'bridge=xenbr0' ]

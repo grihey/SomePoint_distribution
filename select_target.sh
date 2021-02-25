@@ -21,11 +21,21 @@ DOM0_KERNEL_EXTRA_CONFIGS=$(echo -e "\
 CONFIG_XEN_FORCE_DISABLE_SWIOTLB=y" \
 )
 
+DOMU0_KERNEL_EXTRA_CONFIGS=$(echo -e "\
+"\
+)
+
 export DOM0_KERNEL_EXTRA_CONFIGS
+export DOMU0_KERNEL_EXTRA_CONFIGS
 
 echo ""
 echo "Extra kernel configs for DOM0"
 echo "${DOM0_KERNEL_EXTRA_CONFIGS}"
+echo ""
+
+echo ""
+echo "Extra kernel configs for DOM0"
+echo "${DOMU0_KERNEL_EXTRA_CONFIGS}"
 echo ""
 
 case "${TARGET}" in

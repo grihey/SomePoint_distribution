@@ -121,7 +121,7 @@ function all {
     mkdir -p "$BOOT_PARTITION"
 
     compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOM0}" xen_defconfig "${DOM0_KERNEL_EXTRA_CONFIGS:?}"
-    install_kernel arm64 "${LINUX_OUT_DIR_DOM0}" "${BOOT_PARTITION}"vmlinuz
+    install_kernel arm64 "${LINUX_OUT_DIR_DOM0}" "${BOOT_PARTITION}/vmlinuz"
 
     # compile kernel for domu0
     compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOMU0}" xen_defconfig ""

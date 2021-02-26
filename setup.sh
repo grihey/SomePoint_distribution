@@ -758,11 +758,34 @@ function buildall {
     cd ..
 }
 
+# Clean up so that on next build everything gets rebuilt but nothing gets redownloaded
+function clean {
+    safer_rmrf "$GKBUILD"
+    safer_rmrf "$IMGBUILD"
+    safer_rmrf "$TMPDIR"
+
+    (
+        cd buildroot
+        make clean
+        # Removing kernel to force refecth from local linux kernel tree
+        rm -rf dl/linux
+    )
+
+    # Run 'cleanup.sh clean' in subdirs, if available
+    for ENTRY in ./*/ ;do
+        if [ -x "${ENTRY}/cleanup.sh" ]; then
+            "$ENTRY/cleanup.sh" clean
+        fi
+    done
+    rm -f .setup_sh_config
+}
+
+# Restore situation before first 'setup.sh clone' but keep local main repo changes
+# Removes a ton of stuff, like submodule changes, be careful
 function distclean {
     local ENTRY
 
     doumount
-
     remove_ignores
 
     # Go through the submodule dirs, remove "path = " from the start and delete & recreate dir
@@ -773,10 +796,10 @@ function distclean {
         mkdir -p "$ENTRY"
     done <<< "$(grep "path = " .gitmodules)"
 
-    # Run cleanup.sh in subdirs, if available
-    for ENTRY in */ ;do
+    # Run 'cleanup.sh distclean' in subdirs, if available
+    for ENTRY in ./*/ ;do
         if [ -x "${ENTRY}/cleanup.sh" ]; then
-            ./"${ENTRY}/cleanup.sh" distclean
+            "$ENTRY/cleanup.sh" distclean
         fi
     done
 }

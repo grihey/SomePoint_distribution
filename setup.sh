@@ -410,9 +410,11 @@ function bootfs {
         BOOTFS="$(sanitycheck "$1")"
     fi
 
-    pushd "$BOOTFS"
-    rm -rf ./*
-    popd
+    if [ "$FS_UPDATE_ONLY" != "1" ] ; then
+        pushd "$BOOTFS"
+        rm -rf ./*
+        popd
+    fi
 
     config_txt > "${BOOTFS}/config.txt"
     cp u-boot.bin "$BOOTFS"
@@ -484,7 +486,9 @@ function rootfs {
     if [ "$VDAUPDATE" != "1" ] ; then
         pushd "$ROOTFS"
         echo "Updating $ROOTFS/"
-        rm -rf ./*
+        if [ "$FS_UPDATE_ONLY" != "1" ] ; then
+            rm -rf ./*
+        fi
         fakeroot tar xf "${IMAGES}/rootfs.tar" > /dev/null
         popd
     fi
@@ -533,7 +537,7 @@ function rootfs {
         x86)
             cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
             run_x86_qemu > "${ROOTFS}/root/run-x86-qemu.sh"
-	    chmod a+x "${ROOTFS}/root/run-x86-qemu.sh"
+            chmod a+x "${ROOTFS}/root/run-x86-qemu.sh"
         ;;
         *)
             cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"

@@ -68,3 +68,6 @@ NFSDOMU=/srv/nfsdomu
 
 # Generate key from JFrog and place it into the .setup_sh_config file
 ARTIFACTORY_API_KEY=
+
+# Update bootfs/rootfs/domufs only, do not wipe (rm -rf) contents
+FS_UPDATE_ONLY=0

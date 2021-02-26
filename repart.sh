@@ -57,43 +57,43 @@ IMAGE_DOMU=""
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        -b|--boot)
+    -b|--boot)
         BOOTSIZ="$2"
         shift # past argument
         shift # past value
-        ;;
-        -r|--root)
+    ;;
+    -r|--root)
         ROOTSIZ="$2"
         shift # past argument
         shift # past value
-        ;;
-        -d|--domu)
+    ;;
+    -d|--domu)
         DOMUSIZ="$2"
         shift # past argument
         shift # past value
-        ;;
-        -ir|--image-root)
+    ;;
+    -ir|--image-root)
         IMAGE_ROOT="$2"
         shift # past argument
         shift # past value
-        ;;
-        -id|--image-domu)
+    ;;
+    -id|--image-domu)
         IMAGE_DOMU="$2"
         shift # past argument
         shift # past value
-        ;;
-        -h|--help)
+    ;;
+    -h|--help)
         show_help
-        ;;
-        -y|--yes)
+    ;;
+    -y|--yes)
         CONFIRM=N
         shift # past argument
-        ;;
-        --force)
+    ;;
+    --force)
         FORCED=Y
         shift # past argument
-        ;;
-        *)    # device name and invalid argument
+    ;;
+    *)    # device name and invalid argument
         # Argument that starts with "-" have been prosessed already.
         if [[ $1 == -* ]]; then
             echo "Argument <$1> not supported. You might have missed a space before size value!"
@@ -101,7 +101,7 @@ while [ "$#" -gt 0 ]; do
         fi
         DEVICE="$1"
         shift # past argument
-        ;;
+    ;;
    esac
 done
 

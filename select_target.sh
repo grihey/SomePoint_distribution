@@ -1,20 +1,18 @@
-#!/bin/bash
+BUILDOPT=MMC
+FWFDT=1 # FW defined device tree
+HYPERVISOR=XEN
+TARGET=mate
+TARGET_DIR="images/${TARGET}-images"
+TARGET_IMAGE="${TARGET}.img"
+XEN_VERSION=RELEASE-4.14.1
+KERNEL_ARCH=arm64
 
-export BUILDOPT=MMC
-export FWFDT=1 # FW defined device tree
-export HYPERVISOR=XEN
-export TARGET=mate
-export TARGET_DIR="images/${TARGET}-images"
-export TARGET_IMAGE="${TARGET}.img"
-export XEN_VERSION=RELEASE-4.14.1
-export KERNEL_ARCH=arm64
+DOM0_KERNEL_BUILD_BOOT="arch/${KERNEL_ARCH}/boot"
+DOM0_DTS="${DOM0_KERNEL_BUILD_BOOT}/dts"
+DOM0_DTB_RASP="${DOM0_DTS}/broadcom/bcm2711-rpi-4-b.dtb"
 
-export DOM0_KERNEL_BUILD_BOOT="arch/${KERNEL_ARCH}/boot"
-export DOM0_DTS="${DOM0_KERNEL_BUILD_BOOT}/dts"
-export DOM0_DTB_RASP="${DOM0_DTS}/broadcom/bcm2711-rpi-4-b.dtb"
-
-export XEN_DOM0_CPUCOUNT=4
-export XEN_DOM0_MEMORY=4G
+XEN_DOM0_CPUCOUNT=4
+XEN_DOM0_MEMORY=4G
 
 DOM0_KERNEL_EXTRA_CONFIGS=$(echo -e "\
 # Option to disable swiotlb. There is bug in kernel's swiotlb with Xen\n\
@@ -25,16 +23,13 @@ DOMU0_KERNEL_EXTRA_CONFIGS=$(echo -e "\
 "\
 )
 
-export DOM0_KERNEL_EXTRA_CONFIGS
-export DOMU0_KERNEL_EXTRA_CONFIGS
-
 echo ""
 echo "Extra kernel configs for DOM0"
 echo "${DOM0_KERNEL_EXTRA_CONFIGS}"
 echo ""
 
 echo ""
-echo "Extra kernel configs for DOM0"
+echo "Extra kernel configs for DOMU0"
 echo "${DOMU0_KERNEL_EXTRA_CONFIGS}"
 echo ""
 
@@ -67,15 +62,8 @@ esac
 
 echo "Using ${BUILDOPT} boot."
 
-
-export XEN_DOM0
-export XEN_DOM0_FILE
-export XEN_DOM0_WGET_SHA256
-export XEN_DOM0_WGET_URL
-export XEN_DOM0_IMAGE
-
-export XEN_DOMU0=2020-12-02-raspios-buster-armhf
-export XEN_DOMU0_FILE="${XEN_DOMU0}.zip"
-export XEN_DOMU0_WGET_SHA256="32034189474585c521748a6a4b21388fde9ae2c6b0c5c2d32f8abfbf508ee865"
-export XEN_DOMU0_WGET_URL="https://downloads.raspberrypi.org/raspios_armhf/images/raspios_armhf-2020-12-04/${XEN_DOMU0_FILE}"
-export XEN_DOMU0_IMAGE=domu0_raspios.img
+XEN_DOMU0=2020-12-02-raspios-buster-armhf
+XEN_DOMU0_FILE="${XEN_DOMU0}.zip"
+XEN_DOMU0_WGET_SHA256="32034189474585c521748a6a4b21388fde9ae2c6b0c5c2d32f8abfbf508ee865"
+XEN_DOMU0_WGET_URL="https://downloads.raspberrypi.org/raspios_armhf/images/raspios_armhf-2020-12-04/${XEN_DOMU0_FILE}"
+XEN_DOMU0_IMAGE=domu0_raspios.img

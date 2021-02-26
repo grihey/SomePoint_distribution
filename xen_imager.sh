@@ -9,24 +9,17 @@ if [ -f .setup_sh_config ]; then
     . .setup_sh_config
 fi
 
+. helpers.sh
+. text_generators.sh
+. select_target.sh
+
 if [ -n "$CCACHE" ]; then
     export CCACHE_DIR
     export CCACHE_MAXSIZE
 fi
-
 export CCACHE
 
-. helpers.sh
-. text_generators.sh
-
-if [ -z "$TARGET_DIR" ]; then
-    echo "Missing target."
-    echo "Run:"
-    echo "  . select_target.sh"
-    exit 1
-fi
-
-WORK_DIR="${ROOT_DIR}/${TARGET_DIR}"
+WORK_DIR="${ROOT_DIR}/${TARGET_DIR:?}"
 KERNEL_SRC="${ROOT_DIR}/linux"
 XEN_SRC="${ROOT_DIR}/xen-hyp"
 PATCH_DIR="${ROOT_DIR}/patches"
@@ -37,35 +30,6 @@ LINUX_OUT_DIR_DOMU0="${WORK_DIR}/build_${KERNEL_ARCH:?}_domu0"
 DOM0_DIR="${WORK_DIR}/dom0"
 DOMU0_DIR="${WORK_DIR}/domu0"
 BOOT_PARTITION="${WORK_DIR}/boot"
-
-umount_chroot_devs () {
-    check_1_param_exist "$1"
-
-    local ROOTFS
-
-    ROOTFS=$1
-
-    sudo umount "${ROOTFS}/dev/pts" || true
-    sudo umount "${ROOTFS}/dev" || true
-    sudo umount "${ROOTFS}/proc" || true
-    sudo umount "${ROOTFS}/sys" || true
-    sudo umount "${ROOTFS}/tmp" || true
-}
-
-mount_chroot_devs () {
-    check_1_param_exist "$1"
-
-    local ROOTFS
-
-    ROOTFS=$1
-
-    sudo mkdir -p "${ROOTFS}" || true
-    sudo mount -o bind /dev "${ROOTFS}/dev" || true
-    sudo mount -o bind /dev/pts "${ROOTFS}/dev/pts" || true
-    sudo mount -o bind /proc "${ROOTFS}/proc" || true
-    sudo mount -o bind /sys "${ROOTFS}/sys" || true
-    sudo mount -o bind /tmp "${ROOTFS}/tmp" || true
-}
 XEN_TOOL_BINS="${WORK_DIR}/xen_tool_bins"
 
 function prepare_compile_env {
@@ -476,13 +440,14 @@ EOF
 }
 
 function post_image_domu_tweaks {
+    echo "post_image_domu_tweaks"
     check_1_param_exist "$1"
 
     local WORKDIR
     local ROOTFS_DIR
 
     WORKDIR=$1
-    ROOTFS_DIR="${WORKDIR}/rootfs/"
+    ROOTFS_DIR="${WORKDIR}/rootfs"
     mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
 
         # Fix mounting of the files
@@ -493,6 +458,7 @@ proc         /proc   proc    defaults    0   0
 EOF
 
     umount_image "$ROOTFS_DIR"
+    echo "post_image_domu_tweaks done"
 }
 
 "$@"

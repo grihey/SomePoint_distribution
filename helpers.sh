@@ -174,6 +174,36 @@ function decompress_image {
     7z e "$1" || true
 }
 
+umount_chroot_devs () {
+    check_1_param_exist "$1"
+
+    local ROOTFS
+
+    ROOTFS=$1
+
+    sudo umount "${ROOTFS}/dev/pts" || true > /dev/null
+    sudo umount "${ROOTFS}/dev" || true > /dev/null
+    sudo umount "${ROOTFS}/proc" || true > /dev/null
+    sudo umount "${ROOTFS}/sys" || true > /dev/null
+    sudo umount "${ROOTFS}/tmp" || true > /dev/null
+}
+
+mount_chroot_devs () {
+    check_1_param_exist "$1"
+
+    local ROOTFS
+
+    ROOTFS=$1
+
+    sudo mkdir -p "${ROOTFS}"
+    sudo mount -o bind /dev "${ROOTFS}/dev"
+    sudo mount -o bind /dev/pts "${ROOTFS}/dev/pts"
+    sudo mount -o bind /proc "${ROOTFS}/proc"
+    sudo mount -o bind /sys "${ROOTFS}/sys"
+    sudo mount -o bind /tmp "${ROOTFS}/tmp"
+}
+
+
 function mount_image {
     echo "Mount image"
     check_2_param_exist "$1" "$2"
@@ -197,6 +227,9 @@ function umount_image {
         echo "Umounting. $1 folder is not mounted."
         return
     fi
+
+    umount_chroot_devs "$1"
+
     sudo umount "$1"
     rmdir "$1"
 }
@@ -297,7 +330,7 @@ function install_kernel {
     local compile_dir
     local kernel_install_dir
 
-    echo "Install kernel"
+    echo "install_kernel"
     check_3_param_exist "$1" "$2" "$3"
 
     arch="$1"
@@ -310,6 +343,7 @@ function install_kernel {
         echo "Arch: $arch is not supported" >&2
         exit 1
     fi
+    echo "install_kernel done"
 }
 
 function install_kernel_modules {

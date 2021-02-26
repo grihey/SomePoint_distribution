@@ -83,17 +83,22 @@ while [ "$#" -gt 0 ]; do
         shift # past value
         ;;
         -h|--help)
-	show_help
+        show_help
         ;;
-	-y|--yes)
-	CONFIRM=N
-	shift # past argument
-	;;
+        -y|--yes)
+        CONFIRM=N
+        shift # past argument
+        ;;
         --force)
         FORCED=Y
         shift # past argument
         ;;
-        *)    # device name
+        *)    # device name and invalid argument
+        # Argument that starts with "-" have been prosessed already.
+        if [[ $1 == -* ]]; then
+            echo "Argument <$1> not supported. You might have missed a space before size value!"
+            exit 1
+        fi
         DEVICE="$1"
         shift # past argument
         ;;

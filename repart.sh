@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Calculates actual number of bytes from strings like '4G' and '23M' plain numbers are sectors (512 bytes)
 function actual_value {
     local LCH
@@ -13,10 +15,10 @@ function actual_value {
         echo "$((${1:0:-1}*1024*1024))"
         ;;
         0|1|2|3|4|5|6|7|8|9)
-	echo "$((${1}*512))"
+    echo "$((${1}*512))"
         ;;
-	*)
-	echo "0"
+    *)
+    echo "0"
     esac
 }
 
@@ -177,7 +179,7 @@ if [ "$CONFIRM" == "Y" ]; then
     echo "THIS WILL DESTROY ANY DATA IN SELECTED DEVICE OR IMAGE FILE!"
     read -rp " Do you really want to continue? (y/N): " I
     if [ "$I" != "y" ] && [ "$I" != "Y" ]; then
-	echo Canceled
+    echo Canceled
         exit 8
     fi
 fi
@@ -224,7 +226,7 @@ if [ -b "$DEVICE" ]; then
 
     # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
     if [[ "${DEVICE: -1}" =~ [0-9] ]]; then
-	MIDP="p"
+        MIDP="p"
     else
         MIDP=""
     fi

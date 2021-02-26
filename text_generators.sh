@@ -185,7 +185,7 @@ function ubootsource {
 
     case "$HYPERVISOR" in
     KVM)
-        local CONSOLE=" console=tty1"
+        local CONSOLE=" console=tty1 console=ttyS0,115200"
         local ADDITIONAL=""
     ;;
     *)
@@ -302,6 +302,7 @@ function inittab {
         KVM)
             echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
             echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
+            echo "S0::respawn:/sbin/getty -L ttyS0 0 vt100 # Serial console"
             if [ "$PLATFORM" = "x86" ] ; then
                 echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic Serial"
             fi

@@ -31,6 +31,8 @@ DOM0_DIR="${WORK_DIR}/dom0"
 DOMU0_DIR="${WORK_DIR}/domu0"
 BOOT_PARTITION="${WORK_DIR}/boot"
 XEN_TOOL_BINS="${WORK_DIR}/xen_tool_bins"
+BINARIES="${WORK_DIR}/binary_releases"
+FLUFFY_BINARY="${BINARIES}/fluffy-binary-release.tar.xz"
 
 function prepare_compile_env {
     echo "prepare_compile_env"
@@ -85,6 +87,16 @@ function prepare_compile_env {
 
 function all {
     mkdir -p "$BOOT_PARTITION"
+    mkdir -p "${BINARIES}"
+
+    if [ ! -f ${BINARIES}/download.done ]; then
+        # Docker doens't see the ssrc nameserver
+        # TODO: add ssrc nameserver
+        download_artifactory_binary \
+            "http://172.18.20.106:80/artifactory/example-repo-local/fluffychat/manual_builds/fluffy-binary-release.tar.xz" \
+            "${FLUFFY_BINARY}"
+        touch ${BINARIES}/download.done
+    fi
 
     compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOM0}" xen_defconfig "${DOM0_KERNEL_EXTRA_CONFIGS}"
     install_kernel arm64 "${LINUX_OUT_DIR_DOM0}" "${BOOT_PARTITION}/vmlinuz"
@@ -199,6 +211,13 @@ function prepare_image {
     mount_image 1.img "$ROOTFS_DIR"
     install_kernel_modules "$KERNEL_SRC" arm64 aarch64-linux-gnu- "$LINUX_OUT_DIR" "$ROOTFS_DIR"
 
+    mkdir -p "$ROOTFS_DIR"/opt
+    sudo chmod a+wr "${ROOTFS_DIR}/opt"
+
+    pushd "${ROOTFS_DIR}/opt"
+    tar xxf ${FLUFFY_BINARY}
+    popd
+
     umount_image "$ROOTFS_DIR"
     popd
     echo "prepare_image done"
@@ -299,7 +318,6 @@ function compile_xen_tools {
         popd
     else
         # Use clean repo to build tools but make sure branch is same as the branch was used to build xen binary
-        sudo chmod a+w "${ROOTFS_DIR}/opt"
         pushd "${ROOTFS_DIR}/opt" || exit 255
         if [ ! -d xen ]; then
             git clone "$XEN_SRC" xen
@@ -431,9 +449,8 @@ EOF
     wg_client_config | sudo tee "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf" > /dev/null
     sudo chmod 600 -R "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf"
 
-    sudo chmod a+wr "${ROOTFS_DIR}/opt"
-    domu_config > tee "${ROOTFS_DIR}/opt/domu.cfg"
-    install_kernel arm64 "${LINUX_OUT_DIR_DOMU0}" "$ROOTFS_DIR/opt/Image"
+    domu_config | tee "${ROOTFS_DIR}/opt/domu.cfg"
+    install_kernel arm64 "${LINUX_OUT_DIR_DOMU0}" "${ROOTFS_DIR}/opt/Image"
 
     umount_image "$ROOTFS_DIR"
     echo "post_image_tweaks done"

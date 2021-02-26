@@ -290,6 +290,20 @@ function sanitycheck {
     esac
 }
 
+function download_artifactory_binary {
+    echo "download_binaries"
+    local DOWNLOAD_PATH
+    local DESTDIR
+
+    check_1_param_exist "$1" "$2"
+    DOWNLOAD_URL="$1"
+    DESTINATION="$2"
+
+    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}" -L "${DOWNLOAD_URL}" -o ${DESTINATION}
+
+    echo "download_binaries done"
+}
+
 function compile_kernel {
     local kernel_src
     local arch

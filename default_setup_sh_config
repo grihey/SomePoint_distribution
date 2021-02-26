@@ -65,3 +65,6 @@ TFTPPATH=/srv/tftp
 NFSSERVER="$TFTPSERVER"
 NFSDOM0=/srv/nfsdom0
 NFSDOMU=/srv/nfsdomu
+
+# Generate key from JFrog and place it into the .setup_sh_config file
+ARTIFACTORY_API_KEY=

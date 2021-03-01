@@ -3,6 +3,7 @@
 set -e
 
 . helpers.sh
+load_config
 
 function show_help {
     echo "Usage:"

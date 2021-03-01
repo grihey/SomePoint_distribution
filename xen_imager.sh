@@ -4,13 +4,11 @@ ROOT_DIR="$(pwd)"
 
 set -e
 
-. default_setup_sh_config
-if [ -f .setup_sh_config ]; then
-    . .setup_sh_config
-fi
-
 . helpers.sh
 . text_generators.sh
+
+load_config
+
 . select_target.sh
 
 if [ -n "$CCACHE" ]; then

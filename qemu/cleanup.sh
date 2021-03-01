@@ -7,8 +7,10 @@ SDIR="$(dirname "${BASH_SOURCE[0]}")"
 SDIR="$(realpath "$SDIR")"
 
 pushd "$SDIR" > /dev/null
+trap "popd > /dev/null" EXIT
 
 . ../helpers.sh
+load_config
 
 case "$1" in
     distclean)
@@ -22,5 +24,3 @@ case "$1" in
         fi
     ;;
 esac
-
-popd > /dev/null

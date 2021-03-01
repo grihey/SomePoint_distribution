@@ -1,3 +1,9 @@
+# With STDSUDO=1 scripts will use standard sudo instead of verbose sudo function
+STDSUDO=0
+
+# If verbose sudo function is in use and SUDOCHECK=1 then all sudoed commands will be confirmed
+SUDOCHECK=0
+
 # Automount sd/usb if not mounted when doing e.g. rootfs (0=off, 1=on)
 AUTOMOUNT=0
 

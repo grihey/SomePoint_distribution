@@ -2,7 +2,71 @@
 
 # This file has multipurpose functions.
 # Usage . helpers.sh
-# compile <args>
+
+# Get actual directory of this bash script
+HDIR="$(dirname "${BASH_SOURCE[0]}")"
+HDIR="$(realpath "$HDIR")"
+
+# Loads build system configurations
+function load_config {
+    # Load defaults in case .setup_sh_config is missing any settings
+    # for example .setup_sh_config could be from older revision
+    . "${HDIR}/default_setup_sh_config"
+
+    if [ -f "${HDIR}/.setup_sh_config" ]; then
+        . "${HDIR}/.setup_sh_config"
+    fi
+
+    set_ipconfraspi
+
+    # Disable sudo function if standard sudo is requested
+    if [ "$STDSUDO" == "1" ]; then
+        unset sudo
+    fi
+}
+
+# Get path to sudo binary (or empty if not available, but don't fail here)
+SUDOCMD="$(command -v sudo || true)"
+
+# Verbose sudo, will show the command about to be run if password is prompted for
+# At least for the very first run you'll know what is about to happen as root
+# If SUDOCHECK=1 then all commands will be confirmed
+function sudo {
+    local PROMPT
+    local INP
+
+    PROMPT="$(printf "About to sudo: \"%s\"" "$*")"
+
+    # Check if sudo is going to ask password or not
+    if "${SUDOCMD:?}" -n true 2> /dev/null; then
+        # Ask for confirmation if SUDOCHECK enabled
+        if [ "$SUDOCHECK" == "1" ]; then
+            INP="x"
+            while [ "$INP" == "x" ]; do
+                printf "%s\nConfirm (Y/n): " "$PROMPT" > /dev/tty
+                read -r INP < /dev/tty
+                case "$INP" in
+                ""|y|Y)
+                    INP="Y"
+                ;;
+                n|N)
+                    return 1
+                ;;
+                *)
+                    echo "Invalid input" > /dev/tty
+                    INP="x"
+                ;;
+                esac
+            done
+        fi
+
+        "${SUDOCMD:?}" "$@"
+    else
+        # If sudo is going to ask password show the command about to be run anyway
+        printf "%s\n" "$PROMPT" > /dev/tty
+        "${SUDOCMD:?}" "$@"
+    fi
+}
 
 function defconfig {
     echo "Creating .setup_sh_config with defaults" >&2

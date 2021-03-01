@@ -43,11 +43,7 @@ case "$1" in
     ;;
 esac
 
-# Load defaults in case .setup_sh_config is missing any settings
-# for example .setup_sh_config could be from older revision
-. default_setup_sh_config
-. .setup_sh_config
-set_ipconfraspi
+load_config
 
 if [ -n "$CCACHE" ]; then
     export CCACHE

@@ -228,6 +228,7 @@ function check_6_param_exist {
 }
 
 function check_sha {
+    echo "check_sha"
     # $1 is sha
     # $2 is file
     check_2_param_exist "$1" "$2"
@@ -237,12 +238,49 @@ function check_sha {
     if [ "$ok" == "0" ]; then
         echo 1 > shaok
     fi
+    echo "check_sha done"
 }
 
 function download {
-    check_1_param_exist "$1"
-    wget "$1"
+    check_3_param_exist "$1" "$2" "$3"
+
+    download_artifactory_binary "$1" "$2" "$3" 0
 }
+
+function download_artifactory_binary {
+    echo "download_artifactory_binary"
+    local DOWNLOAD_PATH
+    local DESTDIR
+    local TMPOUTPUT
+    local EXTRA_OPTIONS
+    local FROM_ARTIFACTORY
+
+    check_3_param_exist "$1" "$2" "$3" # can be empty"$4"
+    DOWNLOAD_URL="$1"
+    DESTDIR="$2"
+    FILENAME="$3"
+    TMPOUTPUT="${DESTDIR}/${FILENAME}"
+    FROM_ARTIFACTORY="${4}"
+
+    if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
+        TMPOUTPUT="${DOWNLOAD_CACHE_DIR}/${FILENAME}"
+        mkdir -p ${DOWNLOAD_CACHE_DIR}
+    fi
+
+    if [ ! -f "${DOWNLOAD_CACHE_DIR}/${FILENAME}" ] || [ ! -n "${DOWNLOAD_CACHE_DIR}" ] ; then
+        if [ "${FROM_ARTIFACTORY}" != "0" ]; then
+            EXTRA_OPTIONS="-H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
+        fi
+        curl ${EXTRA_OPTIONS} -L "${DOWNLOAD_URL}" -o "${TMPOUTPUT}"
+    fi
+
+    if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
+        cp "${DOWNLOAD_CACHE_DIR}/${FILENAME}" "${DESTDIR}/${FILENAME}"
+    fi
+
+    echo "download_artifactory_binary done"
+}
+
 
 function decompress_xz {
     check_1_param_exist "$1"
@@ -372,20 +410,6 @@ function sanitycheck {
         exit 0
         ;;
     esac
-}
-
-function download_artifactory_binary {
-    echo "download_binaries"
-    local DOWNLOAD_PATH
-    local DESTDIR
-
-    check_1_param_exist "$1" "$2"
-    DOWNLOAD_URL="$1"
-    DESTINATION="$2"
-
-    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}" -L "${DOWNLOAD_URL}" -o ${DESTINATION}
-
-    echo "download_binaries done"
 }
 
 function compile_kernel {

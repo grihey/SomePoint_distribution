@@ -77,3 +77,6 @@ ARTIFACTORY_API_KEY=
 
 # Update bootfs/rootfs/domufs only, do not wipe (rm -rf) contents
 FS_UPDATE_ONLY=0
+
+# Path where downloads are cached. If empty cache is not used.
+DOWNLOAD_CACHE_DIR="$(pwd)/.download_cache"

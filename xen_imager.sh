@@ -30,7 +30,7 @@ DOMU0_DIR="${WORK_DIR}/domu0"
 BOOT_PARTITION="${WORK_DIR}/boot"
 XEN_TOOL_BINS="${WORK_DIR}/xen_tool_bins"
 BINARIES="${WORK_DIR}/binary_releases"
-FLUFFY_BINARY="${BINARIES}/fluffy-binary-release.tar.xz"
+FLUFFY_BINARY_FILENAME="fluffy-binary-release.tar.xz"
 
 function prepare_compile_env {
     echo "prepare_compile_env"
@@ -93,7 +93,8 @@ function all {
         # TODO: add ssrc nameserver
         download_artifactory_binary \
             "http://172.18.20.106:80/artifactory/example-repo-local/fluffychat/manual_builds/fluffy-binary-release.tar.xz" \
-            "${FLUFFY_BINARY}"
+            "${BINARIES}" \
+            "${FLUFFY_BINARY_FILENAME}"
         touch ${BINARIES}/download.done
     fi
 
@@ -178,7 +179,7 @@ function prepare_image {
     mkdir -p "$WORKDIR"
     pushd "$WORKDIR" > /dev/null
     if ! [ -f "$IMAGE_FILE" ]; then
-        download "$IMAGE_URL"
+        download "${IMAGE_URL}" "${WORKDIR}" "${IMAGE_FILE}"
     fi
     if ! [ -f shaok ]; then
         check_sha "${IMAGE_COMPRESSED_SHA}" "${IMAGE_FILE}"
@@ -217,7 +218,7 @@ function prepare_image {
     sudo chmod a+wr "${ROOTFS_DIR}/opt"
 
     pushd "${ROOTFS_DIR}/opt"
-    tar xxf ${FLUFFY_BINARY}
+    tar xxf ${BINARIES}/${FLUFFY_BINARY_FILENAME}
     popd
 
     umount_image "$ROOTFS_DIR"

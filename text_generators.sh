@@ -381,7 +381,7 @@ function wg_client_config {
     echo "[Interface]"
     echo "Address = 10.10.10.2/24"
     echo "DNS = 10.10.10.1"
-    echo "PrivateKey = [INSERT CLIENT PRIVATE KEY HERE FROM STEP 4]"
+    echo "PrivateKey = +Lr/45I4KF+EeE3kZ0p/0GKxKp4Cjj+bGMtGFYw97U0="
     echo ""
     echo "[Peer]"
     echo "PublicKey = 8Rvz/ER24u/w2y4tiqpsEthEJJNAO3OGmdNpArimBjA="

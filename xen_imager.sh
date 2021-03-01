@@ -73,7 +73,7 @@ function prepare_compile_env {
     sudo chroot "${ROOTFS_DIR}" apt-get clean
 
     sudo chroot "${ROOTFS_DIR}" apt-get -y install bin86 bcc liblzma-dev ocaml python3 python3-dev gettext acpica-tools wget ftp
-    sudo chroot "${ROOTFS_DIR}" apt-get -y install wireguard wireguard-tools
+    sudo chroot "${ROOTFS_DIR}" apt-get -y install wireguard wireguard-tools openresolv
 
     # App dependencies
     sudo chroot "${ROOTFS_DIR}" apt-get -y install libgtk-3-dev # For Flutter

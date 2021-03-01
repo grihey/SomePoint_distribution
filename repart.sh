@@ -2,25 +2,7 @@
 
 set -e
 
-# Calculates actual number of bytes from strings like '4G' and '23M' plain numbers are sectors (512 bytes)
-function actual_value {
-    local LCH
-
-    LCH="${1: -1}"
-    case "$LCH" in
-        G)
-        echo "$((${1:0:-1}*1024*1024*1024))"
-        ;;
-        M)
-        echo "$((${1:0:-1}*1024*1024))"
-        ;;
-        0|1|2|3|4|5|6|7|8|9)
-    echo "$((${1}*512))"
-        ;;
-    *)
-    echo "0"
-    esac
-}
+. helpers.sh
 
 function show_help {
     echo "Usage:"
@@ -168,12 +150,11 @@ echo "Boot FS size = ${BOOTSIZ}"
 echo "Root FS size = ${ROOTSIZ}"
 echo "Domu FS size = ${DOMUSIZ:-fill device}"
 if [ -n "$IMAGE_ROOT" ]; then
-    echo "Root Image   = ${IMAGE_ROOT}"
+    echo "  Root Image = ${IMAGE_ROOT}"
 fi
 if [ -n "$IMAGE_DOMU" ]; then
-    echo "Domu Image   = ${IMAGE_DOMU}"
+    echo "  Domu Image = ${IMAGE_DOMU}"
 fi
-
 
 if [ "$CONFIRM" == "Y" ]; then
     echo "THIS WILL DESTROY ANY DATA IN SELECTED DEVICE OR IMAGE FILE!"
@@ -194,6 +175,9 @@ if [ -n "$DOMUSIZ" ]; then
     DOMUSIZ="+$DOMUSIZ"
 fi
 
+# Sed magic here used to remove comments from the here document
+# Avoiding the here document would require creating a temp file
+# $SUDOCMD is intentionally unquoted
 sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | sudo fdisk "$DEVICE"
   o # clear the in memory partition table
   n # new partition

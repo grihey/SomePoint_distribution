@@ -33,6 +33,26 @@ function fn_exists {
     fi
 }
 
+# Calculates actual number of bytes from strings like '4G' and '23M' plain numbers are sectors (512 bytes)
+function actual_value {
+    local LCH
+
+    LCH="${1: -1}"
+    case "$LCH" in
+        G)
+        echo "$((${1:0:-1}*1024*1024*1024))"
+        ;;
+        M)
+        echo "$((${1:0:-1}*1024*1024))"
+        ;;
+        0|1|2|3|4|5|6|7|8|9)
+	echo "$((${1}*512))"
+        ;;
+	*)
+	echo "0"
+    esac
+}
+
 # Trims off whitespace from start and end of a string
 function trim {
     local STR

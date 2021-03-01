@@ -488,6 +488,12 @@ function deploy {
     local device="$1"
 
     sudo ./repart.sh -b 512M -r 16G -ir ${DOM0_DIR}/1.img -d 10G -id ${DOMU0_DIR}/1.img "$device"
+
+    mkdir -p ${WORK_DIR}/boot_tmp
+    sudo mount "$device"1 ${WORK_DIR}/boot_tmp
+    cp -r ${BOOT_PARTITION}/* ${WORK_DIR}/boot_tmp/
+    sudo umount ${WORK_DIR}/boot_tmp
+    rmdir ${WORK_DIR}/boot_tmp
 }
 
 "$@"

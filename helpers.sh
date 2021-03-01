@@ -396,7 +396,7 @@ function install_kernel_modules {
 }
 
 function compile_xen {
-    echo "Compile xen"
+    echo "compile_xen"
     check_2_param_exist "$1" "$2"
 
     local SRC
@@ -418,4 +418,6 @@ function compile_xen {
         make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dist-xen -j "$(nproc)"
         popd || exit 255
     fi
+
+    echo "compile_xen done"
 }

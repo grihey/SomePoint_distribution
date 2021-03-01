@@ -86,6 +86,7 @@ function prepare_compile_env {
 }
 
 function all {
+    echo "all"
     mkdir -p "$BOOT_PARTITION"
     mkdir -p "${BINARIES}"
 
@@ -115,10 +116,11 @@ function all {
 
     prepare_boot "$BOOT_PARTITION"
 
-    echo "All done"
+    echo "all done"
 }
 
 function prepare_boot {
+    echo "prepare_boot"
     check_1_param_exist "$1"
 
     local BOOTFS
@@ -151,6 +153,8 @@ function prepare_boot {
     cp -r "${LINUX_OUT_DIR_DOM0}/${DOM0_DTS:?}/overlays" "$BOOTFS"
     cp usbfix/fixup4.dat "$BOOTFS"
     cp usbfix/start4.elf "$BOOTFS"
+
+    echo "prepare_boot done"
 }
 
 function prepare_image {
@@ -476,6 +480,14 @@ EOF
 
     umount_image "$ROOTFS_DIR"
     echo "post_image_domu_tweaks done"
+}
+
+function deploy {
+    check_1_param_exist "$1"
+
+    local device="$1"
+
+    sudo ./repart.sh -b 512M -r 16G -ir ${DOM0_DIR}/1.img -d 10G -id ${DOMU0_DIR}/1.img "$device"
 }
 
 "$@"

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 IMAGE=$1
+ROOT_OPTS=$2
 LOCALIP=`ip a s eth0 | grep "inet " | cut -d" " -f6 | cut -d"/" -f1`
 USER=$(whoami)
 PORT=222
@@ -26,9 +27,15 @@ if [ "$USER" = "root" ]; then
 	[ ! -c /dev/net/tun ] && mknod /dev/net/tun c 10 200 && chmod 0666 /dev/net/tun
 fi
 
-KERNEL_OPTS="root=/dev/vda console=ttyAMA0 nokaslr loglevel=8 rw ${SYSTEMD_DEBUG}"
+KERNEL_OPTS="console=ttyAMA0 nokaslr loglevel=8 rw ${SYSTEMD_DEBUG}"
 USB="-device qemu-xhci -device usb-kbd -device usb-tablet"
-DRIVE="-drive file=$IMAGE,format=raw,if=none,id=ubu-sd -device virtio-blk-device,drive=ubu-sd"
+if [ "$IMAGE" = "/dev/nfs" ] ; then
+    DRIVE=""
+    KERNEL_OPTS="root=/dev/nfs nfsroot=${ROOT_OPTS},tcp,vers=3 ip=::::raspi-domu:eth0:dhcp ${KERNEL_OPTS}"
+else
+    DRIVE="-drive file=$IMAGE,format=raw,if=none,id=ubu-sd -device virtio-blk-device,drive=ubu-sd"
+    KERNEL_OPTS="root=/dev/vda ${KERNEL_OPTS}"
+fi
 QEMUOPTS="-enable-kvm -cpu ${CPUTYPE},${PROFILE} ${SMP} -M ${MACHINE},virtualization=off,secure=off,highmem=off -m ${MEM} ${DEBUGOPTS} ${NETOPTS} ${AUDIO}"
 
 echo "Running $QEMUDIR/qemu-system-aarch64 as user $USER"

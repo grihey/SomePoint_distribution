@@ -100,7 +100,13 @@ function domu_interfaces {
         echo "auto lo"
         echo "iface lo inet loopback"
         echo ""
-        echo "auto eth0"
+        case "$BUILDOPT" in
+        0|1|MMC|USB)
+            echo "auto eth0"
+        ;;
+        *)
+        ;;
+        esac
         echo "iface eth0 inet dhcp"
         echo ""
         echo "iface default inet dhcp"
@@ -356,8 +362,7 @@ function rq_sh {
         echo "./run-qemu.sh /dev/mmcblk0p3"
     ;;
     2|3)
-        echo "Warning: network boot with KVM not implemented properly yet (sda3 assumed for guest root)" >&2
-        echo "./run-qemu.sh /dev/sda3"
+        echo "./run-qemu.sh /dev/nfs ${NFSSERVER}:${NFSDOMU}"
     ;;
     *)
         echo "./run-qemu.sh /dev/sda3"

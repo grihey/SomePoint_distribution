@@ -503,10 +503,12 @@ function rootfs {
     cp configs/wpa_supplicant.conf "${ROOTFS}/etc/wpa_supplicant.conf"
 
     domu_config > "${ROOTFS}/root/domu.cfg"
+
+    net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
+    chmod 755 "${ROOTFS}/etc/init.d/S41netadditions"
+
     case "$BUILDOPT" in
     2|3)
-        net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
-        chmod 755 "${ROOTFS}/etc/init.d/S41netadditions"
         if [ "$HYPERVISOR" == "XEN" ] ; then
             echo 'vif.default.script="vif-nat"' >> "${ROOTFS}/etc/xen/xl.conf"
         fi
@@ -564,14 +566,8 @@ function domufs {
 
     rootfs "$DOMUFS"
 
-    case "$BUILDOPT" in
-    2|3)
-        net_rc_add domu > "${DOMUFS}/etc/init.d/S41netadditions"
-        chmod 755 "${DOMUFS}/etc/init.d/S41netadditions"
-    ;;
-    *)
-    ;;
-    esac
+    net_rc_add domu > "${DOMUFS}/etc/init.d/S41netadditions"
+    chmod 755 "${DOMUFS}/etc/init.d/S41netadditions"
 
     domu_interfaces > "${DOMUFS}/etc/network/interfaces"
     inittab domu > "${DOMUFS}/etc/inittab"

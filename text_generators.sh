@@ -101,10 +101,7 @@ function domu_interfaces {
         echo "iface lo inet loopback"
         echo ""
         echo "auto eth0"
-        echo "iface eth0 inet static"
-        echo "    address 10.123.123.2"
-        echo "    netmask 255.255.255.0"
-        echo "    gateway 10.123.123.1"
+        echo "iface eth0 inet dhcp"
         echo ""
         echo "iface default inet dhcp"
     ;;
@@ -263,6 +260,11 @@ function ubootsource {
 function net_rc_add {
     echo "#!/bin/bash"
     echo ""
+
+    if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "KVM" ] ; then
+        # Allow ping from guest VMs under KVM
+        echo "sysctl -w net.ipv4.ping_group_range='0 2147483647'"
+    fi
 
     case "$BUILDOPT" in
     0|1|USB|MMC)

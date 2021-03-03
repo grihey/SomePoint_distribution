@@ -35,6 +35,9 @@ case "$1" in
         x86config
         exit 0
     ;;
+    clean|distclean)
+        # Don't create .setup_sh_config on cleans
+    ;;
     *)
         if [ ! -f .setup_sh_config ]; then
             echo ".setup_sh_config not found" >&2
@@ -760,12 +763,22 @@ function clean {
     safer_rmrf "$IMGBUILD"
     safer_rmrf "$TMPDIR"
 
-    (
-        cd buildroot
-        make clean
-        # Removing kernel to force refecth from local linux kernel tree
-        rm -rf dl/linux
-    )
+    # Try to clean buildroot only if docker and buildroot have been cloned
+    if [ -f "docker/Makefile" ] && [ -f "buildroot/Makefile" ]; then
+        (
+            cd docker
+            # If build_env has not been run, then run it
+            if [ ! -f gitconfig ]; then
+                make build_env
+            fi
+            make buildroot_clean
+        )
+        (
+            cd buildroot
+            # Removing kernel to force refecth from local linux kernel tree
+            rm -rf dl/linux
+        )
+    fi
 
     # Run 'cleanup.sh clean' in subdirs, if available
     for ENTRY in ./*/ ;do
@@ -824,6 +837,7 @@ function showhelp {
     echo "                                      (overwrites .setup_sh_config if given)"
     echo "    distclean                         removes almost everything except main repo local changes"
     echo "                                      (basically resets to just cloned main repo)"
+    echo "    clean                             Clean up built files, but keep downloads"
     echo ""
     exit 0
 }

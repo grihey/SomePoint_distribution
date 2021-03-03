@@ -219,6 +219,8 @@ function prepare_image {
 
     pushd "${ROOTFS_DIR}/opt"
     tar xxf ${BINARIES}/${FLUFFY_BINARY_FILENAME}
+    sudo mkdir -p "${ROOTFS_DIR}/etc/skel/Desktop/"
+    sudo cp "${ROOTFS_DIR}/opt/fluffy/Fluffy.desktop" "${ROOTFS_DIR}/etc/skel/Desktop/"
     popd
 
     umount_image "$ROOTFS_DIR"

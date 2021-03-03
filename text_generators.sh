@@ -13,7 +13,7 @@ function domu_config {
     ;;
     2|3)
         echo "kernel = \"/root/Image\""
-        echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:${RASPHN}-domu:eth0:off:${RASPDNS}\""
+        echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:${DEVICEHN}-domu:eth0:off:${DEVICEDNS}\""
         echo "memory = \"1024\""
         echo "name = \"rpi4-xen-guest\""
         echo "vcpus = 2"
@@ -48,9 +48,9 @@ function dom0_interfaces {
             echo "iface lo inet loopback"
             echo ""
             echo "iface eth0 inet static"
-            echo "    address ${RASPIP}"
-            echo "    netmask ${RASPNM}"
-            echo "    gateway ${RASPGW}"
+            echo "    address ${DEVICEIP}"
+            echo "    netmask ${DEVICENM}"
+            echo "    gateway ${DEVICEGW}"
             echo ""
             echo "iface default inet dhcp"
         ;;
@@ -80,9 +80,9 @@ function dom0_interfaces {
             echo "iface lo inet loopback"
             echo ""
             echo "iface eth0 inet static"
-            echo "    address ${RASPIP}"
-            echo "    netmask ${RASPNM}"
-            echo "    gateway ${RASPGW}"
+            echo "    address ${DEVICEIP}"
+            echo "    netmask ${DEVICENM}"
+            echo "    gateway ${DEVICEGW}"
             echo ""
             echo "iface default inet dhcp"
         ;;
@@ -148,8 +148,8 @@ function ubootstub {
         echo "source 0x100000"
     ;;
     3)
-        echo "setenv ipaddr ${RASPIP}"
-        echo "setenv netmask ${RASPNM}"
+        echo "setenv ipaddr ${DEVICEIP}"
+        echo "setenv netmask ${DEVICENM}"
         echo "setenv serverip ${TFTPSERVER}"
         echo "tftp 0x100000 boot2.scr"
         echo "source 0x100000"
@@ -208,7 +208,7 @@ function ubootsource {
     ;;
     2|3)
         local LOAD="tftp"
-        local ROOTPARM=" root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,rw,vers=3 ip=${IPCONFRASPI}"
+        local ROOTPARM=" root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,rw,vers=3 ip=${DEVICEIPCONF}"
     ;;
     *)
         echo "Invalid BUILDOPT setting" >&2
@@ -289,7 +289,7 @@ function net_rc_add {
         echo "    DNS0=\${DNS0##*nameserver0=}"
         echo "    DNS0=\${DNS0%%,*}"
         echo "else"
-        echo "    DNS0=${RASPDNS}"
+        echo "    DNS0=${DEVICEDNS}"
         echo "fi"
         echo ""
         echo "echo \"nameserver \$DNS0\" > /etc/resolv.conf"

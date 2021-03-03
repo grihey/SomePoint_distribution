@@ -492,13 +492,16 @@ function rootfs {
         popd
     fi
 
-    if ! [ -a "images/rasp_id_rsa" ]; then
+    if ! [ -a "images/device_id_rsa" ]; then
         echo "Generate ssh key"
-        ssh-keygen -t rsa -q -f "images/rasp_id_rsa" -N ""
+        ssh-keygen -t rsa -q -f "images/device_id_rsa" -N ""
+        # Just to make CI build happy for now, will be removed later
+        cp -pf "images/device_id_rsa" "images/rasp_id_rsa"
+        cp -pf "images/device_id_rsa.pub" "images/rasp_id_rsa.pub"
     fi
 
     mkdir -p "${ROOTFS}/root/.ssh"
-    cat images/rasp_id_rsa.pub >> "${ROOTFS}/root/.ssh/authorized_keys"
+    cat images/device_id_rsa.pub >> "${ROOTFS}/root/.ssh/authorized_keys"
     chmod 700 "${ROOTFS}/root/.ssh/authorized_keys"
     chmod 700 "${ROOTFS}/root/.ssh"
 
@@ -530,7 +533,7 @@ function rootfs {
     inittab dom0 > "${ROOTFS}/etc/inittab"
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
-    echo "${RASPHN}-dom0" > "${ROOTFS}/etc/hostname"
+    echo "${DEVICEHN}-dom0" > "${ROOTFS}/etc/hostname"
 
     case "$HYPERVISOR" in
     KVM)
@@ -574,7 +577,7 @@ function domufs {
 
     domu_interfaces > "${DOMUFS}/etc/network/interfaces"
     inittab domu > "${DOMUFS}/etc/inittab"
-    echo "${RASPHN}-domu" > "${DOMUFS}/etc/hostname"
+    echo "${DEVICEHN}-domu" > "${DOMUFS}/etc/hostname"
 }
 
 function nfsupdate {
@@ -681,10 +684,10 @@ function kernel_conf_change {
 function ssh_dut {
     case "$1" in
     domu)
-        ssh -i images/rasp_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$RASPIP"
+        ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$DEVICEIP"
     ;;
     *)
-        ssh -i images/rasp_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$RASPIP"
+        ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$DEVICEIP"
     esac
 }
 

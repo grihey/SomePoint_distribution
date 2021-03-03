@@ -17,7 +17,7 @@ function load_config {
         . "${HDIR}/.setup_sh_config"
     fi
 
-    set_ipconfraspi
+    set_deviceipconf
 
     # Disable sudo function if standard sudo is requested
     if [ "$STDSUDO" == "1" ]; then
@@ -84,7 +84,7 @@ function x86config {
         -e "s/PLATFORM=.*/PLATFORM=x86/" \
         -e "s/BUILDOPT=.*/BUILDOPT=2/" \
         -e "s/KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
-        -e "s/RASPHN=.*/RASPHN=x86/" < default_setup_sh_config > .setup_sh_config
+        -e "s/DEVICEHN=.*/DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
 }
 
 # Returns 0 if function exists, 1 if not
@@ -163,20 +163,20 @@ function remove_ignores {
     fi
 }
 
-function set_ipconfraspi {
-    # IPCONFRASPI defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
+function set_deviceipconf {
+    # DEVICEIPCONF defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
     case "$BUILDOPT" in
     2)
         # dhcp configuration
-        IPCONFRASPI="::::${RASPHN}-dom0:eth0:dhcp"
+        DEVICEIPCONF="::::${DEVICEHN}-dom0:eth0:dhcp"
     ;;
     3)
         # static IP configuration
-        IPCONFRASPI="${RASPIP}::${RASPGW}:${RASPNM}:${RASPHN}-dom0:eth0:off:${RASPDNS}"
+        DEVICEIPCONF="${DEVICEIP}::${DEVICEGW}:${DEVICENM}:${DEVICEHN}-dom0:eth0:off:${DEVICEDNS}"
     ;;
     *)
         # IP configuration not used at boot time (SD/USB)
-        IPCONFRASPI="invalid"
+        DEVICEIPCONF="invalid"
     ;;
     esac
 }

@@ -141,8 +141,10 @@ function build_guest_kernels {
 
     case "$HYPERVISOR" in
     KVM)
-        mkdir -p "${ODIR}/kvm_domu"
-        compile_kernel ./linux arm64 aarch64-linux-gnu- "${ODIR}/kvm_domu" raspi4_kvm_guest_release_defconfig
+        # Atm kvm buildroot uses the same kernel for host and guest, uncomment
+        # below to build separate guest kernel
+        # mkdir -p "${ODIR}/kvm_domu"
+        # compile_kernel ./linux arm64 aarch64-linux-gnu- "${ODIR}/kvm_domu" raspi4_kvm_guest_release_defconfig
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -337,7 +339,8 @@ function gen_configs {
     case "$HYPERVISOR" in
     KVM)
         local hyp_opt="kvm"
-        configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}_guest${os_opt}_release" -k linux
+	# For now, we use same config for the guest kernels also
+        #configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}_guest${os_opt}_release" -k linux
     ;;
     *)
         local hyp_opt="xen"
@@ -544,7 +547,8 @@ function rootfs {
             chmod a+x "${ROOTFS}/root/run-x86-qemu.sh"
         ;;
         *)
-            cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"
+            #cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"
+            cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
             cp qemu/efi-virtio.rom "${ROOTFS}/root"
             cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
             cp qemu/run-qemu.sh "${ROOTFS}/root"

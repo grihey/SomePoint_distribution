@@ -492,7 +492,7 @@ function deploy {
 
     mkdir -p ${WORK_DIR}/boot_tmp
     sudo mount "$device"1 ${WORK_DIR}/boot_tmp
-    cp -r ${BOOT_PARTITION}/* ${WORK_DIR}/boot_tmp/
+    sudo cp -r ${BOOT_PARTITION}/* ${WORK_DIR}/boot_tmp/
     sudo umount ${WORK_DIR}/boot_tmp
     rmdir ${WORK_DIR}/boot_tmp
 }

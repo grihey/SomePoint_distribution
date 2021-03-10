@@ -3,9 +3,9 @@
 set -e
 
 . helpers.sh
-load_config
+Load_config
 
-function show_help {
+function Show_help {
     echo "Usage:"
     echo "    $0 [-b|--boot <boot fs size>] [-r|-root <root fs size>] [-d|--domu <domu fs size>] [-y|--yes] [--force] <device>"
     echo "       [-ir|--image-root <root image>"
@@ -28,7 +28,7 @@ function show_help {
 }
 
 if [ "$#" -eq 0 ]; then
-    show_help >&2
+    Show_help >&2
 fi
 
 DEVICE=/dev/null
@@ -68,7 +68,7 @@ while [ "$#" -gt 0 ]; do
         shift # past value
     ;;
     -h|--help)
-        show_help
+        Show_help
     ;;
     -y|--yes)
         CONFIRM=N
@@ -112,20 +112,20 @@ if [ ! -b "$DEVICE" ] && [ -z "$DOMUSIZ" ]; then
     exit 4
 fi
 
-AB="$(actual_value "$BOOTSIZ")"
+AB="$(Actual_value "$BOOTSIZ")"
 if [ "$AB" -eq 0 ]; then
     echo "Invalid boot fs size" >&2
     exit 5
 fi
 
-AR="$(actual_value "$ROOTSIZ")"
+AR="$(Actual_value "$ROOTSIZ")"
 if [ "$AR" -eq 0 ]; then
     echo "Invalid root fs size" >&2
     exit 6
 fi
 
 if [ -n "$DOMUSIZ" ]; then
-    AD="$(actual_value "$DOMUSIZ")"
+    AD="$(Actual_value "$DOMUSIZ")"
     if [ "$AD" -eq 0 ]; then
         echo "Invalid domu fs size" >&2
         exit 7

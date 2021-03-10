@@ -7,7 +7,7 @@ set -e
 . helpers.sh
 . text_generators.sh
 
-load_config
+Load_config
 
 . select_target.sh
 
@@ -32,9 +32,9 @@ XEN_TOOL_BINS="${WORK_DIR}/xen_tool_bins"
 BINARIES="${WORK_DIR}/binary_releases"
 FLUFFY_BINARY_FILENAME="fluffy-binary-release.tar.xz"
 
-function prepare_compile_env {
-    echo "prepare_compile_env"
-    check_2_param_exist "$1" "$2"
+function Prepare_compile_env {
+    echo "Prepare_compile_env"
+    Check_2_param_exist "$1" "$2"
 
     local IMAGE
     local ROOTFS_DIR
@@ -44,8 +44,8 @@ function prepare_compile_env {
 
     sudo apt install qemu-user-static pkg-config
 
-    mount_image "$IMAGE" "$ROOTFS_DIR"
-    mount_chroot_devs "$ROOTFS_DIR"
+    Mount_image "$IMAGE" "$ROOTFS_DIR"
+    Mount_chroot_devs "$ROOTFS_DIR"
 
     sudo cp "$(command -v qemu-aarch64-static)" "${ROOTFS_DIR}/usr/bin/"
 
@@ -79,50 +79,50 @@ function prepare_compile_env {
     sudo chroot "${ROOTFS_DIR}" apt-get -y install libgtk-3-dev # For Flutter
     sudo chroot "${ROOTFS_DIR}" apt-get -y install libsqlite3-dev libolm-dev # For Fluffychat (needs libolm3)
 
-    umount_chroot_devs "$ROOTFS_DIR"
-    umount_image "$ROOTFS_DIR"
+    Umount_chroot_devs "$ROOTFS_DIR"
+    Umount_image "$ROOTFS_DIR"
 
-    echo "prepare_compile_env done"
+    echo "Prepare_compile_env done"
 }
 
-function all {
-    echo "all"
+function All {
+    echo "All"
     mkdir -p "$BOOT_PARTITION"
     mkdir -p "${BINARIES}"
 
     if [ ! -f ${BINARIES}/download.done ]; then
         # Docker doens't see the ssrc nameserver
         # TODO: add ssrc nameserver
-        download_artifactory_binary \
+        Download_artifactory_binary \
             "http://172.18.20.106:80/artifactory/example-repo-local/fluffychat/manual_builds/fluffy-binary-release.tar.xz" \
             "${BINARIES}" \
             "${FLUFFY_BINARY_FILENAME}"
         touch ${BINARIES}/download.done
     fi
 
-    compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOM0}" xen_defconfig "${DOM0_KERNEL_EXTRA_CONFIGS}"
-    install_kernel arm64 "${LINUX_OUT_DIR_DOM0}" "${BOOT_PARTITION}/vmlinuz"
+    Compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOM0}" xen_defconfig "${DOM0_KERNEL_EXTRA_CONFIGS}"
+    Install_kernel arm64 "${LINUX_OUT_DIR_DOM0}" "${BOOT_PARTITION}/vmlinuz"
 
     # compile kernel for domu0
-    compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOMU0}" xen_defconfig "${DOMU0_KERNEL_EXTRA_CONFIGS}"
+    Compile_kernel "${KERNEL_SRC}" arm64 aarch64-linux-gnu- "${LINUX_OUT_DIR_DOMU0}" xen_defconfig "${DOMU0_KERNEL_EXTRA_CONFIGS}"
 
-    prepare_image "${DOM0_DIR}"  "${LINUX_OUT_DIR_DOM0}"   "${XEN_DOM0_FILE:?}" "${XEN_DOM0_WGET_URL:?}" "${XEN_DOM0_WGET_SHA256:?}" 0
-    prepare_image "${DOMU0_DIR}" "${LINUX_OUT_DIR_DOMU0}"  "${XEN_DOMU0_FILE:?}" "${XEN_DOMU0_WGET_URL:?}" "${XEN_DOMU0_WGET_SHA256:?}" 1
+    Prepare_image "${DOM0_DIR}"  "${LINUX_OUT_DIR_DOM0}"   "${XEN_DOM0_FILE:?}" "${XEN_DOM0_WGET_URL:?}" "${XEN_DOM0_WGET_SHA256:?}" 0
+    Prepare_image "${DOMU0_DIR}" "${LINUX_OUT_DIR_DOMU0}"  "${XEN_DOMU0_FILE:?}" "${XEN_DOMU0_WGET_URL:?}" "${XEN_DOMU0_WGET_SHA256:?}" 1
 
-    compile_xen "${XEN_SRC}" "${XEN_VERSION}"
-    compile_xen_tools "${DOM0_DIR}" arm64 "${XEN_SRC}"
+    Compile_xen "${XEN_SRC}" "${XEN_VERSION}"
+    Compile_xen_tools "${DOM0_DIR}" arm64 "${XEN_SRC}"
 
-    post_image_tweaks "${DOM0_DIR}"
-    post_image_domu_tweaks "${DOMU0_DIR}"
+    Post_image_tweaks "${DOM0_DIR}"
+    Post_image_domu_tweaks "${DOMU0_DIR}"
 
-    prepare_boot "$BOOT_PARTITION"
+    Prepare_boot "$BOOT_PARTITION"
 
-    echo "all done"
+    echo "All done"
 }
 
-function prepare_boot {
-    echo "prepare_boot"
-    check_1_param_exist "$1"
+function Prepare_boot {
+    echo "Prepare_boot"
+    Check_1_param_exist "$1"
 
     local BOOTFS
 
@@ -130,14 +130,14 @@ function prepare_boot {
 
     case "${BUILDOPT}" in
     MMC|USB)
-        ubootsource > "${WORK_DIR}/boot.source"
+        Uboot_source > "${WORK_DIR}/boot.source"
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d "${WORK_DIR}/boot.source" "${BOOTFS}/boot.scr"
         ;;
     # Not supported at the moment
     #TFTP)
-    #    ubootstub > "${WORK_DIR}"boot.source
+    #    Uboot_stub > "${WORK_DIR}"boot.source
     #    mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d "${WORK_DIR}"boot.source "${WORK_DIR}"boot.scr
-    #    ubootsource > "${WORK_DIR}"boot2.source
+    #    Uboot_source > "${WORK_DIR}"boot2.source
     #    mkimage -A arm64 -T script -C none -a 0x100000 -e 0x100000 -d "${WORK_DIR}"boot2.source "${WORK_DIR}"boot2.scr
     #;;
     *)
@@ -146,7 +146,7 @@ function prepare_boot {
     ;;
     esac
 
-    config_txt > "${BOOTFS}/config.txt"
+    Config_txt > "${BOOTFS}/config.txt"
     cp u-boot.bin "${BOOTFS}"
     cp "${XEN_SRC}/xen/xen" "${BOOTFS}"
 
@@ -155,12 +155,12 @@ function prepare_boot {
     cp usbfix/fixup4.dat "$BOOTFS"
     cp usbfix/start4.elf "$BOOTFS"
 
-    echo "prepare_boot done"
+    echo "Prepare_boot done"
 }
 
-function prepare_image {
-    echo "prepare_image"
-    check_6_param_exist "$1" "$2" "$3" "$4" "$5" "$6"
+function Prepare_image {
+    echo "Prepare_image"
+    Check_6_param_exist "$1" "$2" "$3" "$4" "$5" "$6"
 
     local WORKDIR
     local LINUX_OUT_DIR
@@ -181,10 +181,10 @@ function prepare_image {
     mkdir -p "$WORKDIR"
     pushd "$WORKDIR" > /dev/null
     if ! [ -f "$IMAGE_FILE" ]; then
-        download "${IMAGE_URL}" "${WORKDIR}" "${IMAGE_FILE}"
+        Download "${IMAGE_URL}" "${WORKDIR}" "${IMAGE_FILE}"
     fi
     if ! [ -f shaok ]; then
-        check_sha "${IMAGE_COMPRESSED_SHA}" "${IMAGE_FILE}"
+        Check_sha "${IMAGE_COMPRESSED_SHA}" "${IMAGE_FILE}"
     fi
 
     t=$(basename "${IMAGE_FILE}")
@@ -197,12 +197,12 @@ function prepare_image {
 
     if ! [ -f "${IMAGE_NAME}" ]; then
         echo "Decompress ${IMAGE_FILE}"
-        decompress_image "${IMAGE_FILE}"
+        Decompress_image "${IMAGE_FILE}"
     fi
 
     if ! [ -f 1.img ]; then
         echo "Extract 1.img"
-        decompress_image "${IMAGE_NAME}"
+        Decompress_image "${IMAGE_NAME}"
     fi
 
     # only resize dom0. Space is needed for compiling Xen.
@@ -213,8 +213,8 @@ function prepare_image {
 
     ROOTFS_DIR=${WORKDIR}/rootfs
 
-    mount_image 1.img "$ROOTFS_DIR"
-    install_kernel_modules "$KERNEL_SRC" arm64 aarch64-linux-gnu- "$LINUX_OUT_DIR" "$ROOTFS_DIR"
+    Mount_image 1.img "$ROOTFS_DIR"
+    Install_kernel_modules "$KERNEL_SRC" arm64 aarch64-linux-gnu- "$LINUX_OUT_DIR" "$ROOTFS_DIR"
 
     mkdir -p "$ROOTFS_DIR"/opt
     sudo chmod a+wr "${ROOTFS_DIR}/opt"
@@ -225,22 +225,22 @@ function prepare_image {
     sudo cp "${ROOTFS_DIR}/opt/fluffy/Fluffy.desktop" "${ROOTFS_DIR}/etc/skel/Desktop/"
     popd
 
-    umount_image "$ROOTFS_DIR"
+    Umount_image "$ROOTFS_DIR"
     popd
-    echo "prepare_image done"
+    echo "Prepare_image done"
 }
 
-function umount_all {
+function Umount_all {
     local WORKDIR
 
     WORKDIR="${DOM0_DIR}"
-    umount_chroot_devs "${WORKDIR}/rootfs/"
-    umount_image "${WORKDIR}/rootfs/"
+    Umount_chroot_devs "${WORKDIR}/rootfs/"
+    Umount_image "${WORKDIR}/rootfs/"
 }
 
-function compile_xen_tools {
-    echo "compile_xen_tools"
-    check_3_param_exist "$1" "$2" "$3"
+function Compile_xen_tools {
+    echo "Compile_xen_tools"
+    Check_3_param_exist "$1" "$2" "$3"
 
     local WORKDIR
     local ARCH
@@ -255,11 +255,11 @@ function compile_xen_tools {
 
     ROOTFS_DIR="${WORKDIR}/rootfs"
     if ! [ -f "${WORKDIR}/prepare_compile_env.setup.done" ]; then
-        prepare_compile_env "${WORKDIR}/1.img" "$ROOTFS_DIR"
+        Prepare_compile_env "${WORKDIR}/1.img" "$ROOTFS_DIR"
         touch "${WORKDIR}/prepare_compile_env.setup.done"
     fi
 
-    mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
+    Mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
 
     # Build Xen tools
     if [ "${ARCH}" == "arm64" ]; then
@@ -369,15 +369,15 @@ EOF
         popd
     fi
 
-    umount_image "$ROOTFS_DIR"
+    Umount_image "$ROOTFS_DIR"
 
-    echo "compile_xen_tools done"
+    echo "Compile_xen_tools done"
 }
 
 
-function post_image_tweaks {
-    echo "post_image_tweaks"
-    check_1_param_exist "$1"
+function Post_image_tweaks {
+    echo "Post_image_tweaks"
+    Check_1_param_exist "$1"
 
     local WORKDIR
     local ROOTFS_DIR
@@ -385,7 +385,7 @@ function post_image_tweaks {
     WORKDIR=$1
     ROOTFS_DIR="${WORKDIR}/rootfs"
 
-    mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
+    Mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
 
     # destination var/run is link we cannot copy the whole thing at once.
     # TODO: Create function that can handle this.
@@ -453,26 +453,26 @@ EOF
     fi
 
     sudo mkdir -p "${ROOTFS_DIR}/etc/wireguard"
-    wg_client_config | sudo tee "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf" > /dev/null
+    Wg_client_config | sudo tee "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf" > /dev/null
     sudo chmod 600 -R "${ROOTFS_DIR}/etc/wireguard/wg-client0.conf"
 
-    domu_config | tee "${ROOTFS_DIR}/opt/domu.cfg"
-    install_kernel arm64 "${LINUX_OUT_DIR_DOMU0}" "${ROOTFS_DIR}/opt/Image"
+    Domu_config | tee "${ROOTFS_DIR}/opt/domu.cfg"
+    Install_kernel arm64 "${LINUX_OUT_DIR_DOMU0}" "${ROOTFS_DIR}/opt/Image"
 
-    umount_image "$ROOTFS_DIR"
-    echo "post_image_tweaks done"
+    Umount_image "$ROOTFS_DIR"
+    echo "Post_image_tweaks done"
 }
 
-function post_image_domu_tweaks {
-    echo "post_image_domu_tweaks"
-    check_1_param_exist "$1"
+function Post_image_domu_tweaks {
+    echo "Post_image_domu_tweaks"
+    Check_1_param_exist "$1"
 
     local WORKDIR
     local ROOTFS_DIR
 
     WORKDIR=$1
     ROOTFS_DIR="${WORKDIR}/rootfs"
-    mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
+    Mount_image "${WORKDIR}/1.img" "$ROOTFS_DIR"
 
         # Fix mounting of the files
     sudo bash -c "cat > ${ROOTFS_DIR}/etc/fstab" <<EOF
@@ -481,12 +481,12 @@ proc         /proc   proc    defaults    0   0
 /dev/xvda    /     ext4    defaults,x-systemd.growfs    0 0
 EOF
 
-    umount_image "$ROOTFS_DIR"
-    echo "post_image_domu_tweaks done"
+    Umount_image "$ROOTFS_DIR"
+    echo "Post_image_domu_tweaks done"
 }
 
-function deploy {
-    check_1_param_exist "$1"
+function Deploy {
+    Check_1_param_exist "$1"
 
     local device="$1"
 
@@ -499,4 +499,12 @@ function deploy {
     rmdir ${WORK_DIR}/boot_tmp
 }
 
-"$@"
+# Convert command to all lower case and then convert first letter to upper case
+CMD="${1,,}"
+CMD="${CMD^}"
+
+shift
+
+# Check if function exists and run it if it does
+Fn_exists "$CMD"
+"$CMD" "$@"

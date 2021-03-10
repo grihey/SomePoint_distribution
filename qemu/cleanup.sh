@@ -10,11 +10,11 @@ pushd "$SDIR" > /dev/null
 trap "popd > /dev/null" EXIT
 
 . ../helpers.sh
-load_config
+Load_config
 
 case "$1" in
     distclean)
-        remove_ignores sudo
+        Remove_ignores sudo
     ;;
     *)
         if [ -d qemu ]; then

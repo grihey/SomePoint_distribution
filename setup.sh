@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function on_exit_cleanup {
+function On_exit_cleanup {
     set +e
     if [ -n "$TMPDIR" ]; then
         rm -rf "$TMPDIR"
@@ -16,37 +16,12 @@ SDIR="$(realpath "$SDIR")"
 
 # Change to the script directory and set cleanup on exit
 pushd "$SDIR" > /dev/null
-trap on_exit_cleanup EXIT
+trap On_exit_cleanup EXIT
 
 . helpers.sh
 . text_generators.sh
 
-# Stuff that needs to be done before loading config files
-case "$1" in
-    defconfig)
-        defconfig
-        exit 0
-    ;;
-    kvmconfig)
-        kvmconfig
-        exit 0
-    ;;
-    x86config)
-        x86config
-        exit 0
-    ;;
-    clean|distclean)
-        # Don't create .setup_sh_config on cleans
-    ;;
-    *)
-        if [ ! -f .setup_sh_config ]; then
-            echo ".setup_sh_config not found" >&2
-            defconfig
-        fi
-    ;;
-esac
-
-load_config
+Load_config
 
 if [ -n "$CCACHE" ]; then
     export CCACHE
@@ -54,16 +29,16 @@ if [ -n "$CCACHE" ]; then
     export CCACHE_MAXSIZE
 fi
 
-function generate_disk_image {
+function Generate_disk_image {
     local IDIR
     local BDIR
     local RDIR
     local DDIR
 
     if [ -n "$1" ]; then
-        IDIR="$(sanitycheck "$1" ne)"
+        IDIR="$(Sanity_check "$1" ne)"
     else
-        IDIR="$(sanitycheck "$IMGBUILD" ne)"
+        IDIR="$(Sanity_check "$IMGBUILD" ne)"
     fi
 
     if [ -z "$ROOTSIZE" ]; then
@@ -92,15 +67,15 @@ function generate_disk_image {
 
     rm -rf "$BDIR"
     mkdir -p "$BDIR"
-    bootfs "$BDIR"
+    Boot_fs "$BDIR"
 
     rm -rf "$RDIR"
     mkdir -p "$RDIR"
-    rootfs "$RDIR"
+    Root_fs "$RDIR"
 
     rm -rf "$DDIR"
     mkdir -p "$DDIR"
-    domufs "$DDIR"
+    Domu_fs "$DDIR"
 
     mkdir -p "${IDIR}/input"
     rm -f "${IDIR}/input/rootfs.ext4"
@@ -125,7 +100,7 @@ function generate_disk_image {
             --tmppath "$TMPDIR/genimage"
 }
 
-function build_guest_kernels {
+function Build_guest_kernels {
     local ODIR
 
     if [ "$PLATFORM" = "x86" ] ; then
@@ -134,9 +109,9 @@ function build_guest_kernels {
     fi
 
     if [ -n "$1" ]; then
-        ODIR="$(sanitycheck "$1" ne)"
+        ODIR="$(Sanity_check "$1" ne)"
     else
-        ODIR="$(sanitycheck "$GKBUILD" ne)"
+        ODIR="$(Sanity_check "$GKBUILD" ne)"
     fi
 
     case "$HYPERVISOR" in
@@ -144,7 +119,7 @@ function build_guest_kernels {
         # Atm kvm buildroot uses the same kernel for host and guest, uncomment
         # below to build separate guest kernel
         # mkdir -p "${ODIR}/kvm_domu"
-        # compile_kernel ./linux arm64 aarch64-linux-gnu- "${ODIR}/kvm_domu" raspi4_kvm_guest_release_defconfig
+        # Compile_kernel ./linux arm64 aarch64-linux-gnu- "${ODIR}/kvm_domu" raspi4_kvm_guest_release_defconfig
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -152,12 +127,12 @@ function build_guest_kernels {
     esac
 }
 
-function set_myids {
+function Set_my_ids {
     MYUID="$(id -u)"
     MYGID="$(id -g)"
 }
 
-function is_mounted {
+function Is_mounted {
     local FLAGS
     local MOUNTED
 
@@ -177,7 +152,7 @@ function is_mounted {
     if [ -z "$MOUNTED" ]; then
         if [ "$AUTOMOUNT" == "1" ]; then
             echo "Block device is not mounted. Automounting!" >&2
-            domount
+            Mount
         else
             echo "Block device is not mounted." >&2
             exit 1
@@ -185,7 +160,7 @@ function is_mounted {
     fi
 }
 
-function uloopimg {
+function Uloop_img {
     if [ -f .mountimg ]; then
         local IMG
         IMG="$(cat .mountimg)"
@@ -198,7 +173,7 @@ function uloopimg {
     fi
 }
 
-function umountimg {
+function Umount_img {
     set +e
     if [ -f .mountimg ]; then
         sudo umount "$BOOTMNT"
@@ -206,14 +181,14 @@ function umountimg {
         sudo umount "$DOMUMNT"
         sudo umount "${ROOTMNT}-su"
         sudo umount "${DOMUMNT}-su"
-        uloopimg
+        Uloop_img
     else
         echo "No image currently mounted" >&2
         exit 4
     fi
 }
 
-function loopimg {
+function Loop_img {
     local KPARTXOUT
 
     KPARTXOUT="$(sudo kpartx -l "$1" 2> /dev/null)"
@@ -227,7 +202,7 @@ function loopimg {
     echo "$1" > .mountimg
 }
 
-function create_mount_points {
+function Create_mount_points {
     mkdir -p "$BOOTMNT"
     mkdir -p "$ROOTMNT"
     mkdir -p "${ROOTMNT}-su"
@@ -235,12 +210,12 @@ function create_mount_points {
     mkdir -p "${DOMUMNT}-su"
 }
 
-function bind_mounts {
+function Bind_mounts {
     sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${ROOTMNT}-su" "$ROOTMNT"
     sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${DOMUMNT}-su" "$DOMUMNT"
 }
 
-function mountimg {
+function Mount_img {
     set +e
 
     if [ -f .mountimg ]; then
@@ -253,19 +228,19 @@ function mountimg {
         exit 5
     fi
 
-    loopimg "$1"
+    Loop_img "$1"
 
-    create_mount_points
+    Create_mount_points
 
-    set_myids
+    Set_my_ids
 
     sudo mount -o "uid=${MYUID},gid=$MYGID" "$PART1" "$BOOTMNT"
     sudo mount "$PART2" "${ROOTMNT}-su"
     sudo mount "$PART3" "${DOMUMNT}-su"
-    bind_mounts
+    Bind_mounts
 }
 
-function domount {
+function Mount {
     local DEV
 
     set +e
@@ -278,7 +253,7 @@ function domount {
 
     if [ -f "$DEV" ]; then
         # If dev is file, mount image instead
-        mountimg "$DEV"
+        Mount_img "$DEV"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
         if [[ "${DEV: -1}" =~ [0-9] ]]; then
@@ -287,24 +262,24 @@ function domount {
                 MIDP=""
         fi
 
-        create_mount_points
+        Create_mount_points
 
-        set_myids
+        Set_my_ids
 
         sudo mount -o "uid=${MYUID},gid=$MYGID" "${DEV}${MIDP}1" "$BOOTMNT"
         sudo mount "${DEV}${MIDP}2" "${ROOTMNT}-su"
         sudo mount "${DEV}${MIDP}3" "${DOMUMNT}-su"
-        bind_mounts
+        Bind_mounts
     fi
 }
 
-function doumount {
+function Umount {
     local MOUNTED
 
     set +e
 
     if [ -f .mountimg ]; then
-        umountimg
+        Umount_img
         return 0
     fi
 
@@ -326,7 +301,7 @@ function doumount {
     sync
 }
 
-function gen_configs {
+function Gen_configs {
     case "$SECURE_OS" in
     1)
         local os_opt="_secure"
@@ -351,7 +326,7 @@ function gen_configs {
     cp "configs/buildroot_config_${PLATFORM}_${hyp_opt}${os_opt}" buildroot/.config
 }
 
-function clone {
+function Clone {
     git submodule init
     git submodule update -f
     cp ~/.gitconfig docker/gitconfig
@@ -364,12 +339,12 @@ function clone {
     git checkout xen
     popd
 
-    gen_configs
+    Gen_configs
 }
 
-function uboot_src {
+function Uboot_script {
     if [ "$PLATFORM" = "x86" ] ; then
-        echo "INFO: uboot_src generated scripts not needed for x86 build."
+        echo "INFO: Uboot_script generated scripts not needed for x86 build."
         return 0
     fi
 
@@ -381,13 +356,13 @@ function uboot_src {
     cp "${IMAGES}/$DEVTREE" images/xen
     case "$BUILDOPT" in
     0|1|MMC|USB)
-        ubootsource > images/xen/boot.source
+        Uboot_source > images/xen/boot.source
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
     ;;
     2|3)
-        ubootstub > images/xen/boot.source
+        Uboot_stub > images/xen/boot.source
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
-        ubootsource > images/xen/boot2.source
+        Uboot_source > images/xen/boot2.source
         mkimage -A arm64 -T script -C none -a 0x100000 -e 0x100000 -d images/xen/boot2.source images/xen/boot2.scr
     ;;
     *)
@@ -397,7 +372,7 @@ function uboot_src {
     esac
 }
 
-function bootfs {
+function Boot_fs {
     local BOOTFS
 
     if [ "$PLATFORM" = "x86" ] ; then
@@ -407,9 +382,9 @@ function bootfs {
 
     if [ -z "$1" ]; then
         BOOTFS="$BOOTMNT"
-        is_mounted "$BOOTMNT"
+        Is_mounted "$BOOTMNT"
     else
-        BOOTFS="$(sanitycheck "$1")"
+        BOOTFS="$(Sanity_check "$1")"
     fi
 
     if [ "$FS_UPDATE_ONLY" != "1" ] ; then
@@ -418,7 +393,7 @@ function bootfs {
         popd
     fi
 
-    config_txt > "${BOOTFS}/config.txt"
+    Config_txt > "${BOOTFS}/config.txt"
     cp u-boot.bin "$BOOTFS"
     cp "$KERNEL_IMAGE" "${BOOTFS}/vmlinuz"
     case "$BUILDOPT" in
@@ -445,23 +420,23 @@ function bootfs {
     cp usbfix/start4.elf "$BOOTFS"
 }
 
-function netboot {
+function Net_boot_fs {
     local BOOTFS
 
     case "$BUILDOPT" in
     2|3)
         if [ -z "$1" ]; then
             BOOTFS="$BOOTMNT"
-            is_mounted "$BOOTMNT"
+            Is_mounted "$BOOTMNT"
         else
-            BOOTFS="$(sanitycheck "$1")"
+            BOOTFS="$(Sanity_check "$1")"
         fi
 
         pushd "$BOOTFS"
         rm -rf ./*
         popd
 
-        config_txt > "${BOOTFS}/config.txt"
+        Config_txt > "${BOOTFS}/config.txt"
         cp u-boot.bin "$BOOTFS"
         cp usbfix/fixup4.dat "$BOOTFS"
         cp usbfix/start4.elf "$BOOTFS"
@@ -475,14 +450,14 @@ function netboot {
     esac
 }
 
-function rootfs {
+function Root_fs {
     local ROOTFS
 
     if [ -z "$1" ]; then
         ROOTFS="$ROOTMNT"
-        is_mounted "$ROOTMNT"
+        Is_mounted "$ROOTMNT"
     else
-        ROOTFS="$(sanitycheck "$1")"
+        ROOTFS="$(Sanity_check "$1")"
     fi
 
     if [ "$VDAUPDATE" != "1" ] ; then
@@ -508,12 +483,12 @@ function rootfs {
     chmod 700 "${ROOTFS}/root/.ssh/authorized_keys"
     chmod 700 "${ROOTFS}/root/.ssh"
 
-    dom0_interfaces > "${ROOTFS}/etc/network/interfaces"
+    Dom0_interfaces > "${ROOTFS}/etc/network/interfaces"
     cp configs/wpa_supplicant.conf "${ROOTFS}/etc/wpa_supplicant.conf"
 
-    domu_config > "${ROOTFS}/root/domu.cfg"
+    Domu_config > "${ROOTFS}/root/domu.cfg"
 
-    net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
+    Net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
     chmod 755 "${ROOTFS}/etc/init.d/S41netadditions"
 
     case "$BUILDOPT" in
@@ -533,7 +508,7 @@ function rootfs {
     if [ "$PLATFORM" == "raspi4" ] ; then
         cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
     fi
-    inittab dom0 > "${ROOTFS}/etc/inittab"
+    Inittab dom0 > "${ROOTFS}/etc/inittab"
     echo '. .bashrc' > "${ROOTFS}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
     echo "${DEVICEHN}-dom0" > "${ROOTFS}/etc/hostname"
@@ -543,7 +518,7 @@ function rootfs {
         case "$PLATFORM" in
         x86)
             cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
-            run_x86_qemu > "${ROOTFS}/root/run-x86-qemu.sh"
+            Run_x86_qemu_sh > "${ROOTFS}/root/run-x86-qemu.sh"
             chmod a+x "${ROOTFS}/root/run-x86-qemu.sh"
         ;;
         *)
@@ -555,7 +530,7 @@ function rootfs {
         ;;
         esac
 
-        rq_sh > "${ROOTFS}/root/rq.sh"
+        Rq_sh > "${ROOTFS}/root/rq.sh"
         chmod a+x "${ROOTFS}/root/rq.sh"
     ;;
     *)
@@ -564,31 +539,31 @@ function rootfs {
     esac
 }
 
-function domufs {
+function Domu_fs {
     local DOMUFS
 
     if [ -z "$1" ]; then
         DOMUFS="$DOMUMNT"
-        is_mounted "$DOMUMNT"
+        Is_mounted "$DOMUMNT"
     else
-        DOMUFS="$(sanitycheck "$1")"
+        DOMUFS="$(Sanity_check "$1")"
     fi
 
-    rootfs "$DOMUFS"
+    Root_fs "$DOMUFS"
 
-    net_rc_add domu > "${DOMUFS}/etc/init.d/S41netadditions"
+    Net_rc_add domu > "${DOMUFS}/etc/init.d/S41netadditions"
     chmod 755 "${DOMUFS}/etc/init.d/S41netadditions"
 
-    domu_interfaces > "${DOMUFS}/etc/network/interfaces"
-    inittab domu > "${DOMUFS}/etc/inittab"
+    Domu_interfaces > "${DOMUFS}/etc/network/interfaces"
+    Inittab domu > "${DOMUFS}/etc/inittab"
     echo "${DEVICEHN}-domu" > "${DOMUFS}/etc/hostname"
 }
 
-function nfsupdate {
+function Nfs_update {
     case "$BUILDOPT" in
     2|3)
-        set_myids
-        create_mount_points
+        Set_my_ids
+        Create_mount_points
         if [ "$PLATFORM" != "x86" ] ; then
             sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TFTPPATH" "$BOOTMNT"
         fi
@@ -596,14 +571,14 @@ function nfsupdate {
         sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOMU" "$DOMUMNT"
 
         if [ "$PLATFORM" != "x86" ] ; then
-            bootfs
+            Boot_fs
             chmod -R 744 "$BOOTMNT"
             chmod 755 "$BOOTMNT"
             chmod 755 "${BOOTMNT}/overlays"
         fi
         rootfs
         echo "DOM0_NFSROOT" > "${ROOTMNT}/DOM0_NFSROOT"
-        domufs
+        Domu_fs
         echo "DOMU_NFSROOT" > "${DOMUMNT}/DOMU_NFSROOT"
 
         if [ "$PLATFORM" != "x86" ] ; then
@@ -619,7 +594,7 @@ function nfsupdate {
     esac
 }
 
-function vdaupdate {
+function Vdaupdate {
     local SIZE
 
     if [ "$PLATFORM" != "x86" ] ; then
@@ -629,8 +604,8 @@ function vdaupdate {
 
     case "$BUILDOPT" in
     0|1|MMC|USB)
-        set_myids
-        create_mount_points
+        Set_my_ids
+        Create_mount_points
 
         # Create a copy of the rootfs.ext2 image for domU.
         # The domU rootfs image gets copied inside the rootfs.ext2
@@ -647,13 +622,13 @@ function vdaupdate {
 
         sudo mount "${IMAGES}/rootfs.ext2" "${ROOTMNT}-su"
         sudo mount "${IMAGES}/rootfs-domu.ext2" "${DOMUMNT}-su"
-        bind_mounts
+        Bind_mounts
 
         VDAUPDATE=1
 
         rootfs
         echo "DOM0_VDAROOT" > "${ROOTMNT}/DOM0_VDAROOT"
-        domufs
+        Domu_fs
         echo "DOMU_VDAROOT" > "${DOMUMNT}/DOMU_VDAROOT"
 
         sudo umount "$DOMUMNT"
@@ -672,7 +647,7 @@ function vdaupdate {
 }
 
 # If you have changed for example linux/arch/arm64/configs/xen_defconfig and want buildroot to recompile kernel
-function kernel_conf_change {
+function Kernel_conf_change {
     if [ -f /usr/src/linux/.git ]; then
         pushd buildroot/dl/linux/git
         git branch --set-upstream-to=origin/xen xen
@@ -685,7 +660,7 @@ function kernel_conf_change {
     fi
 }
 
-function ssh_dut {
+function Ssh_dut {
     case "$1" in
     domu)
         ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$DEVICEIP"
@@ -695,7 +670,7 @@ function ssh_dut {
     esac
 }
 
-function dofsck {
+function Fsck {
     local DEV
     local MIDP
 
@@ -709,7 +684,7 @@ function dofsck {
 
     if [ -f "$DEV" ]; then
         # If dev is file, get loop devices for image
-        loopimg "$DEV"
+        Loop_img "$DEV"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
         if [[ "${DEV: -1}" =~ [0-9] ]]; then
@@ -728,20 +703,20 @@ function dofsck {
     sudo fsck.ext4 -f "$PART3"
 
     if [ -f "$DEV" ]; then
-        uloopimg
+        Uloop_img
     fi
 }
 
-function buildall {
+function Build_all {
     case "$1" in
     x86|X86)
-        x86config
+        X86config
     ;;
     kvm|KVM)
-        kvmconfig
+        Kvmconfig
     ;;
     xen|XEN)
-        defconfig
+        Defconfig
     ;;
     "")
         # Don't touch config unless explicitly told to
@@ -757,7 +732,7 @@ function buildall {
     . default_setup_sh_config
     . .setup_sh_config
 
-    clone
+    Clone
     cd docker
     make build_env
     make ci
@@ -765,10 +740,10 @@ function buildall {
 }
 
 # Clean up so that on next build everything gets rebuilt but nothing gets redownloaded
-function clean {
-    safer_rmrf "$GKBUILD"
-    safer_rmrf "$IMGBUILD"
-    safer_rmrf "$TMPDIR"
+function Clean {
+    Safer_rmrf "$GKBUILD"
+    Safer_rmrf "$IMGBUILD"
+    Safer_rmrf "$TMPDIR"
 
     # Try to clean buildroot only if docker and buildroot have been cloned
     if [ -f "docker/Makefile" ] && [ -f "buildroot/Makefile" ]; then
@@ -798,17 +773,17 @@ function clean {
 
 # Restore situation before first 'setup.sh clone' but keep local main repo changes
 # Removes a ton of stuff, like submodule changes, be careful
-function distclean {
+function Distclean {
     local ENTRY
 
-    doumount
-    remove_ignores
+    Umount
+    Remove_ignores
 
     # Go through the submodule dirs, remove "path = " from the start and delete & recreate dir
     while IFS= read -r ENTRY; do
-        ENTRY="$(trim "$ENTRY")"
+        ENTRY="$(Trim "$ENTRY")"
         ENTRY="${ENTRY#path = }"
-        safer_rmrf "$ENTRY"
+        Safer_rmrf "$ENTRY"
         mkdir -p "$ENTRY"
     done <<< "$(grep "path = " .gitmodules)"
 
@@ -820,7 +795,7 @@ function distclean {
     done
 }
 
-function showhelp {
+function Show_help {
     echo "Usage $0 <command> [parameters]"
     echo ""
     echo "Commands:"
@@ -849,30 +824,49 @@ function showhelp {
     exit 0
 }
 
-# Some translations
-case "$1" in
-    mount|sdcard)
-        CMD="domount"
+# Convert command to all lower case and then convert first letter to upper case
+CMD="${1,,}"
+CMD="${CMD^}"
+
+# Some aliases for legacy and clearer function names
+case "$CMD" in
+    Sdcard)
+        CMD="Mount"
     ;;
-    umount|usdcard)
-        CMD="doumount"
+    Usdcard)
+        CMD="Umount"
     ;;
-    domu)
-        CMD="domufs"
+    Domu|Domufs)
+        CMD="Domu_fs"
     ;;
-    fsck)
-        CMD="dofsck"
+    ""|Help|-h|--help)
+        Show_help >&2
     ;;
-    ""|help|-h|--help)
-        showhelp >&2
+    Uboot_src)
+        CMD="Uboot_script"
+    ;;
+    Buildall)
+        CMD="Build_all"
+    ;;
+    Bootfs)
+        CMD="Boot_fs"
+    ;;
+    Rootfs)
+        CMD="Root_fs"
+    ;;
+    Nfsupdate)
+        CMD="Nfs_update"
+    ;;
+    Netboot)
+        CMD="Net_boot_fs"
     ;;
     *)
-        CMD="$1"
+        # Default, no conversion
     ;;
 esac
 
 shift
 
 # Check if function exists and run it if it does
-fn_exists "$CMD"
+Fn_exists "$CMD"
 "$CMD" "$@"

@@ -8,7 +8,7 @@ HDIR="$(dirname "${BASH_SOURCE[0]}")"
 HDIR="$(realpath "$HDIR")"
 
 # Loads build system configurations
-function load_config {
+function Load_config {
     # Load defaults in case .setup_sh_config is missing any settings
     # for example .setup_sh_config could be from older revision
     . "${HDIR}/default_setup_sh_config"
@@ -17,12 +17,18 @@ function load_config {
         . "${HDIR}/.setup_sh_config"
     fi
 
-    set_deviceipconf
+    Set_deviceipconf
 
     # Disable sudo function if standard sudo is requested
     if [ "$STDSUDO" == "1" ]; then
         unset sudo
     fi
+}
+
+# This translation here only to facilitate smooth transition with docker repo
+# Can be removed after docker repo has been updated
+function load_config {
+    Load_config
 }
 
 # Get path to sudo binary (or empty if not available, but don't fail here)
@@ -31,6 +37,7 @@ SUDOCMD="$(command -v sudo || true)"
 # Verbose sudo, will show the command about to be run if password is prompted for
 # At least for the very first run you'll know what is about to happen as root
 # If SUDOCHECK=1 then all commands will be confirmed
+# sudo function meant to replace sudo command, so it is not capitalized like other functions
 function sudo {
     local PROMPT
     local INP
@@ -68,17 +75,17 @@ function sudo {
     fi
 }
 
-function defconfig {
+function Defconfig {
     echo "Creating .setup_sh_config with defaults" >&2
     cp -f default_setup_sh_config .setup_sh_config
 }
 
-function kvmconfig {
+function Kvmconfig {
     echo "Creating .setup_sh_config with kvm configuration" >&2
     sed "s/HYPERVISOR=.*/HYPERVISOR=KVM/" < default_setup_sh_config > .setup_sh_config
 }
 
-function x86config {
+function X86config {
     echo "Creating .setup_sh_config for x86" >&2
     sed -e "s/HYPERVISOR=.*/HYPERVISOR=KVM/" \
         -e "s/PLATFORM=.*/PLATFORM=x86/" \
@@ -88,7 +95,7 @@ function x86config {
 }
 
 # Returns 0 if function exists, 1 if not
-function fn_exists {
+function Fn_exists {
     if [ "$(LC_ALL=C type -t "$1")" == "function" ]; then
         return 0
     else
@@ -98,7 +105,7 @@ function fn_exists {
 }
 
 # Calculates actual number of bytes from strings like '4G' and '23M' plain numbers are sectors (512 bytes)
-function actual_value {
+function Actual_value {
     local LCH
 
     LCH="${1: -1}"
@@ -118,7 +125,7 @@ function actual_value {
 }
 
 # Trims off whitespace from start and end of a string
-function trim {
+function Trim {
     local STR
 
     STR="$*"
@@ -134,11 +141,11 @@ function trim {
 
 # Slightly safer recursive deletion
 # If second parameter is 'sudo' root user is used to remove files
-function safer_rmrf {
+function Safer_rmrf {
     local RMD
 
     # Sanity check the path, just in case
-    RMD="$(sanitycheck "$1" ne)"
+    RMD="$(Sanity_check "$1" ne)"
     if [  "$2" == "sudo" ]; then
         # Check that we actually have something to delete before using sudo
         if [ -e "${RMD:?}" ]; then
@@ -150,20 +157,20 @@ function safer_rmrf {
 }
 
 # Remove files and directories listed in .gitignores
-function remove_ignores {
+function Remove_ignores {
     local ENTRY
 
     if [ -f .gitignore ]; then
         while IFS= read -r ENTRY; do
-            ENTRY="$(trim "$ENTRY")"
+            ENTRY="$(Trim "$ENTRY")"
             if [ -n "$ENTRY" ] && [ "${ENTRY:0:1}" != "#" ]; then
-                safer_rmrf "$ENTRY" "$1"
+                Safer_rmrf "$ENTRY" "$1"
             fi
         done < .gitignore
     fi
 }
 
-function set_deviceipconf {
+function Set_deviceipconf {
     # DEVICEIPCONF defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
     case "$BUILDOPT" in
     2)
@@ -181,81 +188,81 @@ function set_deviceipconf {
     esac
 }
 
-function check_param_exist {
+function Check_param_exist {
     if [ -z "$1" ]; then
         echo "Parameter not defined"
         exit 1
     fi
 }
 
-function check_1_param_exist {
-    check_param_exist "$1"
+function Check_1_param_exist {
+    Check_param_exist "$1"
 }
 
-function check_2_param_exist {
-    check_param_exist "$1"
-    check_param_exist "$2"
+function Check_2_param_exist {
+    Check_param_exist "$1"
+    Check_param_exist "$2"
 }
 
-function check_3_param_exist {
-    check_param_exist "$1"
-    check_param_exist "$2"
-    check_param_exist "$3"
+function Check_3_param_exist {
+    Check_param_exist "$1"
+    Check_param_exist "$2"
+    Check_param_exist "$3"
 }
 
-function check_4_param_exist {
-    check_param_exist "$1"
-    check_param_exist "$2"
-    check_param_exist "$3"
-    check_param_exist "$4"
+function Check_4_param_exist {
+    Check_param_exist "$1"
+    Check_param_exist "$2"
+    Check_param_exist "$3"
+    Check_param_exist "$4"
 }
 
-function check_5_param_exist {
-    check_param_exist "$1"
-    check_param_exist "$2"
-    check_param_exist "$3"
-    check_param_exist "$4"
-    check_param_exist "$5"
+function Check_5_param_exist {
+    Check_param_exist "$1"
+    Check_param_exist "$2"
+    Check_param_exist "$3"
+    Check_param_exist "$4"
+    Check_param_exist "$5"
 }
 
-function check_6_param_exist {
-    check_param_exist "$1"
-    check_param_exist "$2"
-    check_param_exist "$3"
-    check_param_exist "$4"
-    check_param_exist "$5"
-    check_param_exist "$6"
+function Check_6_param_exist {
+    Check_param_exist "$1"
+    Check_param_exist "$2"
+    Check_param_exist "$3"
+    Check_param_exist "$4"
+    Check_param_exist "$5"
+    Check_param_exist "$6"
 }
 
-function check_sha {
-    echo "check_sha"
+function Check_sha {
+    echo "Check_sha"
     # $1 is sha
     # $2 is file
-    check_2_param_exist "$1" "$2"
+    Check_2_param_exist "$1" "$2"
     echo "${1} *${2}" | shasum -a 256 --check -s --strict
     ok="$?"
     echo "val: <$ok>"
     if [ "$ok" == "0" ]; then
         echo 1 > shaok
     fi
-    echo "check_sha done"
+    echo "Check_sha done"
 }
 
-function download {
-    check_3_param_exist "$1" "$2" "$3"
+function Download {
+    Check_3_param_exist "$1" "$2" "$3"
 
-    download_artifactory_binary "$1" "$2" "$3" 0
+    Download_artifactory_binary "$1" "$2" "$3" 0
 }
 
-function download_artifactory_binary {
-    echo "download_artifactory_binary"
+function Download_artifactory_binary {
+    echo "Download_artifactory_binary"
     local DOWNLOAD_PATH
     local DESTDIR
     local TMPOUTPUT
     local EXTRA_OPTIONS
     local FROM_ARTIFACTORY
 
-    check_3_param_exist "$1" "$2" "$3" # can be empty"$4"
+    Check_3_param_exist "$1" "$2" "$3" # can be empty"$4"
     DOWNLOAD_URL="$1"
     DESTDIR="$2"
     FILENAME="$3"
@@ -278,26 +285,25 @@ function download_artifactory_binary {
         cp "${DOWNLOAD_CACHE_DIR}/${FILENAME}" "${DESTDIR}/${FILENAME}"
     fi
 
-    echo "download_artifactory_binary done"
+    echo "Download_artifactory_binary done"
 }
 
-
-function decompress_xz {
-    check_1_param_exist "$1"
+function Decompress_xz {
+    Check_1_param_exist "$1"
 
     xz -dk "$1"
 }
 
-function decompress_image {
-    check_1_param_exist "$1"
+function Decompress_image {
+    Check_1_param_exist "$1"
 
     echo "$1"
 
     7z e "$1" || true
 }
 
-umount_chroot_devs () {
-    check_1_param_exist "$1"
+function Umount_chroot_devs {
+    Check_1_param_exist "$1"
 
     local ROOTFS
 
@@ -310,8 +316,8 @@ umount_chroot_devs () {
     sudo umount "${ROOTFS}/tmp" || true > /dev/null
 }
 
-mount_chroot_devs () {
-    check_1_param_exist "$1"
+function Mount_chroot_devs {
+    Check_1_param_exist "$1"
 
     local ROOTFS
 
@@ -326,9 +332,9 @@ mount_chroot_devs () {
 }
 
 
-function mount_image {
+function Mount_image {
     echo "Mount image"
-    check_2_param_exist "$1" "$2"
+    Check_2_param_exist "$1" "$2"
 
     if [ -d "$2" ]; then
         echo "Mounting: $1 to $2 -folder. Already mounted."
@@ -341,27 +347,27 @@ function mount_image {
     sudo mount "$1" "$2" || true
 }
 
-function umount_image {
+function Umount_image {
     echo "Umount image"
-    check_1_param_exist "$1"
+    Check_1_param_exist "$1"
 
     if ! [ -d "$1" ]; then
         echo "Umounting. $1 folder is not mounted."
         return
     fi
 
-    umount_chroot_devs "$1"
+    Umount_chroot_devs "$1"
 
     sudo umount "$1"
     rmdir "$1"
 }
 
-# sanitycheck function will return the clean path or exit with an error
+# Sanity_check function will return the clean path or exit with an error
 # if second argument is given, path does not need to exist
-# usage example: CLEANPATH="$(sanitycheck <path to check> [non_existing])"
+# usage example: CLEANPATH="$(Sanity_check <path to check> [non_existing])"
 #   on error an error message is printed to stderr and CLEANPATH is empty and return value is nonzero
 #   on success CLEANPATH is the cleaned up path to <path to check> and return value is zero
-function sanitycheck {
+function Sanity_check {
     local TPATH
 
     set +e
@@ -412,7 +418,7 @@ function sanitycheck {
     esac
 }
 
-function compile_kernel {
+function Compile_kernel {
     local kernel_src
     local arch
     local cross_compile
@@ -420,8 +426,8 @@ function compile_kernel {
     local defconfig
     local extra_configs
 
-    echo "compile_kernel"
-    check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
+    echo "Compile_kernel"
+    Check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
 
     kernel_src="$1"
     arch="$2"
@@ -444,16 +450,16 @@ function compile_kernel {
     popd
     # RUN in docker end
 
-    echo "compile_kernel done"
+    echo "Compile_kernel done"
 }
 
-function install_kernel {
+function Install_kernel {
     local arch
     local compile_dir
     local kernel_install_dir
 
-    echo "install_kernel"
-    check_3_param_exist "$1" "$2" "$3"
+    echo "Install_kernel"
+    Check_3_param_exist "$1" "$2" "$3"
 
     arch="$1"
     compile_dir="$2"
@@ -465,10 +471,10 @@ function install_kernel {
         echo "Arch: $arch is not supported" >&2
         exit 1
     fi
-    echo "install_kernel done"
+    echo "Install_kernel done"
 }
 
-function install_kernel_modules {
+function Install_kernel_modules {
     local KERNEL_SRC
     local ARCH
     local CROSS_COMPILE
@@ -476,8 +482,8 @@ function install_kernel_modules {
     local ROOTFS
     local MNTROOTFS
 
-    echo "install_kernel_modules"
-    check_5_param_exist "$1" "$2" "$3" "$4" "$5"
+    echo "Install_kernel_modules"
+    Check_5_param_exist "$1" "$2" "$3" "$4" "$5"
 
     KERNEL_SRC="$1"
     ARCH="$2"
@@ -485,7 +491,7 @@ function install_kernel_modules {
     COMPILE_DIR="$4"
     ROOTFS="$5"
 
-    MNTROOTFS="$(sanitycheck "$ROOTFS")"
+    MNTROOTFS="$(Sanity_check "$ROOTFS")"
 
     pushd "$KERNEL_SRC" || exit 255
     # RUN in docker
@@ -500,12 +506,12 @@ function install_kernel_modules {
     echo "Compiled kernel version: ${KVERSION}"
     sudo chroot "$MNTROOTFS" depmod -a "${KVERSION}"
 
-    echo "install_kernel_modules done"
+    echo "Install_kernel_modules done"
 }
 
-function compile_xen {
-    echo "compile_xen"
-    check_2_param_exist "$1" "$2"
+function Compile_xen {
+    echo "Compile_xen"
+    Check_2_param_exist "$1" "$2"
 
     local SRC
     local VERSION
@@ -527,5 +533,5 @@ function compile_xen {
         popd || exit 255
     fi
 
-    echo "compile_xen done"
+    echo "Compile_xen done"
 }

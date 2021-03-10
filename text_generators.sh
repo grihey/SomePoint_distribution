@@ -3,7 +3,7 @@
 # Configuration file text generators
 # Included into setup.sh
 
-function domu_config {
+function Domu_config {
     case "$BUILDOPT" in
     0|MMC)
         cat configs/domu.cfg.sd
@@ -31,7 +31,7 @@ function domu_config {
     esac
 }
 
-function dom0_interfaces {
+function Dom0_interfaces {
     case "$HYPERVISOR" in
     KVM)
         case "$BUILDOPT" in
@@ -94,7 +94,7 @@ function dom0_interfaces {
     esac
 }
 
-function domu_interfaces {
+function Domu_interfaces {
     case "$HYPERVISOR" in
     KVM)
         echo "auto lo"
@@ -132,7 +132,7 @@ function domu_interfaces {
     esac
 }
 
-function ubootstub {
+function Uboot_stub {
     case "$BUILDOPT" in
     0|MMC)
         echo "fatload mmc 0:1 0x100000 boot2.scr"
@@ -161,7 +161,7 @@ function ubootstub {
     esac
 }
 
-function fdt_addr {
+function Fdt_addr {
     case "$FWFDT" in
     1)
         # No address set in this case
@@ -172,7 +172,7 @@ function fdt_addr {
     esac
 }
 
-function fdt_load {
+function Fdt_load {
     case "$FWFDT" in
     1)
         # No load in this case
@@ -183,7 +183,7 @@ function fdt_load {
     esac
 }
 
-function ubootsource {
+function Uboot_source {
     local BOOTARGS="dwc_otg.lpm_enable=0"
 
     case "$HYPERVISOR" in
@@ -233,8 +233,8 @@ function ubootsource {
     echo "fi"
     echo
 
-    fdt_addr 2600000
-    fdt_load "$LOAD"
+    Fdt_addr 2600000
+    Fdt_load "$LOAD"
     echo "fdt addr \${fdt_addr}"
     echo "setenv lin_addr 1000000"
     echo "${LOAD} 0x\${lin_addr} vmlinuz"
@@ -263,7 +263,7 @@ function ubootsource {
     esac
 }
 
-function net_rc_add {
+function Net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
@@ -301,7 +301,7 @@ function net_rc_add {
     esac
 }
 
-function inittab {
+function Inittab {
     case "$1" in
     dom0)
         cat configs/inittab.pre
@@ -338,13 +338,13 @@ function inittab {
         cat configs/inittab.post
     ;;
     *)
-        echo "Invalid inittab option" >&2
+        echo "Invalid Inittab option" >&2
         exit 2
     ;;
     esac
 }
 
-function config_txt {
+function Config_txt {
     case "$HYPERVISOR" in
     KVM)
         cat configs/config_kvm.txt
@@ -355,7 +355,7 @@ function config_txt {
     esac
 }
 
-function rq_sh {
+function Rq_sh {
     echo "#!/bin/bash"
     case "$BUILDOPT" in
     0|MMC)
@@ -370,7 +370,7 @@ function rq_sh {
     esac
 }
 
-function run_x86_qemu {
+function Run_x86_qemu_sh {
     echo "#!/bin/sh"
     case "$BUILDOPT" in
     0|1|MMC|USB)
@@ -385,7 +385,7 @@ function run_x86_qemu {
 }
 
 # Azure wg server settings.
-function wg_client_config {
+function Wg_client_config {
     echo "[Interface]"
     echo "Address = 10.10.10.2/24"
     echo "DNS = 10.10.10.1"

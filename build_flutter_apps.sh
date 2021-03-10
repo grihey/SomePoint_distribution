@@ -10,7 +10,7 @@ set -eo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-function desktop_file_text {
+function Desktop_file_text {
     local app_name="$1"
     local app_path="$2"
 
@@ -24,7 +24,7 @@ Type=Application
 EOT
 }
 
-function create_desktop_file {
+function Create_desktop_file {
     # Creates desktop file for given app to user skeleton
     local app_name="$1"
     local flavor="$2" # debug|release
@@ -33,12 +33,12 @@ function create_desktop_file {
     local file_path="${domain_root}/etc/skel/Desktop/${app_name}-${flavor}.desktop"
 
     mkdir -p "${domain_root}/etc/skel/Desktop"
-    desktop_file_text "${app_name} (${flavor})" "/opt/flutter/${app_name}-arm64-gtk-${flavor}" \
+    Desktop_file_text "${app_name} (${flavor})" "/opt/flutter/${app_name}-arm64-gtk-${flavor}" \
         > "${file_path}"
     chmod +x "${file_path}"
 }
 
-function build_to {
+function Build_to {
     # Builds app to given target folder. If target exists, it's overridden.
     local make_rule="$1"
     local target="$2"
@@ -50,7 +50,7 @@ function build_to {
     chmod a+w "${target}"
 }
 
-function deploy_app {
+function Deploy_app {
     # Builds and deploys app to domain FS
     local domain="$1" # rootfs|domufs
     local app_name="$2"
@@ -61,11 +61,11 @@ function deploy_app {
     mkdir -p app
     cp -r "${src_path}"/* app
     mkdir -p "${domain_root}/opt/flutter"
-    build_to app-arm64-gtk-debug "${domain_root}/opt/flutter/${app_name}-arm64-gtk-debug"
-    build_to app-arm64-gtk-release "${domain_root}/opt/flutter/${app_name}-arm64-gtk-release"
+    Build_to app-arm64-gtk-debug "${domain_root}/opt/flutter/${app_name}-arm64-gtk-debug"
+    Build_to app-arm64-gtk-release "${domain_root}/opt/flutter/${app_name}-arm64-gtk-release"
 
-    create_desktop_file "${app_name}" debug "${domain_root}"
-    create_desktop_file "${app_name}" release "${domain_root}"
+    Create_desktop_file "${app_name}" debug "${domain_root}"
+    Create_desktop_file "${app_name}" release "${domain_root}"
 
     rm -rf app
 }
@@ -80,11 +80,11 @@ if ! mountpoint -q -- "${DIR}/mnt/rootfs"; then
     exit 1
 fi
 
-pushd flutter-shim >/dev/null 
+pushd flutter-shim >/dev/null
 
 [ ! -e samples ] && git clone https://github.com/flutter/samples.git
 
-deploy_app rootfs timeflow samples/web/timeflow
-deploy_app rootfs form_app samples/form_app
+Deploy_app rootfs timeflow samples/web/timeflow
+Deploy_app rootfs form_app samples/form_app
 
 popd >/dev/null

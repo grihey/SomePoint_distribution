@@ -3,7 +3,7 @@
 set -e
 
 . ../helpers.sh
-load_config
+Load_config
 
 UBASEDIR="ubuntu-base-20.04.1-base-arm64"
 UBASETAR="${UBASEDIR}.tar.gz"

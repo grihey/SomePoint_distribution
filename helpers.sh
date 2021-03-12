@@ -25,12 +25,6 @@ function Load_config {
     fi
 }
 
-# This translation here only to facilitate smooth transition with docker repo
-# Can be removed after docker repo has been updated
-function load_config {
-    Load_config
-}
-
 # Get path to sudo binary (or empty if not available, but don't fail here)
 SUDOCMD="$(command -v sudo || true)"
 

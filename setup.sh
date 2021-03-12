@@ -576,7 +576,7 @@ function Nfs_update {
             chmod 755 "$BOOTMNT"
             chmod 755 "${BOOTMNT}/overlays"
         fi
-        rootfs
+        Root_fs
         echo "DOM0_NFSROOT" > "${ROOTMNT}/DOM0_NFSROOT"
         Domu_fs
         echo "DOMU_NFSROOT" > "${DOMUMNT}/DOMU_NFSROOT"
@@ -626,7 +626,7 @@ function Vdaupdate {
 
         VDAUPDATE=1
 
-        rootfs
+        Root_fs
         echo "DOM0_VDAROOT" > "${ROOTMNT}/DOM0_VDAROOT"
         Domu_fs
         echo "DOMU_VDAROOT" > "${DOMUMNT}/DOMU_VDAROOT"
@@ -729,8 +729,7 @@ function Build_all {
     esac
 
     # Reload config in case it was changed above
-    . default_setup_sh_config
-    . .setup_sh_config
+    Load_config
 
     Clone
     cd docker

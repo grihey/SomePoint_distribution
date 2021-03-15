@@ -20,7 +20,7 @@ fi
 case "$BUILDOPT" in
 0|1|MMC|USB)
     # SD or USB boot, use static image
-    FILE_ARG="-drive file=${IMAGE_DIR}/rootfs.ext2,if=virtio,format=raw"
+    FILE_ARG="-drive file=${IMAGE_DIR}/rootfs-withdomu.ext2,if=virtio,format=raw"
     ROOTFS_ARG="root=/dev/vda"
     ;;
 *)

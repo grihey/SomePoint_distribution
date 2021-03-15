@@ -609,21 +609,18 @@ function Vdaupdate {
         Set_my_ids
         Create_mount_points
 
-        # Create a copy of the rootfs.ext2 image for domU.
-        # The domU rootfs image gets copied inside the rootfs.ext2
-        # image so that we can boot it up via qemu, thus we must also
-        # double the size of rootfs.ext2 image.
-        if [ ! -f "${IMAGES}/rootfs-domu.ext2" ] ; then
-            cp "${IMAGES}/rootfs.ext2" "${IMAGES}/rootfs-domu.ext2"
-            e2fsck -f "${IMAGES}/rootfs.ext2"
-            size="$(wc -c "${IMAGES}/rootfs.ext2" | cut -d " " -f 1)"
-            size="$((size * 2 / 1024 / 1024))"
-            echo "Resizing rootfs to ${size}M bytes"
-            resize2fs "${IMAGES}/rootfs.ext2" "${size}M"
-        fi
+        # Create a copy of the rootfs.ext2 image for including domu.
+        # The rootfs image gets copied inside the rootfs-withdomu.ext2
+        # thus we must also double the size of rootfs-withdomu.ext2 image.
+        e2fsck -f "${IMAGES}/rootfs.ext2"
+        cp -f "${IMAGES}/rootfs.ext2" "${IMAGES}/rootfs-withdomu.ext2"
+        size="$(wc -c "${IMAGES}/rootfs-withdomu.ext2" | cut -d " " -f 1)"
+        size="$((size * 2 / 1024 / 1024 + 10))"
+        echo "Resizing rootfs to ${size}M bytes"
+        resize2fs "${IMAGES}/rootfs-withdomu.ext2" "${size}M"
 
-        sudo mount "${IMAGES}/rootfs.ext2" "${ROOTMNT}-su"
-        sudo mount "${IMAGES}/rootfs-domu.ext2" "${DOMUMNT}-su"
+        sudo mount "${IMAGES}/rootfs-withdomu.ext2" "${ROOTMNT}-su"
+        sudo mount "${IMAGES}/rootfs.ext2" "${DOMUMNT}-su"
         Bind_mounts
 
         VDAUPDATE=1
@@ -636,7 +633,7 @@ function Vdaupdate {
         sudo umount "$DOMUMNT"
         sudo umount "${DOMUMNT}-su"
 
-        cp "${IMAGES}/rootfs-domu.ext2" "${ROOTMNT}/root/rootfs.ext2"
+        cp "${IMAGES}/rootfs.ext2" "${ROOTMNT}/root/rootfs.ext2"
         sudo umount "$ROOTMNT"
         sudo umount "${ROOTMNT}-su"
     ;;

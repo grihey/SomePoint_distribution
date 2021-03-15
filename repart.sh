@@ -5,6 +5,13 @@ set -e
 . helpers.sh
 Load_config
 
+function Check_script {
+    shellcheck repart.sh helpers.sh default_setup_sh_config
+    # Ignore "E006 Line too long" errors
+    bashate -i E006 repart.sh helpers.sh default_setup_sh_config
+    echo Nothing to complain
+}
+
 function Show_help {
     echo "Usage:"
     echo "    $0 [-b|--boot <boot fs size>] [-r|-root <root fs size>] [-d|--domu <domu fs size>] [-y|--yes] [--force] <device>"
@@ -78,6 +85,10 @@ while [ "$#" -gt 0 ]; do
         FORCED=Y
         shift # past argument
     ;;
+    check_script)
+        Check_script
+        exit 0
+    ;;
     *)    # device name and invalid argument
         # Argument that starts with "-" have been prosessed already.
         if [[ $1 == -* ]]; then
@@ -87,13 +98,13 @@ while [ "$#" -gt 0 ]; do
         DEVICE="$1"
         shift # past argument
     ;;
-   esac
+    esac
 done
 
 if [ "$FORCED" != "Y" ]; then
     if mount | grep -q "$DEVICE"; then
-       echo "${DEVICE} seems to be mounted, aborting" >&2
-       exit 1
+        echo "${DEVICE} seems to be mounted, aborting" >&2
+        exit 1
     fi
 fi
 
@@ -252,5 +263,5 @@ fi
 sudo sync
 
 if [ ! -b "$DEVICE" ]; then
-     sudo kpartx -d "$DEVICE"
+    sudo kpartx -d "$DEVICE"
 fi

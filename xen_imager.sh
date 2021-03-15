@@ -493,6 +493,13 @@ function Deploy {
     rmdir ${WORK_DIR}/boot_tmp
 }
 
+function Check_script {
+    shellcheck xen_imager.sh select_target.sh helpers.sh text_generators.sh default_setup_sh_config
+    # Ignore "E006 Line too long" errors
+    bashate -i E006 xen_imager.sh select_target.sh helpers.sh text_generators.sh default_setup_sh_config
+    echo Nothing to complain
+}
+
 # Convert command to all lower case and then convert first letter to upper case
 CMD="${1,,}"
 CMD="${CMD^}"

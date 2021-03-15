@@ -3,6 +3,9 @@
 # This file has multipurpose functions.
 # Usage . helpers.sh
 
+# Set exit on error, so shellcheck won't suggest '|| exit 1' everywhere
+set -e
+
 # Get actual directory of this bash script
 HDIR="$(dirname "${BASH_SOURCE[0]}")"
 HDIR="$(realpath "$HDIR")"
@@ -11,9 +14,12 @@ HDIR="$(realpath "$HDIR")"
 function Load_config {
     # Load defaults in case .setup_sh_config is missing any settings
     # for example .setup_sh_config could be from older revision
+    # shellcheck source=./default_setup_sh_config
     . "${HDIR}/default_setup_sh_config"
 
     if [ -f "${HDIR}/.setup_sh_config" ]; then
+        # disable shellchecking of .setup_sh_config and warnings about it
+        # shellcheck disable=SC1091,SC1090
         . "${HDIR}/.setup_sh_config"
     fi
 
@@ -108,17 +114,18 @@ function Actual_value {
 
     lch="${1: -1}"
     case "$lch" in
-        G)
+    G)
         echo "$((${1:0:-1}*1024*1024*1024))"
-        ;;
-        M)
+    ;;
+    M)
         echo "$((${1:0:-1}*1024*1024))"
-        ;;
-        0|1|2|3|4|5|6|7|8|9)
-	echo "$((${1}*512))"
-        ;;
-	*)
-	echo "0"
+    ;;
+    0|1|2|3|4|5|6|7|8|9)
+        echo "$((${1}*512))"
+    ;;
+    *)
+        echo "0"
+    ;;
     esac
 }
 
@@ -184,6 +191,8 @@ function Set_deviceipconf {
         DEVICEIPCONF="invalid"
     ;;
     esac
+
+    export DEVICEIPCONF
 }
 
 function Check_param_exist {
@@ -271,7 +280,7 @@ function Download_artifactory_binary {
 
     if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
         tmpoutput="${DOWNLOAD_CACHE_DIR}/${filename}"
-        mkdir -p ${DOWNLOAD_CACHE_DIR}
+        mkdir -p "${DOWNLOAD_CACHE_DIR}"
     fi
 
     if [ ! -f "${DOWNLOAD_CACHE_DIR}/${filename}" ] || [ -z "${DOWNLOAD_CACHE_DIR}" ] ; then
@@ -436,7 +445,7 @@ function Compile_kernel {
     defconfig="$5"
     extra_configs="$6"
 
-    pushd $kernel_src
+    pushd "$kernel_src"
     # RUN in docker
     make O="${compile_dir}" ARCH="${arch}" CROSS_COMPILE="$cross_compile" "$defconfig"
     if [ -n "${extra_configs}" ]; then
@@ -493,12 +502,14 @@ function Install_kernel_modules {
 
     mntrootfs="$(Sanity_check "$rootfs")"
 
-    pushd "$kernel_src" || exit 255
+    pushd "$kernel_src"
     # RUN in docker
+    # Don't complain about sudo redirect, it's okay here
+    # shellcheck disable=SC2024
     sudo make "O=${compile_dir}" "ARCH=${arch}" "CROSS_COMPILE=${cross_compile}" "INSTALL_MOD_PATH=${mntrootfs}" \
         modules_install > "${compile_dir}/modules_install.log"
     # RUN in docker end
-    popd || exit 255
+    popd
 
     # Create module deps files
     echo "Create module dep files"
@@ -521,7 +532,7 @@ function Compile_xen {
 
     # Build xen
     if [ ! -s "${src}/xen/xen" ]; then
-        pushd "${src}" || exit 255
+        pushd "${src}"
         git checkout "${version}"
 
         if [ ! -s xen/.config ]; then
@@ -530,7 +541,7 @@ function Compile_xen {
             make -C xen XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
         fi
         make XEN_TARGET_ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dist-xen -j "$(nproc)"
-        popd || exit 255
+        popd
     fi
 
     echo "Compile_xen done"

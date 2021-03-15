@@ -114,6 +114,9 @@ function Build_guest_kernels {
         # below to build separate guest kernel
         # mkdir -p "${odir}/kvm_domu"
         # Compile_kernel ./linux arm64 aarch64-linux-gnu- "${odir}/kvm_domu" raspi4_kvm_guest_release_defconfig
+
+        # Workaround for shellcheck nagging about unused odir, remove this if you take above code into use
+        echo "$odir" > /dev/null
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -610,13 +613,13 @@ function Vdaupdate {
         # The domU rootfs image gets copied inside the rootfs.ext2
         # image so that we can boot it up via qemu, thus we must also
         # double the size of rootfs.ext2 image.
-        if [ ! -f ${IMAGES}/rootfs-domu.ext2 ] ; then
-            cp ${IMAGES}/rootfs.ext2 ${IMAGES}/rootfs-domu.ext2
-            e2fsck -f ${IMAGES}/rootfs.ext2
-            size=$(wc -c ${IMAGES}/rootfs.ext2 | cut -d " " -f 1)
-            size=$((${size} * 2 / 1024 / 1024))
+        if [ ! -f "${IMAGES}/rootfs-domu.ext2" ] ; then
+            cp "${IMAGES}/rootfs.ext2" "${IMAGES}/rootfs-domu.ext2"
+            e2fsck -f "${IMAGES}/rootfs.ext2"
+            size="$(wc -c "${IMAGES}/rootfs.ext2" | cut -d " " -f 1)"
+            size="$((size * 2 / 1024 / 1024))"
             echo "Resizing rootfs to ${size}M bytes"
-            resize2fs ${IMAGES}/rootfs.ext2 ${size}M
+            resize2fs "${IMAGES}/rootfs.ext2" "${size}M"
         fi
 
         sudo mount "${IMAGES}/rootfs.ext2" "${ROOTMNT}-su"
@@ -633,7 +636,7 @@ function Vdaupdate {
         sudo umount "$DOMUMNT"
         sudo umount "${DOMUMNT}-su"
 
-        cp ${IMAGES}/rootfs-domu.ext2 ${ROOTMNT}/root/rootfs.ext2
+        cp "${IMAGES}/rootfs-domu.ext2" "${ROOTMNT}/root/rootfs.ext2"
         sudo umount "$ROOTMNT"
         sudo umount "${ROOTMNT}-su"
     ;;
@@ -777,7 +780,7 @@ function Distclean {
     local entry
 
     Umount
-    Remove_ignores
+    Remove_ignores ""
 
     # Go through the submodule dirs, remove "path = " from the start and delete & recreate dir
     while IFS= read -r entry; do
@@ -793,6 +796,13 @@ function Distclean {
             "$entry/cleanup.sh" distclean
         fi
     done
+}
+
+function Check_script {
+    shellcheck setup.sh helpers.sh text_generators.sh default_setup_sh_config
+    # Ignore "E006 Line too long" errors
+    bashate -i E006 setup.sh helpers.sh text_generators.sh default_setup_sh_config
+    echo Nothing to complain
 }
 
 function Show_help {
@@ -820,6 +830,7 @@ function Show_help {
     echo "    distclean                         removes almost everything except main repo local changes"
     echo "                                      (basically resets to just cloned main repo)"
     echo "    clean                             Clean up built files, but keep downloads"
+    echo "    check_script                      Check setup.sh script with shellcheck and bashate"
     echo ""
     exit 0
 }

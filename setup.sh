@@ -24,15 +24,15 @@ trap On_exit_cleanup EXIT
 Load_config
 
 function Generate_disk_image {
-    local IDIR
-    local BDIR
-    local RDIR
-    local DDIR
+    local idir
+    local bdir
+    local rdir
+    local ddir
 
     if [ -n "$1" ]; then
-        IDIR="$(Sanity_check "$1" ne)"
+        idir="$(Sanity_check "$1" ne)"
     else
-        IDIR="$(Sanity_check "$IMGBUILD" ne)"
+        idir="$(Sanity_check "$IMGBUILD" ne)"
     fi
 
     if [ -z "$ROOTSIZE" ]; then
@@ -55,28 +55,28 @@ function Generate_disk_image {
         exit 1
     fi
 
-    BDIR="${IDIR}/root/bootfs"
-    RDIR="${IDIR}/root/rootfs"
-    DDIR="${IDIR}/root/domufs"
+    bdir="${idir}/root/bootfs"
+    rdir="${idir}/root/rootfs"
+    ddir="${idir}/root/domufs"
 
-    rm -rf "$BDIR"
-    mkdir -p "$BDIR"
-    Boot_fs "$BDIR"
+    rm -rf "$bdir"
+    mkdir -p "$bdir"
+    Boot_fs "$bdir"
 
-    rm -rf "$RDIR"
-    mkdir -p "$RDIR"
-    Root_fs "$RDIR"
+    rm -rf "$rdir"
+    mkdir -p "$rdir"
+    Root_fs "$rdir"
 
-    rm -rf "$DDIR"
-    mkdir -p "$DDIR"
-    Domu_fs "$DDIR"
+    rm -rf "$ddir"
+    mkdir -p "$ddir"
+    Domu_fs "$ddir"
 
-    mkdir -p "${IDIR}/input"
-    rm -f "${IDIR}/input/rootfs.ext4"
-    fakeroot mke2fs -t ext4 -d "$RDIR" "${IDIR}/input/rootfs.ext4" "$ROOTSIZE"
+    mkdir -p "${idir}/input"
+    rm -f "${idir}/input/rootfs.ext4"
+    fakeroot mke2fs -t ext4 -d "$rdir" "${idir}/input/rootfs.ext4" "$ROOTSIZE"
 
-    rm -f "${IDIR}/input/domufs.ext4"
-    fakeroot mke2fs -t ext4 -d "$DDIR" "${IDIR}/input/domufs.ext4" "$DOMUSIZE"
+    rm -f "${idir}/input/domufs.ext4"
+    fakeroot mke2fs -t ext4 -d "$ddir" "${idir}/input/domufs.ext4" "$DOMUSIZE"
 
     if [ "$PLATFORM" = "x86" ] ; then
         return 0
@@ -88,14 +88,14 @@ function Generate_disk_image {
     PATH="${BRHOSTDIR}/bin:${BRHOSTDIR}/sbin:${PATH}" \
         genimage \
             --config ./configs/genimage-sp-distro.cfg \
-            --rootpath "${IDIR}/root" \
-            --inputpath "${IDIR}/input" \
-            --outputpath "${IDIR}/output" \
+            --rootpath "${idir}/root" \
+            --inputpath "${idir}/input" \
+            --outputpath "${idir}/output" \
             --tmppath "$TMPDIR/genimage"
 }
 
 function Build_guest_kernels {
-    local ODIR
+    local odir
 
     if [ "$PLATFORM" = "x86" ] ; then
         echo "INFO: x86 does not require separate guest kernel images."
@@ -103,17 +103,17 @@ function Build_guest_kernels {
     fi
 
     if [ -n "$1" ]; then
-        ODIR="$(Sanity_check "$1" ne)"
+        odir="$(Sanity_check "$1" ne)"
     else
-        ODIR="$(Sanity_check "$GKBUILD" ne)"
+        odir="$(Sanity_check "$GKBUILD" ne)"
     fi
 
     case "$HYPERVISOR" in
     KVM)
         # Atm kvm buildroot uses the same kernel for host and guest, uncomment
         # below to build separate guest kernel
-        # mkdir -p "${ODIR}/kvm_domu"
-        # Compile_kernel ./linux arm64 aarch64-linux-gnu- "${ODIR}/kvm_domu" raspi4_kvm_guest_release_defconfig
+        # mkdir -p "${odir}/kvm_domu"
+        # Compile_kernel ./linux arm64 aarch64-linux-gnu- "${odir}/kvm_domu" raspi4_kvm_guest_release_defconfig
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -127,23 +127,23 @@ function Set_my_ids {
 }
 
 function Is_mounted {
-    local FLAGS
-    local MOUNTED
+    local flags
+    local mounted
 
     # Save flags
-    FLAGS="$-"
+    flags="$-"
 
     # Disable exit on status != 0 for grep
     set +e
 
-    MOUNTED="$(mount | grep "$1")"
+    mounted="$(mount | grep "$1")"
 
     # Restore flags
-    if [[ "$FLAGS" =~ "e" ]]; then
+    if [[ "$flags" =~ "e" ]]; then
         set -e
     fi
 
-    if [ -z "$MOUNTED" ]; then
+    if [ -z "$mounted" ]; then
         if [ "$AUTOMOUNT" == "1" ]; then
             echo "Block device is not mounted. Automounting!" >&2
             Mount
@@ -155,11 +155,12 @@ function Is_mounted {
 }
 
 function Uloop_img {
+    local img
+
     if [ -f .mountimg ]; then
-        local IMG
-        IMG="$(cat .mountimg)"
+        img="$(cat .mountimg)"
         sync
-        sudo kpartx -d "$IMG"
+        sudo kpartx -d "$img"
         rm -f .mountimg
     else
         echo "No image currently looped" >&2
@@ -183,13 +184,13 @@ function Umount_img {
 }
 
 function Loop_img {
-    local KPARTXOUT
+    local kpartxout
 
-    KPARTXOUT="$(sudo kpartx -l "$1" 2> /dev/null)"
+    kpartxout="$(sudo kpartx -l "$1" 2> /dev/null)"
 
-    PART1="/dev/mapper/$(grep "p1 " <<< "$KPARTXOUT" | cut -d " " -f1)"
-    PART2="/dev/mapper/$(grep "p2 " <<< "$KPARTXOUT" | cut -d " " -f1)"
-    PART3="/dev/mapper/$(grep "p3 " <<< "$KPARTXOUT" | cut -d " " -f1)"
+    PART1="/dev/mapper/$(grep "p1 " <<< "$kpartxout" | cut -d " " -f1)"
+    PART2="/dev/mapper/$(grep "p2 " <<< "$kpartxout" | cut -d " " -f1)"
+    PART3="/dev/mapper/$(grep "p3 " <<< "$kpartxout" | cut -d " " -f1)"
 
     sudo kpartx -a "$1"
 
@@ -235,40 +236,41 @@ function Mount_img {
 }
 
 function Mount {
-    local DEV
+    local dev
+    local midp
 
     set +e
 
     if [ -z "$1" ]; then
-        DEV="$DEFDEV"
+        dev="$DEFDEV"
     else
-        DEV="$1"
+        dev="$1"
     fi
 
-    if [ -f "$DEV" ]; then
+    if [ -f "$dev" ]; then
         # If dev is file, mount image instead
-        Mount_img "$DEV"
+        Mount_img "$dev"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
-        if [[ "${DEV: -1}" =~ [0-9] ]]; then
-                MIDP="p"
-            else
-                MIDP=""
+        if [[ "${dev: -1}" =~ [0-9] ]]; then
+            midp="p"
+        else
+            midp=""
         fi
 
         Create_mount_points
 
         Set_my_ids
 
-        sudo mount -o "uid=${MYUID},gid=$MYGID" "${DEV}${MIDP}1" "$BOOTMNT"
-        sudo mount "${DEV}${MIDP}2" "${ROOTMNT}-su"
-        sudo mount "${DEV}${MIDP}3" "${DOMUMNT}-su"
+        sudo mount -o "uid=${MYUID},gid=$MYGID" "${dev}${midp}1" "$BOOTMNT"
+        sudo mount "${dev}${midp}2" "${ROOTMNT}-su"
+        sudo mount "${dev}${midp}3" "${DOMUMNT}-su"
         Bind_mounts
     fi
 }
 
 function Umount {
-    local MOUNTED
+    local mounted
 
     set +e
 
@@ -277,8 +279,8 @@ function Umount {
         return 0
     fi
 
-    MOUNTED="$(mount | grep "$BOOTMNT")"
-    if [ -z "$MOUNTED" ]; then
+    mounted="$(mount | grep "$BOOTMNT")"
+    if [ -z "$mounted" ]; then
         return 0
     fi
 
@@ -296,23 +298,26 @@ function Umount {
 }
 
 function Gen_configs {
+    local os_opt
+    local hyp_opt
+
     case "$SECURE_OS" in
     1)
-        local os_opt="_secure"
+        os_opt="_secure"
     ;;
     *)
-        local os_opt=""
+        os_opt=""
     ;;
     esac
 
     case "$HYPERVISOR" in
     KVM)
-        local hyp_opt="kvm"
-	# For now, we use same config for the guest kernels also
+        hyp_opt="kvm"
+        # For now, we use same config for the guest kernels also
         #configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}_guest${os_opt}_release" -k linux
     ;;
     *)
-        local hyp_opt="xen"
+        hyp_opt="xen"
     ;;
     esac
 
@@ -367,7 +372,7 @@ function Uboot_script {
 }
 
 function Boot_fs {
-    local BOOTFS
+    local bootfs
 
     if [ "$PLATFORM" = "x86" ] ; then
         echo "INFO: x86 does not require bootfs setup."
@@ -375,27 +380,27 @@ function Boot_fs {
     fi
 
     if [ -z "$1" ]; then
-        BOOTFS="$BOOTMNT"
+        bootfs="$BOOTMNT"
         Is_mounted "$BOOTMNT"
     else
-        BOOTFS="$(Sanity_check "$1")"
+        bootfs="$(Sanity_check "$1")"
     fi
 
     if [ "$FS_UPDATE_ONLY" != "1" ] ; then
-        pushd "$BOOTFS"
+        pushd "$bootfs"
         rm -rf ./*
         popd
     fi
 
-    Config_txt > "${BOOTFS}/config.txt"
-    cp u-boot.bin "$BOOTFS"
-    cp "$KERNEL_IMAGE" "${BOOTFS}/vmlinuz"
+    Config_txt > "${bootfs}/config.txt"
+    cp u-boot.bin "$bootfs"
+    cp "$KERNEL_IMAGE" "${bootfs}/vmlinuz"
     case "$BUILDOPT" in
     0|1|MMC|USB)
-        cp images/xen/boot.scr "$BOOTFS"
+        cp images/xen/boot.scr "$bootfs"
     ;;
     2|3)
-        cp images/xen/boot2.scr "$BOOTFS"
+        cp images/xen/boot2.scr "$bootfs"
     ;;
     esac
 
@@ -404,38 +409,38 @@ function Boot_fs {
         # Nothing to copy at this point
     ;;
     *)
-        cp "${IMAGES}/xen" "$BOOTFS"
+        cp "${IMAGES}/xen" "$bootfs"
     ;;
     esac
 
-    cp "${IMAGES}/$DEVTREE" "$BOOTFS"
-    cp -r "${IMAGES}/rpi-firmware/overlays" "$BOOTFS"
-    cp usbfix/fixup4.dat "$BOOTFS"
-    cp usbfix/start4.elf "$BOOTFS"
+    cp "${IMAGES}/$DEVTREE" "$bootfs"
+    cp -r "${IMAGES}/rpi-firmware/overlays" "$bootfs"
+    cp usbfix/fixup4.dat "$bootfs"
+    cp usbfix/start4.elf "$bootfs"
 }
 
 function Net_boot_fs {
-    local BOOTFS
+    local bootfs
 
     case "$BUILDOPT" in
     2|3)
         if [ -z "$1" ]; then
-            BOOTFS="$BOOTMNT"
+            bootfs="$BOOTMNT"
             Is_mounted "$BOOTMNT"
         else
-            BOOTFS="$(Sanity_check "$1")"
+            bootfs="$(Sanity_check "$1")"
         fi
 
-        pushd "$BOOTFS"
+        pushd "$bootfs"
         rm -rf ./*
         popd
 
-        Config_txt > "${BOOTFS}/config.txt"
-        cp u-boot.bin "$BOOTFS"
-        cp usbfix/fixup4.dat "$BOOTFS"
-        cp usbfix/start4.elf "$BOOTFS"
-        cp images/xen/boot.scr "$BOOTFS"
-        cp "${IMAGES}/$DEVTREE" "$BOOTFS"
+        Config_txt > "${bootfs}/config.txt"
+        cp u-boot.bin "$bootfs"
+        cp usbfix/fixup4.dat "$bootfs"
+        cp usbfix/start4.elf "$bootfs"
+        cp images/xen/boot.scr "$bootfs"
+        cp "${IMAGES}/$DEVTREE" "$bootfs"
     ;;
     *)
         echo "Not configured for network boot" >&2
@@ -445,18 +450,18 @@ function Net_boot_fs {
 }
 
 function Root_fs {
-    local ROOTFS
+    local rootfs
 
     if [ -z "$1" ]; then
-        ROOTFS="$ROOTMNT"
+        rootfs="$ROOTMNT"
         Is_mounted "$ROOTMNT"
     else
-        ROOTFS="$(Sanity_check "$1")"
+        rootfs="$(Sanity_check "$1")"
     fi
 
     if [ "$VDAUPDATE" != "1" ] ; then
-        pushd "$ROOTFS"
-        echo "Updating $ROOTFS/"
+        pushd "$rootfs"
+        echo "Updating $rootfs/"
         if [ "$FS_UPDATE_ONLY" != "1" ] ; then
             rm -rf ./*
         fi
@@ -472,85 +477,85 @@ function Root_fs {
         cp -pf "images/device_id_rsa.pub" "images/rasp_id_rsa.pub"
     fi
 
-    mkdir -p "${ROOTFS}/root/.ssh"
-    cat images/device_id_rsa.pub >> "${ROOTFS}/root/.ssh/authorized_keys"
-    chmod 700 "${ROOTFS}/root/.ssh/authorized_keys"
-    chmod 700 "${ROOTFS}/root/.ssh"
+    mkdir -p "${rootfs}/root/.ssh"
+    cat images/device_id_rsa.pub >> "${rootfs}/root/.ssh/authorized_keys"
+    chmod 700 "${rootfs}/root/.ssh/authorized_keys"
+    chmod 700 "${rootfs}/root/.ssh"
 
-    Dom0_interfaces > "${ROOTFS}/etc/network/interfaces"
-    cp configs/wpa_supplicant.conf "${ROOTFS}/etc/wpa_supplicant.conf"
+    Dom0_interfaces > "${rootfs}/etc/network/interfaces"
+    cp configs/wpa_supplicant.conf "${rootfs}/etc/wpa_supplicant.conf"
 
-    Domu_config > "${ROOTFS}/root/domu.cfg"
+    Domu_config > "${rootfs}/root/domu.cfg"
 
-    Net_rc_add dom0 > "${ROOTFS}/etc/init.d/S41netadditions"
-    chmod 755 "${ROOTFS}/etc/init.d/S41netadditions"
+    Net_rc_add dom0 > "${rootfs}/etc/init.d/S41netadditions"
+    chmod 755 "${rootfs}/etc/init.d/S41netadditions"
 
     case "$BUILDOPT" in
     2|3)
         if [ "$HYPERVISOR" == "XEN" ] ; then
-            echo 'vif.default.script="vif-nat"' >> "${ROOTFS}/etc/xen/xl.conf"
+            echo 'vif.default.script="vif-nat"' >> "${rootfs}/etc/xen/xl.conf"
         fi
     ;;
     *)
     ;;
     esac
 
-    cp buildroot/package/busybox/S10mdev "${ROOTFS}/etc/init.d/S10mdev"
-    chmod 755 "${ROOTFS}/etc/init.d/S10mdev"
-    cp buildroot/package/busybox/mdev.conf "${ROOTFS}/etc/mdev.conf"
+    cp buildroot/package/busybox/S10mdev "${rootfs}/etc/init.d/S10mdev"
+    chmod 755 "${rootfs}/etc/init.d/S10mdev"
+    cp buildroot/package/busybox/mdev.conf "${rootfs}/etc/mdev.conf"
 
     if [ "$PLATFORM" == "raspi4" ] ; then
-        cp "$ROOTFS/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${ROOTFS}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+        cp "$rootfs/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${rootfs}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
     fi
-    Inittab dom0 > "${ROOTFS}/etc/inittab"
-    echo '. .bashrc' > "${ROOTFS}/root/.profile"
-    echo 'PS1="\u@\h:\w# "' > "${ROOTFS}/root/.bashrc"
-    echo "${DEVICEHN}-dom0" > "${ROOTFS}/etc/hostname"
+    Inittab dom0 > "${rootfs}/etc/inittab"
+    echo '. .bashrc' > "${rootfs}/root/.profile"
+    echo 'PS1="\u@\h:\w# "' > "${rootfs}/root/.bashrc"
+    echo "${DEVICEHN}-dom0" > "${rootfs}/etc/hostname"
 
     case "$HYPERVISOR" in
     KVM)
         case "$PLATFORM" in
         x86)
-            cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
-            Run_x86_qemu_sh > "${ROOTFS}/root/run-x86-qemu.sh"
-            chmod a+x "${ROOTFS}/root/run-x86-qemu.sh"
+            cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+            Run_x86_qemu_sh > "${rootfs}/root/run-x86-qemu.sh"
+            chmod a+x "${rootfs}/root/run-x86-qemu.sh"
         ;;
         *)
-            #cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${ROOTFS}/root/Image"
-            cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
-            cp qemu/efi-virtio.rom "${ROOTFS}/root"
-            cp qemu/qemu-system-aarch64 "${ROOTFS}/root"
-            cp qemu/run-qemu.sh "${ROOTFS}/root"
+            #cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${rootfs}/root/Image"
+            cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+            cp qemu/efi-virtio.rom "${rootfs}/root"
+            cp qemu/qemu-system-aarch64 "${rootfs}/root"
+            cp qemu/run-qemu.sh "${rootfs}/root"
         ;;
         esac
 
-        Rq_sh > "${ROOTFS}/root/rq.sh"
-        chmod a+x "${ROOTFS}/root/rq.sh"
+        Rq_sh > "${rootfs}/root/rq.sh"
+        chmod a+x "${rootfs}/root/rq.sh"
     ;;
     *)
-        cp "$KERNEL_IMAGE" "${ROOTFS}/root/Image"
+        cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
     ;;
     esac
 }
 
 function Domu_fs {
-    local DOMUFS
+    local domufs
 
     if [ -z "$1" ]; then
-        DOMUFS="$DOMUMNT"
+        domufs="$DOMUMNT"
         Is_mounted "$DOMUMNT"
     else
-        DOMUFS="$(Sanity_check "$1")"
+        domufs="$(Sanity_check "$1")"
     fi
 
-    Root_fs "$DOMUFS"
+    Root_fs "$domufs"
 
-    Net_rc_add domu > "${DOMUFS}/etc/init.d/S41netadditions"
-    chmod 755 "${DOMUFS}/etc/init.d/S41netadditions"
+    Net_rc_add domu > "${domufs}/etc/init.d/S41netadditions"
+    chmod 755 "${domufs}/etc/init.d/S41netadditions"
 
-    Domu_interfaces > "${DOMUFS}/etc/network/interfaces"
-    Inittab domu > "${DOMUFS}/etc/inittab"
-    echo "${DEVICEHN}-domu" > "${DOMUFS}/etc/hostname"
+    Domu_interfaces > "${domufs}/etc/network/interfaces"
+    Inittab domu > "${domufs}/etc/inittab"
+    echo "${DEVICEHN}-domu" > "${domufs}/etc/hostname"
 }
 
 function Nfs_update {
@@ -589,7 +594,7 @@ function Nfs_update {
 }
 
 function Vdaupdate {
-    local SIZE
+    local size
 
     if [ "$PLATFORM" != "x86" ] ; then
         echo "VDA update is only supported for x86." >&2
@@ -608,10 +613,10 @@ function Vdaupdate {
         if [ ! -f ${IMAGES}/rootfs-domu.ext2 ] ; then
             cp ${IMAGES}/rootfs.ext2 ${IMAGES}/rootfs-domu.ext2
             e2fsck -f ${IMAGES}/rootfs.ext2
-            SIZE=$(wc -c ${IMAGES}/rootfs.ext2 | cut -d " " -f 1)
-            SIZE=$((${SIZE} * 2 / 1024 / 1024))
-            echo "Resizing rootfs to ${SIZE}M bytes"
-            resize2fs ${IMAGES}/rootfs.ext2 ${SIZE}M
+            size=$(wc -c ${IMAGES}/rootfs.ext2 | cut -d " " -f 1)
+            size=$((${size} * 2 / 1024 / 1024))
+            echo "Resizing rootfs to ${size}M bytes"
+            resize2fs ${IMAGES}/rootfs.ext2 ${size}M
         fi
 
         sudo mount "${IMAGES}/rootfs.ext2" "${ROOTMNT}-su"
@@ -665,38 +670,38 @@ function Ssh_dut {
 }
 
 function Fsck {
-    local DEV
-    local MIDP
+    local dev
+    local midp
 
     set +e
 
     if [ -z "$1" ]; then
-        DEV="$DEFDEV"
+        dev="$DEFDEV"
     else
-        DEV="$1"
+        dev="$1"
     fi
 
-    if [ -f "$DEV" ]; then
+    if [ -f "$dev" ]; then
         # If dev is file, get loop devices for image
-        Loop_img "$DEV"
+        Loop_img "$dev"
     else
         # Add 'p' to partition device name, if main device name ends in number (e.g. /dev/mmcblk0)
-        if [[ "${DEV: -1}" =~ [0-9] ]]; then
-                MIDP="p"
+        if [[ "${dev: -1}" =~ [0-9] ]]; then
+                midp="p"
             else
-                MIDP=""
+                midp=""
         fi
 
-        PART1="${DEV}${MIDP}1"
-        PART2="${DEV}${MIDP}2"
-        PART3="${DEV}${MIDP}3"
+        PART1="${dev}${midp}1"
+        PART2="${dev}${midp}2"
+        PART3="${dev}${midp}3"
     fi
 
     sudo fsck.msdos "$PART1"
     sudo fsck.ext4 -f "$PART2"
     sudo fsck.ext4 -f "$PART3"
 
-    if [ -f "$DEV" ]; then
+    if [ -f "$dev" ]; then
         Uloop_img
     fi
 }
@@ -734,6 +739,8 @@ function Build_all {
 
 # Clean up so that on next build everything gets rebuilt but nothing gets redownloaded
 function Clean {
+    local entry
+
     Safer_rmrf "$GKBUILD"
     Safer_rmrf "$IMGBUILD"
     Safer_rmrf "$TMPDIR"
@@ -756,9 +763,9 @@ function Clean {
     fi
 
     # Run 'cleanup.sh clean' in subdirs, if available
-    for ENTRY in ./*/ ;do
-        if [ -x "${ENTRY}/cleanup.sh" ]; then
-            "$ENTRY/cleanup.sh" clean
+    for entry in ./*/ ;do
+        if [ -x "${entry}/cleanup.sh" ]; then
+            "${entry}/cleanup.sh" clean
         fi
     done
     rm -f .setup_sh_config
@@ -767,23 +774,23 @@ function Clean {
 # Restore situation before first 'setup.sh clone' but keep local main repo changes
 # Removes a ton of stuff, like submodule changes, be careful
 function Distclean {
-    local ENTRY
+    local entry
 
     Umount
     Remove_ignores
 
     # Go through the submodule dirs, remove "path = " from the start and delete & recreate dir
-    while IFS= read -r ENTRY; do
-        ENTRY="$(Trim "$ENTRY")"
-        ENTRY="${ENTRY#path = }"
-        Safer_rmrf "$ENTRY"
-        mkdir -p "$ENTRY"
+    while IFS= read -r entry; do
+        entry="$(Trim "$entry")"
+        entry="${entry#path = }"
+        Safer_rmrf "$entry"
+        mkdir -p "$entry"
     done <<< "$(grep "path = " .gitmodules)"
 
     # Run 'cleanup.sh distclean' in subdirs, if available
-    for ENTRY in ./*/ ;do
-        if [ -x "${ENTRY}/cleanup.sh" ]; then
-            "$ENTRY/cleanup.sh" distclean
+    for entry in ./*/ ;do
+        if [ -x "${entry}/cleanup.sh" ]; then
+            "$entry/cleanup.sh" distclean
         fi
     done
 }

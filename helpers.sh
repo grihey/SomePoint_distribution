@@ -37,29 +37,29 @@ SUDOCMD="$(command -v sudo || true)"
 # If SUDOCHECK=1 then all commands will be confirmed
 # sudo function meant to replace sudo command, so it is not capitalized like other functions
 function sudo {
-    local PROMPT
-    local INP
+    local prompt
+    local inp
 
-    PROMPT="$(printf "About to sudo: \"%s\"" "$*")"
+    prompt="$(printf "About to sudo: \"%s\"" "$*")"
 
     # Check if sudo is going to ask password or not
     if "${SUDOCMD:?}" -n true 2> /dev/null; then
         # Ask for confirmation if SUDOCHECK enabled
         if [ "$SUDOCHECK" == "1" ]; then
-            INP="x"
-            while [ "$INP" == "x" ]; do
-                printf "%s\nConfirm (Y/n): " "$PROMPT" > /dev/tty
-                read -r INP < /dev/tty
-                case "$INP" in
+            inp="x"
+            while [ "$inp" == "x" ]; do
+                printf "%s\nConfirm (Y/n): " "$prompt" > /dev/tty
+                read -r inp < /dev/tty
+                case "$inp" in
                 ""|y|Y)
-                    INP="Y"
+                    inp="Y"
                 ;;
                 n|N)
                     return 1
                 ;;
                 *)
                     echo "Invalid input" > /dev/tty
-                    INP="x"
+                    inp="x"
                 ;;
                 esac
             done
@@ -68,7 +68,7 @@ function sudo {
         "${SUDOCMD:?}" "$@"
     else
         # If sudo is going to ask password show the command about to be run anyway
-        printf "%s\n" "$PROMPT" > /dev/tty
+        printf "%s\n" "$prompt" > /dev/tty
         "${SUDOCMD:?}" "$@"
     fi
 }
@@ -104,10 +104,10 @@ function Fn_exists {
 
 # Calculates actual number of bytes from strings like '4G' and '23M' plain numbers are sectors (512 bytes)
 function Actual_value {
-    local LCH
+    local lch
 
-    LCH="${1: -1}"
-    case "$LCH" in
+    lch="${1: -1}"
+    case "$lch" in
         G)
         echo "$((${1:0:-1}*1024*1024*1024))"
         ;;
@@ -124,45 +124,45 @@ function Actual_value {
 
 # Trims off whitespace from start and end of a string
 function Trim {
-    local STR
+    local str
 
-    STR="$*"
+    str="$*"
 
     # remove whitespace from start
-    STR="${STR#"${STR%%[![:space:]]*}"}"
+    str="${str#"${str%%[![:space:]]*}"}"
 
     # remove whitespace from end
-    STR="${STR%"${STR##*[![:space:]]}"}"
+    str="${str%"${str##*[![:space:]]}"}"
 
-    printf '%s' "$STR"
+    printf '%s' "$str"
 }
 
 # Slightly safer recursive deletion
 # If second parameter is 'sudo' root user is used to remove files
 function Safer_rmrf {
-    local RMD
+    local rmd
 
     # Sanity check the path, just in case
-    RMD="$(Sanity_check "$1" ne)"
+    rmd="$(Sanity_check "$1" ne)"
     if [  "$2" == "sudo" ]; then
         # Check that we actually have something to delete before using sudo
-        if [ -e "${RMD:?}" ]; then
-            sudo rm -rf "${RMD:?}"
+        if [ -e "${rmd:?}" ]; then
+            sudo rm -rf "${rmd:?}"
         fi
     else
-        rm -rf "${RMD:?}"
+        rm -rf "${rmd:?}"
     fi
 }
 
 # Remove files and directories listed in .gitignores
 function Remove_ignores {
-    local ENTRY
+    local entry
 
     if [ -f .gitignore ]; then
-        while IFS= read -r ENTRY; do
-            ENTRY="$(Trim "$ENTRY")"
-            if [ -n "$ENTRY" ] && [ "${ENTRY:0:1}" != "#" ]; then
-                Safer_rmrf "$ENTRY" "$1"
+        while IFS= read -r entry; do
+            entry="$(Trim "$entry")"
+            if [ -n "$entry" ] && [ "${entry:0:1}" != "#" ]; then
+                Safer_rmrf "$entry" "$1"
             fi
         done < .gitignore
     fi
@@ -253,34 +253,36 @@ function Download {
 }
 
 function Download_artifactory_binary {
+    local download_url
+    local destdir
+    local filename
+    local tmpoutput
+    local extra_options
+    local from_artifactory
+
     echo "Download_artifactory_binary"
-    local DOWNLOAD_PATH
-    local DESTDIR
-    local TMPOUTPUT
-    local EXTRA_OPTIONS
-    local FROM_ARTIFACTORY
 
     Check_3_param_exist "$1" "$2" "$3" # can be empty"$4"
-    DOWNLOAD_URL="$1"
-    DESTDIR="$2"
-    FILENAME="$3"
-    TMPOUTPUT="${DESTDIR}/${FILENAME}"
-    FROM_ARTIFACTORY="${4}"
+    download_url="$1"
+    destdir="$2"
+    filename="$3"
+    tmpoutput="${destdir}/${filename}"
+    from_artifactory="${4}"
 
     if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
-        TMPOUTPUT="${DOWNLOAD_CACHE_DIR}/${FILENAME}"
+        tmpoutput="${DOWNLOAD_CACHE_DIR}/${filename}"
         mkdir -p ${DOWNLOAD_CACHE_DIR}
     fi
 
-    if [ ! -f "${DOWNLOAD_CACHE_DIR}/${FILENAME}" ] || [ ! -n "${DOWNLOAD_CACHE_DIR}" ] ; then
-        if [ "${FROM_ARTIFACTORY}" != "0" ]; then
-            EXTRA_OPTIONS="-H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
+    if [ ! -f "${DOWNLOAD_CACHE_DIR}/${filename}" ] || [ -z "${DOWNLOAD_CACHE_DIR}" ] ; then
+        if [ "${from_artifactory}" != "0" ]; then
+            extra_options="-H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
         fi
-        curl ${EXTRA_OPTIONS} -L "${DOWNLOAD_URL}" -o "${TMPOUTPUT}"
+        curl "${extra_options}" -L "${download_url}" -o "${tmpoutput}"
     fi
 
     if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
-        cp "${DOWNLOAD_CACHE_DIR}/${FILENAME}" "${DESTDIR}/${FILENAME}"
+        cp "${DOWNLOAD_CACHE_DIR}/${filename}" "${destdir}/${filename}"
     fi
 
     echo "Download_artifactory_binary done"
@@ -303,30 +305,30 @@ function Decompress_image {
 function Umount_chroot_devs {
     Check_1_param_exist "$1"
 
-    local ROOTFS
+    local rootfs
 
-    ROOTFS=$1
+    rootfs=$1
 
-    sudo umount "${ROOTFS}/dev/pts" || true > /dev/null
-    sudo umount "${ROOTFS}/dev" || true > /dev/null
-    sudo umount "${ROOTFS}/proc" || true > /dev/null
-    sudo umount "${ROOTFS}/sys" || true > /dev/null
-    sudo umount "${ROOTFS}/tmp" || true > /dev/null
+    sudo umount "${rootfs}/dev/pts" || true > /dev/null
+    sudo umount "${rootfs}/dev" || true > /dev/null
+    sudo umount "${rootfs}/proc" || true > /dev/null
+    sudo umount "${rootfs}/sys" || true > /dev/null
+    sudo umount "${rootfs}/tmp" || true > /dev/null
 }
 
 function Mount_chroot_devs {
     Check_1_param_exist "$1"
 
-    local ROOTFS
+    local rootfs
 
-    ROOTFS=$1
+    rootfs=$1
 
-    sudo mkdir -p "${ROOTFS}"
-    sudo mount -o bind /dev "${ROOTFS}/dev"
-    sudo mount -o bind /dev/pts "${ROOTFS}/dev/pts"
-    sudo mount -o bind /proc "${ROOTFS}/proc"
-    sudo mount -o bind /sys "${ROOTFS}/sys"
-    sudo mount -o bind /tmp "${ROOTFS}/tmp"
+    sudo mkdir -p "${rootfs}"
+    sudo mount -o bind /dev "${rootfs}/dev"
+    sudo mount -o bind /dev/pts "${rootfs}/dev/pts"
+    sudo mount -o bind /proc "${rootfs}/proc"
+    sudo mount -o bind /sys "${rootfs}/sys"
+    sudo mount -o bind /tmp "${rootfs}/tmp"
 }
 
 
@@ -366,20 +368,20 @@ function Umount_image {
 #   on error an error message is printed to stderr and CLEANPATH is empty and return value is nonzero
 #   on success CLEANPATH is the cleaned up path to <path to check> and return value is zero
 function Sanity_check {
-    local TPATH
+    local tpath
 
     set +e
 
     if [ -z "$2" ]; then
-        TPATH="$(realpath -e "$1" 2>/dev/null)"
+        tpath="$(realpath -e "$1" 2>/dev/null)"
     else
-        TPATH="$(realpath -m "$1" 2>/dev/null)"
+        tpath="$(realpath -m "$1" 2>/dev/null)"
     fi
 
     # Explicitly allowed paths
-    case "$TPATH" in
+    case "$tpath" in
     /usr/src/*) # For docker environment this needs to be allowed
-        echo "$TPATH"
+        echo "$tpath"
         exit 0
     ;;
     *)
@@ -388,7 +390,7 @@ function Sanity_check {
     esac
 
     # Denied paths
-    case "$TPATH" in
+    case "$tpath" in
     /bin*|/boot*|/dev*|/etc*|/lib*|/opt*|/proc*|/run*|/sbin*|/snap*|/sys*|/usr*|/var*|/home)
         echo "Will not touch host special directories" >&2
         exit 6
@@ -410,7 +412,7 @@ function Sanity_check {
         exit 5
         ;;
     *)  # Path allowed
-        echo "$TPATH"
+        echo "$tpath"
         exit 0
         ;;
     esac
@@ -473,54 +475,54 @@ function Install_kernel {
 }
 
 function Install_kernel_modules {
-    local KERNEL_SRC
-    local ARCH
-    local CROSS_COMPILE
-    local COMPILE_DIR
-    local ROOTFS
-    local MNTROOTFS
+    local kernel_src
+    local arch
+    local cross_compile
+    local compile_dir
+    local rootfs
+    local mntrootfs
 
     echo "Install_kernel_modules"
     Check_5_param_exist "$1" "$2" "$3" "$4" "$5"
 
-    KERNEL_SRC="$1"
-    ARCH="$2"
-    CROSS_COMPILE="${CCACHE} $3"
-    COMPILE_DIR="$4"
-    ROOTFS="$5"
+    kernel_src="$1"
+    arch="$2"
+    cross_compile="${CCACHE} $3"
+    compile_dir="$4"
+    rootfs="$5"
 
-    MNTROOTFS="$(Sanity_check "$ROOTFS")"
+    mntrootfs="$(Sanity_check "$rootfs")"
 
-    pushd "$KERNEL_SRC" || exit 255
+    pushd "$kernel_src" || exit 255
     # RUN in docker
-    sudo make "O=${COMPILE_DIR}" "ARCH=${ARCH}" "CROSS_COMPILE=${CROSS_COMPILE}" "INSTALL_MOD_PATH=${MNTROOTFS}" \
-        modules_install > "${COMPILE_DIR}/modules_install.log"
+    sudo make "O=${compile_dir}" "ARCH=${arch}" "CROSS_COMPILE=${cross_compile}" "INSTALL_MOD_PATH=${mntrootfs}" \
+        modules_install > "${compile_dir}/modules_install.log"
     # RUN in docker end
     popd || exit 255
 
     # Create module deps files
     echo "Create module dep files"
-    KVERSION="$(cut -d "\"" -f 2 "${COMPILE_DIR}/include/generated/utsrelease.h")"
+    KVERSION="$(cut -d "\"" -f 2 "${compile_dir}/include/generated/utsrelease.h")"
     echo "Compiled kernel version: ${KVERSION}"
-    sudo chroot "$MNTROOTFS" depmod -a "${KVERSION}"
+    sudo chroot "$mntrootfs" depmod -a "${KVERSION}"
 
     echo "Install_kernel_modules done"
 }
 
 function Compile_xen {
+    local src
+    local version
+
     echo "Compile_xen"
     Check_2_param_exist "$1" "$2"
 
-    local SRC
-    local VERSION
-
-    SRC="$1"
-    VERSION="$2"
+    src="$1"
+    version="$2"
 
     # Build xen
-    if [ ! -s "${SRC}/xen/xen" ]; then
-        pushd "${SRC}" || exit 255
-        git checkout "${VERSION}"
+    if [ ! -s "${src}/xen/xen" ]; then
+        pushd "${src}" || exit 255
+        git checkout "${version}"
 
         if [ ! -s xen/.config ]; then
             #echo "CONFIG_DEBUG=y" > xen/arch/arm/configs/arm64_defconfig

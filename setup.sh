@@ -23,12 +23,6 @@ trap On_exit_cleanup EXIT
 
 Load_config
 
-if [ -n "$CCACHE" ]; then
-    export CCACHE
-    export CCACHE_DIR
-    export CCACHE_MAXSIZE
-fi
-
 function Generate_disk_image {
     local IDIR
     local BDIR

@@ -11,12 +11,6 @@ Load_config
 
 . select_target.sh
 
-if [ -n "$CCACHE" ]; then
-    export CCACHE_DIR
-    export CCACHE_MAXSIZE
-fi
-export CCACHE
-
 WORK_DIR="${ROOT_DIR}/${TARGET_DIR:?}"
 KERNEL_SRC="${ROOT_DIR}/linux"
 XEN_SRC="${ROOT_DIR}/xen-hyp"

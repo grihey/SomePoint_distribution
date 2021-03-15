@@ -17,6 +17,10 @@ function Load_config {
         . "${HDIR}/.setup_sh_config"
     fi
 
+    export CCACHE
+    export CCACHE_DIR
+    export CCACHE_MAXSIZE
+
     Set_deviceipconf
 
     # Disable sudo function if standard sudo is requested

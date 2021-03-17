@@ -21,8 +21,6 @@ trap On_exit_cleanup EXIT
 . helpers.sh
 . text_generators.sh
 
-Load_config
-
 function Generate_disk_image {
     local idir
     local bdir
@@ -109,7 +107,7 @@ function Build_guest_kernels {
     fi
 
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         # Atm kvm buildroot uses the same kernel for host and guest, uncomment
         # below to build separate guest kernel
         # mkdir -p "${odir}/kvm_domu"
@@ -302,7 +300,6 @@ function Umount {
 
 function Gen_configs {
     local os_opt
-    local hyp_opt
 
     case "$SECURE_OS" in
     1)
@@ -314,18 +311,16 @@ function Gen_configs {
     esac
 
     case "$HYPERVISOR" in
-    KVM)
-        hyp_opt="kvm"
+    kvm)
         # For now, we use same config for the guest kernels also
-        #configs/linux/defconfig_builder.sh -t "raspi4_${hyp_opt}_guest${os_opt}_release" -k linux
+        #configs/linux/defconfig_builder.sh -t "${PLATFORM}_${HYPERVISOR}_guest${os_opt}_release" -k linux
     ;;
     *)
-        hyp_opt="xen"
     ;;
     esac
 
-    configs/linux/defconfig_builder.sh -t "${PLATFORM}_${hyp_opt}${os_opt}_release" -k linux
-    cp "configs/buildroot_config_${PLATFORM}_${hyp_opt}${os_opt}" buildroot/.config
+    configs/linux/defconfig_builder.sh -t "${PLATFORM}_${HYPERVISOR}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${PLATFORM}_${HYPERVISOR}${os_opt}" buildroot/.config
 }
 
 function Clone {
@@ -357,19 +352,15 @@ function Uboot_script {
 
     cp "${IMAGES}/$DEVTREE" images/xen
     case "$BUILDOPT" in
-    0|1|MMC|USB)
-        Uboot_source > images/xen/boot.source
-        mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
-    ;;
-    2|3)
+    dhcp|static)
         Uboot_stub > images/xen/boot.source
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
         Uboot_source > images/xen/boot2.source
         mkimage -A arm64 -T script -C none -a 0x100000 -e 0x100000 -d images/xen/boot2.source images/xen/boot2.scr
     ;;
     *)
-        echo "Invalid BUILDOPT setting" >&2
-        exit 1
+        Uboot_source > images/xen/boot.source
+        mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
     ;;
     esac
 }
@@ -399,16 +390,16 @@ function Boot_fs {
     cp u-boot.bin "$bootfs"
     cp "$KERNEL_IMAGE" "${bootfs}/vmlinuz"
     case "$BUILDOPT" in
-    0|1|MMC|USB)
-        cp images/xen/boot.scr "$bootfs"
-    ;;
-    2|3)
+    dhcp|static)
         cp images/xen/boot2.scr "$bootfs"
+    ;;
+    *)
+        cp images/xen/boot.scr "$bootfs"
     ;;
     esac
 
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         # Nothing to copy at this point
     ;;
     *)
@@ -426,7 +417,7 @@ function Net_boot_fs {
     local bootfs
 
     case "$BUILDOPT" in
-    2|3)
+    dhcp|static)
         if [ -z "$1" ]; then
             bootfs="$BOOTMNT"
             Is_mounted "$BOOTMNT"
@@ -494,8 +485,8 @@ function Root_fs {
     chmod 755 "${rootfs}/etc/init.d/S41netadditions"
 
     case "$BUILDOPT" in
-    2|3)
-        if [ "$HYPERVISOR" == "XEN" ] ; then
+    dhcp|static)
+        if [ "$HYPERVISOR" == "xen" ] ; then
             echo 'vif.default.script="vif-nat"' >> "${rootfs}/etc/xen/xl.conf"
         fi
     ;;
@@ -516,7 +507,7 @@ function Root_fs {
     echo "${DEVICEHN}-dom0" > "${rootfs}/etc/hostname"
 
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         case "$PLATFORM" in
         x86)
             cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
@@ -563,7 +554,7 @@ function Domu_fs {
 
 function Nfs_update {
     case "$BUILDOPT" in
-    2|3)
+    dhcp|static)
         Set_my_ids
         Create_mount_points
         if [ "$PLATFORM" != "x86" ] ; then
@@ -590,7 +581,7 @@ function Nfs_update {
         sudo umount "$DOMUMNT"
     ;;
     *)
-        echo "BUILDOPT is not set for network boot" >&2
+        echo "BUILDOPT is not set for network boot: $BUILDOPT" >&2
         exit 1
     ;;
     esac
@@ -605,7 +596,7 @@ function Vdaupdate {
     fi
 
     case "$BUILDOPT" in
-    0|1|MMC|USB)
+    usb|mmc)
         Set_my_ids
         Create_mount_points
 
@@ -638,7 +629,7 @@ function Vdaupdate {
         sudo umount "${ROOTMNT}-su"
     ;;
     *)
-        echo "BUILDOPT is not set for VDA boot (USB/SD)" >&2
+        echo "BUILDOPT is not set for VDA boot (USB/SD): $BUILDOPT" >&2
         exit 1
     ;;
     esac
@@ -707,14 +698,14 @@ function Fsck {
 }
 
 function Build_all {
-    case "$1" in
-    x86|X86)
+    case "${1,,}" in
+    x86)
         X86config
     ;;
-    kvm|KVM)
+    kvm)
         Kvmconfig
     ;;
-    xen|XEN)
+    xen)
         Defconfig
     ;;
     "")
@@ -807,7 +798,8 @@ function Show_help {
     echo ""
     echo "Commands:"
     echo "    defconfig                         Create new .setup_sh_config from defaults"
-    echo "    kvmconfig                         Create new .setup_sh_config for KVM"
+    echo "    xenconfig                         Create new .setup_sh_config for xen"
+    echo "    kvmconfig                         Create new .setup_sh_config for kvm"
     echo "    x86config                         Create new .setup_sh_config for x86"
     echo "    clone                             Clone the required subrepositories"
     echo "    mount [device|image_file]         Mount given device or image file"
@@ -868,12 +860,24 @@ case "$CMD" in
     Netboot)
         CMD="Net_boot_fs"
     ;;
+    Defconfig)
+        CMD="Xenconfig"
+    ;;
     *)
         # Default, no conversion
     ;;
 esac
 
 shift
+
+case "$CMD" in
+    Xenconfig|Kvmconfig|X86config)
+        # Do not load config when generating new one.
+    ;;
+    *)
+        Load_config
+    ;;
+esac
 
 # Check if function exists and run it if it does
 Fn_exists "$CMD"

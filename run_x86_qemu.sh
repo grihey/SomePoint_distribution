@@ -1,11 +1,11 @@
 #!/bin/bash
 # Adapted from buildroot start-qemu.sh script
 
-. default_setup_sh_config
-. .setup_sh_config
+. helpers.sh
+Load_config
 
-if [ "$PLATFORM" != "x86" ] || [ "$HYPERVISOR" != "KVM" ] ; then
-    echo "Bad platform, only supported for x86 / KVM." >&2
+if [ "$PLATFORM" != "x86" ] || [ "$HYPERVISOR" != "kvm" ] ; then
+    echo "Bad platform, only supported for x86 / kvm." >&2
     exit
 fi
 
@@ -18,16 +18,16 @@ else
 fi
 
 case "$BUILDOPT" in
-0|1|MMC|USB)
+dhcp|static)
+    # Network build uses NFS rootfs
+    FILE_ARG=""
+    ROOTFS_ARG="root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,vers=3 ip=::::x86-dom0:eth0:dhcp nfsrootdebug"
+;;
+*)
     # SD or USB boot, use static image
     FILE_ARG="-drive file=${IMAGE_DIR}/rootfs-withdomu.ext2,if=virtio,format=raw"
     ROOTFS_ARG="root=/dev/vda"
-    ;;
-*)
-    # Any other uses NFS rootfs
-    FILE_ARG=""
-    ROOTFS_ARG="root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,vers=3 ip=::::x86-dom0:eth0:dhcp nfsrootdebug"
-    ;;
+;;
 esac
 
 exec sudo qemu-system-x86_64 -m 512 -M pc -cpu host -enable-kvm -kernel ${IMAGE_DIR}/bzImage ${FILE_ARG} -append "rootwait ${ROOTFS_ARG} console=tty1 console=ttyS0"  -net nic,model=virtio -net user,hostfwd=tcp::10022-:22  ${EXTRA_ARGS}

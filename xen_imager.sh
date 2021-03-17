@@ -123,10 +123,10 @@ function Prepare_boot {
     BOOTFS=$1
 
     case "${BUILDOPT}" in
-    MMC|USB)
+    usb|mmc)
         Uboot_source > "${WORK_DIR}/boot.source"
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d "${WORK_DIR}/boot.source" "${BOOTFS}/boot.scr"
-        ;;
+    ;;
     # Not supported at the moment
     #TFTP)
     #    Uboot_stub > "${WORK_DIR}"boot.source

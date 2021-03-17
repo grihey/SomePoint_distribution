@@ -23,24 +23,69 @@ function Load_config {
         . "${HDIR}/.setup_sh_config"
     fi
 
+    # Convert some options to lower case
+    PLATFORM="${PLATFORM,,}"
+    HYPERVISOR="${HYPERVISOR,,}"
+    BUILDOPT="${BUILDOPT,,}"
+    SUDOTYPE="${SUDOTYPE,,}"
+
+    case "$PLATFORM" in
+    raspi4|x86)
+        # Options ok
+    ;;
+    *)
+        echo "Invalid PLATFORM: $PLATFORM" >&2
+        exit 1
+    ;;
+    esac
+
+    case "$HYPERVISOR" in
+    xen|kvm)
+        # Options ok
+    ;;
+    *)
+        echo "Invalid HYPERVISOR: $HYPERVISOR" >&2
+        exit 1
+    ;;
+    esac
+
+    case "$BUILDOPT" in
+    usb|mmc|dhcp|static)
+        # Options ok
+    ;;
+    *)
+        echo "Invalid BUILDOPT: $BUILDOPT" >&2
+        exit 1
+    esac
+
+    case "$SUDOTYPE" in
+    standard)
+        # Disable sudo function if standard sudo is requested
+        unset sudo
+    ;;
+    showonpassword|verbose|confirm)
+        # Options ok
+    ;;
+    *)
+        echo "Invalid SUDOTYPE: $SUDOTYPE" >&2
+        exit 1
+    ;;
+    esac
+
     export CCACHE
     export CCACHE_DIR
     export CCACHE_MAXSIZE
 
     Set_deviceipconf
-
-    # Disable sudo function if standard sudo is requested
-    if [ "$STDSUDO" == "1" ]; then
-        unset sudo
-    fi
 }
 
 # Get path to sudo binary (or empty if not available, but don't fail here)
 SUDOCMD="$(command -v sudo || true)"
 
-# Verbose sudo, will show the command about to be run if password is prompted for
-# At least for the very first run you'll know what is about to happen as root
-# If SUDOCHECK=1 then all commands will be confirmed
+# sudo function will show the command about to be run if password is prompted for
+# if SUDOTYPE=verbose then all commands will be shown
+# if SUDOTYPE=confirm then all commands will be confirmed regardless of password prompting
+# if left in the confirm prompt for a long time, then sudo might ask password again after confirmation, but it is what it is
 # sudo function meant to replace sudo command, so it is not capitalized like other functions
 function sudo {
     local prompt
@@ -50,8 +95,9 @@ function sudo {
 
     # Check if sudo is going to ask password or not
     if "${SUDOCMD:?}" -n true 2> /dev/null; then
-        # Ask for confirmation if SUDOCHECK enabled
-        if [ "$SUDOCHECK" == "1" ]; then
+        case "$SUDOTYPE" in
+        confirm)
+            # Ask for confirmation if confirm mode enabled
             inp="x"
             while [ "$inp" == "x" ]; do
                 printf "%s\nConfirm (Y/n): " "$prompt" > /dev/tty
@@ -69,7 +115,12 @@ function sudo {
                 ;;
                 esac
             done
-        fi
+        ;;
+        verbose)
+            # Show the command in verbose mode
+            printf "sudo: \"%s\"\n" "$*"
+        ;;
+        esac
 
         "${SUDOCMD:?}" "$@"
     else
@@ -79,23 +130,25 @@ function sudo {
     fi
 }
 
-function Defconfig {
-    echo "Creating .setup_sh_config with defaults" >&2
+function Xenconfig {
+    echo "Creating .setup_sh_config with xen configuration" >&2
     cp -f default_setup_sh_config .setup_sh_config
 }
 
 function Kvmconfig {
     echo "Creating .setup_sh_config with kvm configuration" >&2
-    sed "s/HYPERVISOR=.*/HYPERVISOR=KVM/" < default_setup_sh_config > .setup_sh_config
+    # Change HYPERVISOR option to kvm
+    sed "s/^HYPERVISOR=.*/HYPERVISOR=kvm/" < default_setup_sh_config > .setup_sh_config
 }
 
 function X86config {
     echo "Creating .setup_sh_config for x86" >&2
-    sed -e "s/HYPERVISOR=.*/HYPERVISOR=KVM/" \
-        -e "s/PLATFORM=.*/PLATFORM=x86/" \
-        -e "s/BUILDOPT=.*/BUILDOPT=2/" \
-        -e "s/KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
-        -e "s/DEVICEHN=.*/DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
+    # Change several options for x86 build
+    sed -e "s/^HYPERVISOR=.*/HYPERVISOR=kvm/" \
+        -e "s/^PLATFORM=.*/PLATFORM=x86/" \
+        -e "s/^BUILDOPT=.*/BUILDOPT=dhcp/" \
+        -e "s/^KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
+        -e "s/^DEVICEHN=.*/DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
 }
 
 # Returns 0 if function exists, 1 if not
@@ -178,11 +231,11 @@ function Remove_ignores {
 function Set_deviceipconf {
     # DEVICEIPCONF defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
     case "$BUILDOPT" in
-    2)
+    dhcp)
         # dhcp configuration
         DEVICEIPCONF="::::${DEVICEHN}-dom0:eth0:dhcp"
     ;;
-    3)
+    static)
         # static IP configuration
         DEVICEIPCONF="${DEVICEIP}::${DEVICEGW}:${DEVICENM}:${DEVICEHN}-dom0:eth0:off:${DEVICEDNS}"
     ;;

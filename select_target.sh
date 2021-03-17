@@ -1,6 +1,6 @@
-BUILDOPT=MMC
+BUILDOPT=mmc
 FWFDT=1 # FW defined device tree
-HYPERVISOR=XEN
+HYPERVISOR=xen
 TARGET=mate
 TARGET_DIR="images/${TARGET}-images"
 TARGET_IMAGE="${TARGET}.img"

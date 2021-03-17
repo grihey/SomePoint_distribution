@@ -1,19 +1,38 @@
 #!/bin/bash
-# Disable complaints about unused variables
+# Disable shellcheck complaints about unused variables, we know these will be used
 # shellcheck disable=SC2034
 
-# With STDSUDO=1 scripts will use standard sudo instead of verbose sudo function
-STDSUDO=0
+# Do not insert whitespace before variable names,
+# keep assignments at the start of the line!
 
-# If verbose sudo function is in use and SUDOCHECK=1 then all sudoed commands will be confirmed
-SUDOCHECK=0
+# Platform selection (raspi4 or x86)
+PLATFORM=raspi4
+
+# Hypervisor selection (xen or kvm)
+HYPERVISOR=xen
+
+# BUILDOPT defines type of build
+# 'usb' for USB build
+# 'mmc' for MMC/SD build
+# 'dhcp' for dynamic network configuration tftp/nfsroot build
+# 'static' for static network configuration tftp/nfsroot build
+BUILDOPT=usb
+
+# SECURE_OS defines if we are building a secure-os or not
+SECURE_OS=0
+
+# SUDOTYPE selects the way sudo command/function is used
+# 'standard' will use standard sudo executable as it is
+# 'showonpassword' will show command to be run when password is prompted
+# 'verbose' will show all sudoed commands even if password is not needed
+# 'confirm' will show and confirm all sudoed commands
+SUDOTYPE=showonpassword
+
+# Update bootfs/rootfs/domufs only, do not wipe (rm -rf) contents
+FS_UPDATE_ONLY=0
 
 # Automount sd/usb if not mounted when doing e.g. rootfs (0=off, 1=on)
 AUTOMOUNT=0
-
-# BUILDOPT defines type of build 0=SD, 1=USB, 2=TFTP/NFS/DHCP, 3=TFTP/NFS/static
-# USB and MMC keywords are also supported
-BUILDOPT=1
 
 # Default device for mount operations
 DEFDEV=/dev/sda
@@ -24,17 +43,12 @@ DEVTREE=bcm2711-rpi-4-b.dtb
 # 0 = load device tree in u-boot, 1 = use firmware provided device tree
 FWFDT=0
 
-# Hypervisor selection (XEN or KVM)
-HYPERVISOR=XEN
+# API key for downloading binaries etc. from Artifactory
+# Generate key from JFrog and place it into the .setup_sh_config file
+ARTIFACTORY_API_KEY=
 
-XEN_DOM0_CPUCOUNT=2
-XEN_DOM0_MEMORY=4G
-
-# SECURE_OS defines if we are building a secure-os or not
-SECURE_OS=0
-
-# Select build platform
-PLATFORM=raspi4
+# Path where downloads are cached. If empty cache is not used.
+DOWNLOAD_CACHE_DIR="$(pwd)/.download_cache"
 
 # Directories where partitions are mounted
 MNT_DIR="$(pwd)/mnt"
@@ -60,6 +74,10 @@ CCACHE="$(command -v ccache || true)"
 CCACHE_DIR="$(pwd)/.ccache"
 CCACHE_MAXSIZE=10G
 
+# Xen cpu and memory options
+XEN_DOM0_CPUCOUNT=2
+XEN_DOM0_MEMORY=4G
+
 # RasPi dom0 static IP Configuration
 DEVICEIP=192.168.1.170
 DEVICENM=255.255.255.0
@@ -76,11 +94,3 @@ NFSSERVER="$TFTPSERVER"
 NFSDOM0=/srv/nfsdom0
 NFSDOMU=/srv/nfsdomu
 
-# Generate key from JFrog and place it into the .setup_sh_config file
-ARTIFACTORY_API_KEY=
-
-# Update bootfs/rootfs/domufs only, do not wipe (rm -rf) contents
-FS_UPDATE_ONLY=0
-
-# Path where downloads are cached. If empty cache is not used.
-DOWNLOAD_CACHE_DIR="$(pwd)/.download_cache"

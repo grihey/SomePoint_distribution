@@ -5,13 +5,7 @@
 
 function Domu_config {
     case "$BUILDOPT" in
-    0|MMC)
-        cat configs/domu.cfg.sd
-    ;;
-    1|USB)
-        cat configs/domu.cfg.usb
-    ;;
-    2|3)
+    dhcp|static)
         echo "kernel = \"/root/Image\""
         echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:${DEVICEHN}-domu:eth0:off:${DEVICEDNS}\""
         echo "memory = \"1024\""
@@ -28,14 +22,17 @@ function Domu_config {
         echo "#sdl = 1"
         echo "vnc = 1"
     ;;
+    *)
+        cat "configs/domu.cfg.${BUILDOPT}"
+    ;;
     esac
 }
 
 function Dom0_interfaces {
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         case "$BUILDOPT" in
-        2)
+        dhcp)
             echo "auto lo"
             echo "iface lo inet loopback"
             echo ""
@@ -43,7 +40,7 @@ function Dom0_interfaces {
             echo ""
             echo "iface default inet dhcp"
         ;;
-        3)
+        static)
             echo "auto lo"
             echo "iface lo inet loopback"
             echo ""
@@ -67,7 +64,7 @@ function Dom0_interfaces {
     ;;
     *)
         case "$BUILDOPT" in
-        2)
+        dhcp)
             echo "auto lo"
             echo "iface lo inet loopback"
             echo ""
@@ -75,7 +72,7 @@ function Dom0_interfaces {
             echo ""
             echo "iface default inet dhcp"
         ;;
-        3)
+        static)
             echo "auto lo"
             echo "iface lo inet loopback"
             echo ""
@@ -96,24 +93,31 @@ function Dom0_interfaces {
 
 function Domu_interfaces {
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         echo "auto lo"
         echo "iface lo inet loopback"
         echo ""
         case "$BUILDOPT" in
-        0|1|MMC|USB)
-            echo "auto eth0"
+        dhcp)
+            echo "iface eth0 inet dhcp"
+        ;;
+        static)
+            echo "iface eth0 inet static"
+            echo "    address 10.0.2.15"
+            echo "    netmask 255.255.255.0"
+            echo "    gateway 10.0.2.1"
         ;;
         *)
+            echo "auto eth0"
+            echo "iface eth0 inet dhcp"
         ;;
         esac
-        echo "iface eth0 inet dhcp"
         echo ""
         echo "iface default inet dhcp"
     ;;
     *)
         case "$BUILDOPT" in
-        2|3)
+        static)
             echo "auto lo"
             echo "iface lo inet loopback"
             echo ""
@@ -121,6 +125,14 @@ function Domu_interfaces {
             echo "    address 10.123.123.2"
             echo "    netmask 255.255.255.0"
             echo "    gateway 10.123.123.1"
+            echo ""
+            echo "iface default inet dhcp"
+        ;;
+        dhcp)
+            echo "auto lo"
+            echo "iface lo inet loopback"
+            echo ""
+            echo "iface eth0 inet dhcp"
             echo ""
             echo "iface default inet dhcp"
         ;;
@@ -134,20 +146,16 @@ function Domu_interfaces {
 
 function Uboot_stub {
     case "$BUILDOPT" in
-    0|MMC)
+    mmc)
         echo "fatload mmc 0:1 0x100000 boot2.scr"
         echo "source 0x100000"
     ;;
-    1|USB)
-        echo "fatload usb 0:1 0x100000 boot2.scr"
-        echo "source 0x100000"
-    ;;
-    2)
+    dhcp)
         echo "dhcp 0x100000 ${TFTPSERVER}:boot2.scr"
         echo "setenv serverip ${TFTPSERVER}"
         echo "source 0x100000"
     ;;
-    3)
+    static)
         echo "setenv ipaddr ${DEVICEIP}"
         echo "setenv netmask ${DEVICENM}"
         echo "setenv serverip ${TFTPSERVER}"
@@ -155,8 +163,8 @@ function Uboot_stub {
         echo "source 0x100000"
     ;;
     *)
-        echo "Invalid BUILDOPT setting" >&2
-        exit 1
+        echo "fatload usb 0:1 0x100000 boot2.scr"
+        echo "source 0x100000"
     ;;
     esac
 }
@@ -187,7 +195,7 @@ function Uboot_source {
     local BOOTARGS="dwc_otg.lpm_enable=0"
 
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         local CONSOLE=" console=tty1 console=ttyS0,115200"
         local ADDITIONAL=""
     ;;
@@ -198,21 +206,17 @@ function Uboot_source {
     esac
 
     case "$BUILDOPT" in
-    0|MMC)
+    mmc)
         local LOAD="fatload mmc 0:1"
         local ROOTPARM=" root=/dev/mmcblk0p2 rootfstype=ext4"
     ;;
-    1|USB)
-        local LOAD="fatload usb 0:1"
-        local ROOTPARM=" root=/dev/sda2 rootfstype=ext4"
-    ;;
-    2|3)
+    dhcp|static)
         local LOAD="tftp"
         local ROOTPARM=" root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,rw,vers=3 ip=${DEVICEIPCONF}"
     ;;
     *)
-        echo "Invalid BUILDOPT setting" >&2
-        exit 1
+        local LOAD="fatload usb 0:1"
+        local ROOTPARM=" root=/dev/sda2 rootfstype=ext4"
     ;;
     esac
 
@@ -240,7 +244,7 @@ function Uboot_source {
     echo "${LOAD} 0x\${lin_addr} vmlinuz"
 
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         echo "setenv bootargs \"${BOOTARGS}\""
         echo "setenv fdt_high 0xffffffffffffffff"
         echo "booti 0x\${lin_addr} - 0x\${fdt_addr}"
@@ -267,16 +271,14 @@ function Net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
-    if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "KVM" ] ; then
-        # Allow ping from guest VMs under KVM
+    if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "kvm" ] ; then
+        # Allow ping from guest VMs under kvm
         echo "sysctl -w net.ipv4.ping_group_range='0 2147483647'"
     fi
 
     case "$BUILDOPT" in
-    0|1|USB|MMC)
-    ;;
-    2|3)
-        if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "XEN" ] ; then
+    dhcp|static)
+        if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "xen" ] ; then
             echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
             echo "iptables -t nat -A PREROUTING -p tcp --dport 222 -j DNAT --to-destination 10.123.123.2:22"
             echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"
@@ -295,8 +297,6 @@ function Net_rc_add {
         echo "echo \"nameserver \$DNS0\" > /etc/resolv.conf"
     ;;
     *)
-        echo "Invalid BUILDOPT setting" >&2
-        exit 1
     ;;
     esac
 }
@@ -307,7 +307,7 @@ function Inittab {
         cat configs/inittab.pre
 
         case "$HYPERVISOR" in
-        KVM)
+        kvm)
             echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
             echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
             echo "S0::respawn:/sbin/getty -L ttyS0 0 vt100 # Serial console"
@@ -325,8 +325,8 @@ function Inittab {
     domu)
         cat configs/inittab.pre
         case "$HYPERVISOR" in
-        KVM)
-            echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # KVM virtual serial"
+        kvm)
+            echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # kvm virtual serial"
             if [ "$PLATFORM" = "x86" ] ; then
                 echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic serial"
             fi
@@ -346,7 +346,7 @@ function Inittab {
 
 function Config_txt {
     case "$HYPERVISOR" in
-    KVM)
+    kvm)
         cat configs/config_kvm.txt
     ;;
     *)
@@ -358,10 +358,10 @@ function Config_txt {
 function Rq_sh {
     echo "#!/bin/bash"
     case "$BUILDOPT" in
-    0|MMC)
+    mmc)
         echo "./run-qemu.sh /dev/mmcblk0p3"
     ;;
-    2|3)
+    dhcp|static)
         echo "./run-qemu.sh /dev/nfs ${NFSSERVER}:${NFSDOMU}"
     ;;
     *)
@@ -373,13 +373,14 @@ function Rq_sh {
 function Run_x86_qemu_sh {
     echo "#!/bin/sh"
     case "$BUILDOPT" in
-    0|1|MMC|USB)
+    dhcp|static)
+        echo "ROOTFS_FILE=\"\""
+        echo "ROOTFS_CMD=\"root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,vers=3,nolock ip=::::${DEVICEHN}-domu:eth0:dhcp\""
+    ;;
+    *)
         echo "ROOTFS_FILE=\"-drive file=rootfs.ext2,if=virtio,format=raw\""
         echo "ROOTFS_CMD=\"root=/dev/vda\""
     ;;
-    *)
-        echo "ROOTFS_FILE=\"\""
-        echo "ROOTFS_CMD=\"root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,vers=3,nolock ip=::::x86-domu:eth0:dhcp\""
     esac
     echo "qemu-system-x86_64 -m 128 -M pc -enable-kvm -kernel Image \${ROOTFS_FILE} -append \"rootwait \${ROOTFS_CMD} console=tty1 console=ttyS0\" -net nic,model=virtio -net user -nographic"
 }

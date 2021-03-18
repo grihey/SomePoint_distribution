@@ -94,11 +94,9 @@ function Generate_disk_image {
 
 function Build_guest_kernels {
     local odir
-
-    if [ "$PLATFORM" = "x86" ] ; then
-        echo "INFO: x86 does not require separate guest kernel images."
-        return 0
-    fi
+    local arch
+    local prefix
+    local os_opt
 
     if [ -n "$1" ]; then
         odir="$(Sanity_check "$1" ne)"
@@ -106,15 +104,30 @@ function Build_guest_kernels {
         odir="$(Sanity_check "$GKBUILD" ne)"
     fi
 
+    case "$SECURE_OS" in
+    1)
+        os_opt="_secure"
+    ;;
+    *)
+        os_opt=""
+    ;;
+    esac
+
+    case "$PLATFORM" in
+    x86)
+        arch="x86_64"
+        prefix="x86_64-linux-gnu-"
+    ;;
+    *)
+        arch="arm64"
+        prefix="aarch64-linux-gnu-"
+    ;;
+    esac
+
     case "$HYPERVISOR" in
     kvm)
-        # Atm kvm buildroot uses the same kernel for host and guest, uncomment
-        # below to build separate guest kernel
-        # mkdir -p "${odir}/kvm_domu"
-        # Compile_kernel ./linux arm64 aarch64-linux-gnu- "${odir}/kvm_domu" raspi4_kvm_guest_release_defconfig
-
-        # Workaround for shellcheck nagging about unused odir, remove this if you take above code into use
-        echo "$odir" > /dev/null
+        mkdir -p "${odir}/kvm_domu"
+        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${PLATFORM}_kvm_guest${os_opt}_release_defconfig"
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -312,8 +325,7 @@ function Gen_configs {
 
     case "$HYPERVISOR" in
     kvm)
-        # For now, we use same config for the guest kernels also
-        #configs/linux/defconfig_builder.sh -t "${PLATFORM}_${HYPERVISOR}_guest${os_opt}_release" -k linux
+        configs/linux/defconfig_builder.sh -t "${PLATFORM}_kvm_guest${os_opt}_release" -k linux
     ;;
     *)
     ;;
@@ -479,8 +491,6 @@ function Root_fs {
     Dom0_interfaces > "${rootfs}/etc/network/interfaces"
     cp configs/wpa_supplicant.conf "${rootfs}/etc/wpa_supplicant.conf"
 
-    Domu_config > "${rootfs}/root/domu.cfg"
-
     Net_rc_add dom0 > "${rootfs}/etc/init.d/S41netadditions"
     chmod 755 "${rootfs}/etc/init.d/S41netadditions"
 
@@ -510,13 +520,14 @@ function Root_fs {
     kvm)
         case "$PLATFORM" in
         x86)
-            cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+            cp "${GKBUILD}/kvm_domu/arch/x86/boot/bzImage" "${rootfs}/root/Image"
+            #cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
             Run_x86_qemu_sh > "${rootfs}/root/run-x86-qemu.sh"
             chmod a+x "${rootfs}/root/run-x86-qemu.sh"
         ;;
         *)
-            #cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${rootfs}/root/Image"
-            cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+            cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${rootfs}/root/Image"
+            #cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
             cp qemu/efi-virtio.rom "${rootfs}/root"
             cp qemu/qemu-system-aarch64 "${rootfs}/root"
             cp qemu/run-qemu.sh "${rootfs}/root"
@@ -525,9 +536,16 @@ function Root_fs {
 
         Rq_sh > "${rootfs}/root/rq.sh"
         chmod a+x "${rootfs}/root/rq.sh"
+
+        Host_socat_sh > "${rootfs}/root/host_socat.sh"
+        chmod a+x "${rootfs}/root/host_socat.sh"
+
+        Virt_socat_sh > "${rootfs}/root/virt_socat.sh"
+        chmod a+x "${rootfs}/root/virt_socat.sh"
     ;;
     *)
         cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+        Domu_config > "${rootfs}/root/domu.cfg"
     ;;
     esac
 }
@@ -653,10 +671,24 @@ function Kernel_conf_change {
 function Ssh_dut {
     case "$1" in
     domu)
-        ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$DEVICEIP"
+        case "$PLATFORM" in
+        x86)
+            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 2222 "root@127.0.0.1"
+        ;;
+        *)
+            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$DEVICEIP"
+        ;;
+        esac
     ;;
     *)
-        ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$DEVICEIP"
+        case "$PLATFORM" in
+        x86)
+            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@127.0.0.1"
+        ;;
+        *)
+            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$DEVICEIP"
+        ;;
+        esac
     esac
 }
 
@@ -756,10 +788,18 @@ function Clean {
     # Run 'cleanup.sh clean' in subdirs, if available
     for entry in ./*/ ;do
         if [ -x "${entry}/cleanup.sh" ]; then
-            "${entry}/cleanup.sh" clean
+            "${entry}/cleanup.sh" clean "$@"
         fi
     done
-    rm -f .setup_sh_config
+
+    case "$1" in
+    keepconfig)
+        # Keeping .setup_sh_config
+    ;;
+    *)
+        rm -f .setup_sh_config
+    ;;
+    esac
 }
 
 # Restore situation before first 'setup.sh clone' but keep local main repo changes
@@ -781,7 +821,7 @@ function Distclean {
     # Run 'cleanup.sh distclean' in subdirs, if available
     for entry in ./*/ ;do
         if [ -x "${entry}/cleanup.sh" ]; then
-            "$entry/cleanup.sh" distclean
+            "$entry/cleanup.sh" distclean "$@"
         fi
     done
 }
@@ -818,8 +858,10 @@ function Show_help {
     echo "                                      (overwrites .setup_sh_config if given)"
     echo "    distclean                         removes almost everything except main repo local changes"
     echo "                                      (basically resets to just cloned main repo)"
-    echo "    clean                             Clean up built files, but keep downloads"
-    echo "    check_script                      Check setup.sh script with shellcheck and bashate"
+    echo "    clean [keepconfig]                Clean up built files, but keep downloads."
+    echo "                                      Use 'keepconfig' option to preserve .setup_sh_config"
+    echo "    check_script                      Check setup.sh script (and sourced scripts) with"
+    echo "                                      shellcheck and bashate"
     echo ""
     exit 0
 }

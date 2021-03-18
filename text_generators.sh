@@ -105,7 +105,7 @@ function Domu_interfaces {
             echo "iface eth0 inet static"
             echo "    address 10.0.2.15"
             echo "    netmask 255.255.255.0"
-            echo "    gateway 10.0.2.1"
+            echo "    gateway 10.0.2.2"
         ;;
         *)
             echo "auto eth0"
@@ -311,9 +311,9 @@ function Inittab {
             echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
             echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
             echo "S0::respawn:/sbin/getty -L ttyS0 0 vt100 # Serial console"
-            if [ "$PLATFORM" = "x86" ] ; then
-                echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic Serial"
-            fi
+            #if [ "$PLATFORM" = "x86" ] ; then
+            #    echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic Serial"
+            #fi
         ;;
         *)
             echo "X0::respawn:/sbin/getty 115200 /dev/hvc0 # Xen virtual serial"
@@ -326,9 +326,10 @@ function Inittab {
         cat configs/inittab.pre
         case "$HYPERVISOR" in
         kvm)
-            echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # kvm virtual serial"
             if [ "$PLATFORM" = "x86" ] ; then
                 echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic serial"
+            else
+                echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # kvm virtual serial"
             fi
         ;;
         *)
@@ -357,21 +358,28 @@ function Config_txt {
 
 function Rq_sh {
     echo "#!/bin/bash"
-    case "$BUILDOPT" in
-    mmc)
-        echo "./run-qemu.sh /dev/mmcblk0p3"
-    ;;
-    dhcp|static)
-        echo "./run-qemu.sh /dev/nfs ${NFSSERVER}:${NFSDOMU}"
+    case "$PLATFORM" in
+    x86)
+        echo "./run-x86-qemu.sh \"\$@\""
     ;;
     *)
-        echo "./run-qemu.sh /dev/sda3"
+        case "$BUILDOPT" in
+        mmc)
+            echo "./run-qemu.sh /dev/mmcblk0p3 \"\$@\""
+        ;;
+        dhcp|static)
+            echo "./run-qemu.sh /dev/nfs ${NFSSERVER}:${NFSDOMU} \"\$@\""
+        ;;
+        *)
+            echo "./run-qemu.sh /dev/sda3 \"\$@\""
+        ;;
+        esac
     ;;
     esac
 }
 
 function Run_x86_qemu_sh {
-    echo "#!/bin/sh"
+    echo "#!/bin/bash"
     case "$BUILDOPT" in
     dhcp|static)
         echo "ROOTFS_FILE=\"\""
@@ -382,7 +390,21 @@ function Run_x86_qemu_sh {
         echo "ROOTFS_CMD=\"root=/dev/vda\""
     ;;
     esac
-    echo "qemu-system-x86_64 -m 128 -M pc -enable-kvm -kernel Image \${ROOTFS_FILE} -append \"rootwait \${ROOTFS_CMD} console=tty1 console=ttyS0\" -net nic,model=virtio -net user -nographic"
+    echo "qemu-system-x86_64 -m 128 -M pc -device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on -enable-kvm \\"
+    echo "    -kernel Image \${ROOTFS_FILE} -append \"rootwait \${ROOTFS_CMD} console=tty1 console=ttyS0\" \\"
+    echo "    -net nic,model=virtio -net user,hostfwd=tcp::222-:22 -nographic \"\$@\""
+}
+
+function Virt_socat_sh {
+    echo "#!/bin/bash"
+    echo "set -x"
+    echo "socat - SOCKET-LISTEN:40:0:x00x00x00x04x00x00x03x00x00x00x00x00x00x00"
+}
+
+function Host_socat_sh {
+    echo "#!/bin/bash"
+    echo "set -x"
+    echo "socat - SOCKET-CONNECT:40:0:x00x00x00x04x00x00x03x00x00x00x00x00x00x00"
 }
 
 # Azure wg server settings.

@@ -30,4 +30,7 @@ dhcp|static)
 ;;
 esac
 
-exec sudo qemu-system-x86_64 -m 512 -M pc -cpu host -enable-kvm -kernel ${IMAGE_DIR}/bzImage ${FILE_ARG} -append "rootwait ${ROOTFS_ARG} console=tty1 console=ttyS0"  -net nic,model=virtio -net user,hostfwd=tcp::10022-:22  ${EXTRA_ARGS}
+# Argument variables contain options separated with spaces and are purposefully unquoted
+exec sudo qemu-system-x86_64 -m 512 -M pc -cpu host -enable-kvm -kernel "${IMAGE_DIR}/bzImage" ${FILE_ARG} \
+    -append "rootwait ${ROOTFS_ARG} console=tty1 console=ttyS0" \
+    -net nic,model=virtio -net user,hostfwd=tcp::222-:22,hostfwd=tcp::2222-:222 ${EXTRA_ARGS}

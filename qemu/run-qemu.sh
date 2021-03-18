@@ -36,7 +36,7 @@ else
     DRIVE="-drive file=$IMAGE,format=raw,if=none,id=ubu-sd -device virtio-blk-device,drive=ubu-sd"
     KERNEL_OPTS="root=/dev/vda ${KERNEL_OPTS}"
 fi
-QEMUOPTS="-enable-kvm -cpu ${CPUTYPE},${PROFILE} ${SMP} -M ${MACHINE},virtualization=off,secure=off,highmem=off -m ${MEM} ${DEBUGOPTS} ${NETOPTS} ${AUDIO}"
+QEMUOPTS="-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on -enable-kvm -cpu ${CPUTYPE},${PROFILE} ${SMP} -M ${MACHINE},virtualization=off,secure=off,highmem=off -m ${MEM} ${DEBUGOPTS} ${NETOPTS} ${AUDIO}"
 
 echo "Running $QEMUDIR/qemu-system-aarch64 as user $USER"
 echo "- Guest ssh access available at $LOCALIP:$PORT"

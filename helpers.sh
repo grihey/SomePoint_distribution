@@ -507,8 +507,16 @@ function Compile_kernel {
         echo "${extra_configs}" >> "${compile_dir}/.config"
     fi
     # make O="$compile_dir" ARCH="$arch" CROSS_COMPILE="$cross_compile" menuconfig
-    make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" Image modules dtbs \
-        > "${compile_dir}"/kernel_compile.log
+    case "$arch" in
+    x86_64)
+        make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" \
+            bzImage modules > "${compile_dir}"/kernel_compile.log
+    ;;
+    *)
+        make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" \
+            Image modules dtbs > "${compile_dir}"/kernel_compile.log
+    ;;
+    esac
     popd
     # RUN in docker end
 

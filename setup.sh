@@ -772,10 +772,8 @@ function Clean {
     if [ -f "docker/Makefile" ] && [ -f "buildroot/Makefile" ]; then
         (
             cd docker
-            # If build_env has not been run, then run it
-            if [ ! -f gitconfig ]; then
-                make build_env
-            fi
+            # Create/update build environment in any case
+            make build_env
             make buildroot_clean
         )
         (
@@ -808,7 +806,7 @@ function Distclean {
     local entry
 
     Umount
-    Remove_ignores ""
+    Remove_ignores
 
     # Go through the submodule dirs, remove "path = " from the start and delete & recreate dir
     while IFS= read -r entry; do
@@ -915,6 +913,10 @@ shift
 case "$CMD" in
     Xenconfig|Kvmconfig|X86config)
         # Do not load config when generating new one.
+    ;;
+    Clean|Distclean)
+        # Do not check config if cleaning
+        Load_config nocheck
     ;;
     *)
         Load_config

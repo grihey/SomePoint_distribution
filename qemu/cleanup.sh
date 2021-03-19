@@ -10,7 +10,7 @@ pushd "$SDIR" > /dev/null
 trap "popd > /dev/null" EXIT
 
 . ../helpers.sh
-Load_config
+Load_config nocheck
 
 case "$1" in
     distclean)

@@ -11,6 +11,8 @@ HDIR="$(dirname "${BASH_SOURCE[0]}")"
 HDIR="$(realpath "$HDIR")"
 
 # Loads build system configurations
+# Disable complaints about arguments they are optional here
+# shellcheck disable=SC2120
 function Load_config {
     # Load defaults in case .setup_sh_config is missing any settings
     # for example .setup_sh_config could be from older revision
@@ -29,48 +31,50 @@ function Load_config {
     BUILDOPT="${BUILDOPT,,}"
     SUDOTYPE="${SUDOTYPE,,}"
 
-    case "$PLATFORM" in
-    raspi4|x86)
-        # Options ok
-    ;;
-    *)
-        echo "Invalid PLATFORM: $PLATFORM" >&2
-        exit 1
-    ;;
-    esac
+    if [ "$1" != "nocheck" ]; then
+        case "$PLATFORM" in
+        raspi4|x86)
+            # Options ok
+        ;;
+        *)
+            echo "Invalid PLATFORM: $PLATFORM" >&2
+            exit 1
+        ;;
+        esac
 
-    case "$HYPERVISOR" in
-    xen|kvm)
-        # Options ok
-    ;;
-    *)
-        echo "Invalid HYPERVISOR: $HYPERVISOR" >&2
-        exit 1
-    ;;
-    esac
+        case "$HYPERVISOR" in
+        xen|kvm)
+            # Options ok
+        ;;
+        *)
+            echo "Invalid HYPERVISOR: $HYPERVISOR" >&2
+            exit 1
+        ;;
+        esac
 
-    case "$BUILDOPT" in
-    usb|mmc|dhcp|static)
-        # Options ok
-    ;;
-    *)
-        echo "Invalid BUILDOPT: $BUILDOPT" >&2
-        exit 1
-    esac
+        case "$BUILDOPT" in
+        usb|mmc|dhcp|static)
+            # Options ok
+        ;;
+        *)
+            echo "Invalid BUILDOPT: $BUILDOPT" >&2
+            exit 1
+        esac
 
-    case "$SUDOTYPE" in
-    standard)
-        # Disable sudo function if standard sudo is requested
-        unset sudo
-    ;;
-    showonpassword|verbose|confirm)
-        # Options ok
-    ;;
-    *)
-        echo "Invalid SUDOTYPE: $SUDOTYPE" >&2
-        exit 1
-    ;;
-    esac
+        case "$SUDOTYPE" in
+        standard)
+            # Disable sudo function if standard sudo is requested
+            unset sudo
+        ;;
+        showonpassword|verbose|confirm)
+            # Options ok
+        ;;
+        *)
+            echo "Invalid SUDOTYPE: $SUDOTYPE" >&2
+            exit 1
+        ;;
+        esac
+    fi
 
     export CCACHE
     export CCACHE_DIR
@@ -215,6 +219,8 @@ function Safer_rmrf {
 }
 
 # Remove files and directories listed in .gitignores
+# Disable complaints about arguments they are optional here
+# shellcheck disable=SC2120
 function Remove_ignores {
     local entry
 

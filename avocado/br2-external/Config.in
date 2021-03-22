@@ -1,0 +1,3 @@
+source "$BR2_EXTERNAL_AVOCADO_PATH/avocado/Config.in"
+source "$BR2_EXTERNAL_AVOCADO_PATH/avocado-vt/Config.in"
+source "$BR2_EXTERNAL_AVOCADO_PATH/aexpect/Config.in"

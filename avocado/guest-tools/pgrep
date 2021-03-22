@@ -1,0 +1,19 @@
+#!/bin/bash
+# Buildroot does not have support for a pgrep command, but avocado
+# requires one. Add a very simple implementation for one.
+pat="$1"
+
+# Grab any process Ids which match a pattern, and just return the integer
+# process Id portion out of it. Shellcheck also complains to use pgrep,
+# which we can't use as our buildroot does not have full support for it
+# shellcheck disable=SC2009
+pids=$(ps aux | grep "${pat}" | grep -v grep | sed s'/^ *//' | cut -d " " -f 1)
+
+echo "pids: $pids"
+# Print all process Ids found, and their associated command name
+for pid in ${pids} ; do
+    comm=$(cat "/proc/$pid/comm")
+    echo "${pid} : ${comm}"
+done
+
+exit 0

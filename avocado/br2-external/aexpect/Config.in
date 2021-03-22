@@ -1,0 +1,4 @@
+config BR2_PACKAGE_AEXPECT
+	bool "aexpect"
+	help
+	  Aexpect is a dependency for avocado-vt.

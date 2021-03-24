@@ -346,7 +346,7 @@ function Download_artifactory_binary {
         if [ "${from_artifactory}" != "0" ]; then
             extra_options="-H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
         fi
-        curl "${extra_options}" -L "${download_url}" -o "${tmpoutput}"
+        curl ${extra_options} -L "${download_url}" -o "${tmpoutput}"
     fi
 
     if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then

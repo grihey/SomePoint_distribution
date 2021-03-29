@@ -479,8 +479,13 @@ function Vdaupdate {
 }
 
 # If you have changed for example linux/arch/arm64/configs/xen_defconfig and want buildroot to recompile kernel
-function Kernel_conf_change {
-    if [ -f /usr/src/linux/.git ]; then
+function Kernel_config_change {
+    if ! In_docker; then
+        echo "This command needs to be run in the docker environment" >&2
+        exit 1
+    fi
+
+    if [ -f linux/.git ] && [ -d buildroot/dl/linux/git ]; then
         pushd buildroot/dl/linux/git
         git branch --set-upstream-to=origin/xen xen
         git pull
@@ -488,7 +493,7 @@ function Kernel_conf_change {
         rm -f buildroot/dl/linux/linux*.tar.gz
         rm -rf buildroot/output/build/linux-xen
     else
-        echo "This command needs to be run in the docker environment" >&2
+            echo "Linux was not cloned yet" >&2
     fi
 }
 
@@ -554,6 +559,8 @@ function Fsck {
 }
 
 function Build_all {
+    local noclone
+
     case "${1,,}" in
     x86)
         X86config
@@ -568,6 +575,9 @@ function Build_all {
         # Don't touch config unless explicitly told to
         # On just cloned repo Xen defaults will be used
     ;;
+    noclone)
+        noclone=1
+    ;;
     *)
         echo "Invalid parameter: $1" >&2
         exit 1
@@ -577,7 +587,9 @@ function Build_all {
     # Reload config in case it was changed above
     Load_config
 
-    Clone
+    if [ -z $noclone ]; then
+        Clone
+    fi
     cd docker
     make build_env
     make ci
@@ -648,6 +660,15 @@ function Distclean {
     done
 }
 
+function Shell {
+    cd docker
+    if [ ! -f ./gitconfig ]; then
+        make build_env
+    fi
+    make shell
+    cd ..
+}
+
 function Check_script {
     shellcheck setup.sh helpers.sh text_generators.sh default_setup_sh_config
     # Ignore "E006 Line too long" errors
@@ -673,11 +694,13 @@ function Show_help {
     echo "    uboot_src                         Generate U-boot script"
     echo "    netboot [path]                    Copy boot files needed for network boot"
     echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
-    echo "    kernel_conf_change                Force buildroot to recompile kernel after config changes"
+    echo "    kernel_config_change              Force buildroot to recompile kernel after config changes"
     echo "    ssh_dut [domu]                    Open ssh session with target device"
-    echo "    buildall [xen|kvm|x86]            Builds a disk image and filesystem tarballs"
+    echo "    shell                             Open docker shell"
+    echo "    buildall [xen|kvm|x86|noclone]    Builds a disk image and filesystem tarballs"
     echo "                                      uses selected default config if given"
     echo "                                      (overwrites .setup_sh_config if given)"
+    echo "                                      noclone option skips cloning"
     echo "    distclean                         removes almost everything except main repo local changes"
     echo "                                      (basically resets to just cloned main repo)"
     echo "    clean [keepconfig]                Clean up built files, but keep downloads."
@@ -726,6 +749,9 @@ case "$CMD" in
     ;;
     Defconfig)
         CMD="Xenconfig"
+    ;;
+    Kernel_conf_change)
+        CMD="Kernel_config_change"
     ;;
     *)
         # Default, no conversion

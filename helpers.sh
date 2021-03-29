@@ -346,6 +346,8 @@ function Download_artifactory_binary {
         if [ "${from_artifactory}" != "0" ]; then
             extra_options="-H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
         fi
+        # extra_options contains options separated with spaces, so it is purposefully unquoted
+        # shellcheck disable=SC2086
         curl ${extra_options} -L "${download_url}" -o "${tmpoutput}"
     fi
 
@@ -787,4 +789,12 @@ function Umount {
     sudo umount "${ROOTMNT}-su"
     sudo umount "${DOMUMNT}-su"
     sync
+}
+
+# Checks if we are running in docker or not from script dir
+function In_docker {
+    if [ "$HDIR" == "/usr/src" ]; then
+        return 0;
+    fi
+    return 1
 }

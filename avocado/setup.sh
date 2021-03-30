@@ -30,7 +30,7 @@ function Dom0_update {
     cp host-tools/*.sh "${ROOTMNT}/root/"
     cp host-tools/kvm "${ROOTMNT}/usr/bin/"
     cp cfg/qemu-base.cfg "${ROOTMNT}/var/lib/avocado/data/avocado-vt/backends/qemu/cfg/base.cfg"
-    rm "${ROOTMNT}/root/rootfs.ext2"
+    rm -f "${ROOTMNT}/root/rootfs.ext2"
     cp images/CustomLinux.qcow2 "${ROOTMNT}/var/lib/avocado/data/avocado-vt/images/"
     sed -i 's/rootfs.ext2/\/var\/lib\/avocado\/data\/avocado-vt\/images\/CustomLinux.qcow2/' "${ROOTMNT}/root/run-x86-qemu.sh"
     sed -i 's/,format=raw//' "${ROOTMNT}/root/run-x86-qemu.sh"
@@ -53,6 +53,8 @@ function Domu_update {
         domuroot="${NFSDOMU}/"
     ;;
     esac
+
+    mkdir -p images
 
     sudo virt-make-fs --format=qcow2 "$domuroot" images/CustomLinux.qcow2
     sudo virt-copy-in -a images/CustomLinux.qcow2 cfg/interfaces /etc/network/

@@ -8,6 +8,10 @@
 # Platform selection (raspi4 or x86)
 PLATFORM=raspi4
 
+# Sub platform selection, only valid for x86 (intel or amd), leave blank
+# for others
+SUB_PLATFORM=
+
 # Hypervisor selection (xen or kvm)
 HYPERVISOR=xen
 

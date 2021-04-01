@@ -33,8 +33,23 @@ function Load_config {
 
     if [ "$1" != "nocheck" ]; then
         case "$PLATFORM" in
-        raspi4|x86)
+        raspi4)
+            if [ "$SUB_PLATFORM" != "" ] ; then
+                echo "Invalid SUB_PLATFORM for $PLATFORM, please leave blank." >&2
+		exit 1
+            fi
             # Options ok
+        ;;
+        x86)
+            case "$SUB_PLATFORM" in
+            intel|amd)
+                # Options ok
+            ;;
+            *)
+                echo "Invalid SUB_PLATFORM: $SUB_PLATFORM" >&2
+                exit 1
+            ;;
+            esac
         ;;
         *)
             echo "Invalid PLATFORM: $PLATFORM" >&2
@@ -150,6 +165,7 @@ function X86config {
     # Change several options for x86 build
     sed -e "s/^HYPERVISOR=.*/HYPERVISOR=kvm/" \
         -e "s/^PLATFORM=.*/PLATFORM=x86/" \
+        -e "s/^SUB_PLATFORM=.*/SUB_PLATFORM=intel/" \
         -e "s/^BUILDOPT=.*/BUILDOPT=dhcp/" \
         -e "s/^KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
         -e "s/^DEVICEHN=.*/DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config

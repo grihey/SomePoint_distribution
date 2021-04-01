@@ -495,6 +495,7 @@ function Compile_kernel {
     local compile_dir
     local defconfig
     local extra_configs
+    local build_targets
 
     echo "Compile_kernel"
     Check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
@@ -506,6 +507,20 @@ function Compile_kernel {
     defconfig="$5"
     extra_configs="$6"
 
+    case "$arch" in
+    x86_64)
+        build_targets="bzImage"
+    ;;
+    *)
+        build_targets="Image dtbs"
+    ;;
+    esac
+
+    # Secure-os disables modules, so only try to build them with !secure-os
+    if [ "$SECURE_OS" = "0" ] ; then
+        build_targets+=" modules"
+    fi
+
     pushd "$kernel_src"
     # RUN in docker
     make O="${compile_dir}" ARCH="${arch}" CROSS_COMPILE="$cross_compile" "$defconfig"
@@ -515,16 +530,10 @@ function Compile_kernel {
         echo "${extra_configs}" >> "${compile_dir}/.config"
     fi
     # make O="$compile_dir" ARCH="$arch" CROSS_COMPILE="$cross_compile" menuconfig
-    case "$arch" in
-    x86_64)
-        make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" \
-            bzImage modules > "${compile_dir}"/kernel_compile.log
-    ;;
-    *)
-        make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" \
-            Image modules dtbs > "${compile_dir}"/kernel_compile.log
-    ;;
-    esac
+    # shellcheck disable=SC2086
+    make O="$compile_dir" -j "$(nproc)" ARCH="$arch" CROSS_COMPILE="$cross_compile" \
+            ${build_targets} > "${compile_dir}"/kernel_compile.log
+
     popd
     # RUN in docker end
 

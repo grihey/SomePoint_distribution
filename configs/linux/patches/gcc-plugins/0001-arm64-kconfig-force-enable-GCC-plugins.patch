@@ -1,0 +1,28 @@
+From 59b523e67356d5ae007b868b60eacc69e481895b Mon Sep 17 00:00:00 2001
+From: Tero Kristo <tero.kristo@unikie.com>
+Date: Thu, 8 Apr 2021 14:43:37 +0300
+Subject: [PATCH 1/2] arm64: kconfig: force-enable GCC plugins
+
+Buildroot forcibly disables the GCC plugin support, but we need these
+for secure-os, thus force enable them from kernel itself.
+
+Signed-off-by: Tero Kristo <tero.kristo@unikie.com>
+---
+ arch/arm64/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
+index 71de5a508605..27e71be239ad 100644
+--- a/arch/arm64/Kconfig
++++ b/arch/arm64/Kconfig
+@@ -151,6 +151,7 @@ config ARM64
+ 	select HAVE_FUNCTION_ERROR_INJECTION
+ 	select HAVE_FUNCTION_GRAPH_TRACER
+ 	select HAVE_GCC_PLUGINS
++	select GCC_PLUGINS
+ 	select HAVE_HW_BREAKPOINT if PERF_EVENTS
+ 	select HAVE_IRQ_TIME_ACCOUNTING
+ 	select HAVE_MEMBLOCK_NODE_MAP if NUMA
+-- 
+2.17.1
+

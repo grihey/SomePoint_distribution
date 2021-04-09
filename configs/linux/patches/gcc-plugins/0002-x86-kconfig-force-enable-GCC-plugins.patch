@@ -1,0 +1,28 @@
+From 61edf47f5377338e96a7f9cc7ca607b24a5f35df Mon Sep 17 00:00:00 2001
+From: Tero Kristo <tero.kristo@unikie.com>
+Date: Thu, 8 Apr 2021 14:44:24 +0300
+Subject: [PATCH 2/2] x86: kconfig: force-enable GCC plugins
+
+Buildroot forcibly disables the GCC plugin support, but we need these
+for secure-os, thus force enable them from the kernel itself.
+
+Signed-off-by: Tero Kristo <tero.kristo@unikie.com>
+---
+ arch/x86/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index e16076b30625..1d6fdc3b41af 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -168,6 +168,7 @@ config X86
+ 	select HAVE_FUNCTION_GRAPH_TRACER
+ 	select HAVE_FUNCTION_TRACER
+ 	select HAVE_GCC_PLUGINS
++	select GCC_PLUGINS
+ 	select HAVE_HW_BREAKPOINT
+ 	select HAVE_IDE
+ 	select HAVE_IOREMAP_PROT
+-- 
+2.17.1
+

@@ -697,7 +697,7 @@ function Show_help {
     echo "    rootfs [path]                     Copy root fs files (dom0)"
     echo "    domufs [path]                     Copy domu fs files"
     echo "    fsck [device|image_file]          Check filesystems in device or image"
-    echo "    uboot_src                         Generate U-boot script"
+    echo "    uboot_script                      Generate U-boot script"
     echo "    netboot [path]                    Copy boot files needed for network boot"
     echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
     echo "    kernel_config_change              Force buildroot to recompile kernel after config changes"
@@ -713,8 +713,14 @@ function Show_help {
     echo "                                      Use 'keepconfig' option to preserve .setup_sh_config"
     echo "    check_script                      Check setup.sh script (and sourced scripts) with"
     echo "                                      shellcheck and bashate"
+    echo "    install_completion                Install bash completion for setup.sh commands"
     echo ""
     exit 0
+}
+
+function Install_completion {
+    echo 'complete -W "defconfig xenconfig kvmconfig x86config clone mount umount bootfs rootfs domufs fsck uboot_script netboot nfsupdate kernel_config_change ssh_dut shell buildall distclean clean check_script" setup.sh' | sudo tee /etc/bash_completion.d/setup.sh_completion > /dev/null
+    echo "Bash auto completion installed (you need to reopen bash shell for changes to be in effect)"
 }
 
 # Convert command to all lower case and then convert first letter to upper case

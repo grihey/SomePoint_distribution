@@ -16,7 +16,8 @@ HDIR="$(realpath "$HDIR")"
 function Load_config {
     # Load defaults in case .setup_sh_config is missing any settings
     # for example .setup_sh_config could be from older revision
-    # shellcheck source=./default_setup_sh_config
+    # disable shellchecking of default_setup_sh_config and warnings about it
+    # shellcheck disable=SC1091,SC1090
     . "${HDIR}/default_setup_sh_config"
 
     if [ -f "${HDIR}/.setup_sh_config" ]; then
@@ -823,3 +824,25 @@ function In_docker {
     fi
     return 1
 }
+
+# Checks scripts with shellcheck and bashate
+function Shellcheck_bashate {
+    local sc
+    local bh
+    set +e
+
+    shellcheck "$@"
+    sc=$?
+    # Ignore "E006 Line too long" errors
+    bashate -i E006 "$@"
+    bh=$?
+
+    if [ "$sc" -eq 0 ] && [ "$bh" -eq 0 ]; then
+        echo "Nothing to complain" >&2
+    else
+        echo "Problems found" >&2
+    fi
+
+    return $((sc+bh))
+}
+

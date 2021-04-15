@@ -101,9 +101,7 @@ function Updatefs {
 }
 
 function Check_script {
-    shellcheck -x setup.sh docker/docker.sh host-tools/* guest-tools/*
-    # Ignore "E0006 Line too long" errors
-    bashate -i E006 setup.sh docker/docker.sh host-tools/* guest-tools/*
+    Shellcheck_bashate setup.sh ../helpers.sh ../default_setup_sh_config docker/docker.sh host-tools/* guest-tools/*
 }
 
 function Show_help {

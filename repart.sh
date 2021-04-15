@@ -5,13 +5,6 @@ set -e
 . helpers.sh
 Load_config
 
-function Check_script {
-    shellcheck repart.sh helpers.sh default_setup_sh_config
-    # Ignore "E006 Line too long" errors
-    bashate -i E006 repart.sh helpers.sh default_setup_sh_config
-    echo Nothing to complain
-}
-
 function Show_help {
     echo "Usage:"
     echo "    $0 [-b|--boot <boot fs size>] [-r|-root <root fs size>] [-d|--domu <domu fs size>] [-y|--yes] [--force] <device>"
@@ -86,8 +79,8 @@ while [ "$#" -gt 0 ]; do
         shift # past argument
     ;;
     check_script)
-        Check_script
-        exit 0
+        Shellcheck_bashate repart.sh helpers.sh default_setup_sh_config
+        exit $?
     ;;
     *)    # device name and invalid argument
         # Argument that starts with "-" have been prosessed already.

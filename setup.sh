@@ -676,10 +676,7 @@ function Shell {
 }
 
 function Check_script {
-    shellcheck setup.sh helpers.sh text_generators.sh default_setup_sh_config
-    # Ignore "E006 Line too long" errors
-    bashate -i E006 setup.sh helpers.sh text_generators.sh default_setup_sh_config
-    echo Nothing to complain
+    Shellcheck_bashate setup.sh helpers.sh text_generators.sh default_setup_sh_config
 }
 
 function Show_help {

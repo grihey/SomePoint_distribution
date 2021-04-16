@@ -151,7 +151,7 @@ function Gen_configs {
     kvm)
         configs/linux/defconfig_builder.sh -t "${PLATFORM}_kvm_guest${os_opt}_release" -k linux
         if [ "$PLATFORM" = "x86" ] && [ "$SUB_PLATFORM" = "amd" ] ; then
-            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' linux/arch/x86/configs/${PLATFORM}_kvm_guest${os_opt}_release_defconfig
+            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${PLATFORM}_kvm_guest${os_opt}_release_defconfig"
         fi
     ;;
     *)
@@ -161,7 +161,7 @@ function Gen_configs {
     configs/linux/defconfig_builder.sh -t "${PLATFORM}_${HYPERVISOR}${os_opt}_release" -k linux
     cp "configs/buildroot_config_${PLATFORM}_${HYPERVISOR}${os_opt}" buildroot/.config
     if [ "$PLATFORM" = "x86" ] && [ "$SUB_PLATFORM" = "amd" ] ; then
-        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' linux/arch/x86/configs/${PLATFORM}_${HYPERVISOR}${os_opt}_release_defconfig
+        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${PLATFORM}_${HYPERVISOR}${os_opt}_release_defconfig"
     fi
 }
 

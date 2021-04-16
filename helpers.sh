@@ -37,7 +37,7 @@ function Load_config {
         raspi4)
             if [ "$SUB_PLATFORM" != "" ] ; then
                 echo "Invalid SUB_PLATFORM for $PLATFORM, please leave blank." >&2
-		exit 1
+                exit 1
             fi
             # Options ok
         ;;

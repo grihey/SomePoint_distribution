@@ -308,9 +308,6 @@ function Root_fs {
     if ! [ -a "images/device_id_rsa" ]; then
         echo "Generate ssh key"
         ssh-keygen -t rsa -q -f "images/device_id_rsa" -N ""
-        # Just to make CI build happy for now, will be removed later
-        cp -pf "images/device_id_rsa" "images/rasp_id_rsa"
-        cp -pf "images/device_id_rsa.pub" "images/rasp_id_rsa.pub"
     fi
 
     mkdir -p "${rootfs}/root/.ssh"

@@ -169,6 +169,7 @@ function X86config {
         -e "s/^SUB_PLATFORM=.*/SUB_PLATFORM=intel/" \
         -e "s/^BUILDOPT=.*/BUILDOPT=dhcp/" \
         -e "s/^KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
+        -e "s/^LINUX_BRANCH=.*/LINUX_BRANCH=tc-x86-5.10-dev/" \
         -e "s/^DEVICEHN=.*/DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
 }
 
@@ -513,6 +514,7 @@ function Compile_kernel {
     local defconfig
     local extra_configs
     local build_targets
+    local kernel_branch
 
     echo "Compile_kernel"
     Check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
@@ -523,6 +525,7 @@ function Compile_kernel {
     compile_dir="$4"
     defconfig="$5"
     extra_configs="$6"
+    kernel_branch="$7"
 
     case "$arch" in
     x86_64)
@@ -539,6 +542,12 @@ function Compile_kernel {
     fi
 
     pushd "$kernel_src"
+    if [ "$kernel_branch" != "" ] ; then
+        git checkout "$kernel_branch"
+    else
+        # Default branch for now is 'xen', to be fixed later
+        git checkout xen
+    fi
     # RUN in docker
     make O="${compile_dir}" ARCH="${arch}" CROSS_COMPILE="$cross_compile" "$defconfig"
     if [ -n "${extra_configs}" ]; then

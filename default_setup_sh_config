@@ -15,6 +15,12 @@ SUB_PLATFORM=
 # Hypervisor selection (xen or kvm)
 HYPERVISOR=xen
 
+# Default linux branch for the build for both buildroot and guest-os setups.
+# 'xen' is used for raspi4 for now, but should be renamed later once the branch
+# for it is updated. For x86 builds, this should be of form tc-x86-5.10-dev;
+# and running x86config sets it properly.
+LINUX_BRANCH=xen
+
 # BUILDOPT defines type of build
 # 'usb' for USB build
 # 'mmc' for MMC/SD build

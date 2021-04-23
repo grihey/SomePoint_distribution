@@ -127,7 +127,7 @@ function Build_guest_kernels {
     case "$HYPERVISOR" in
     kvm)
         mkdir -p "${odir}/kvm_domu"
-        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${PLATFORM}_kvm_guest${os_opt}_release_defconfig"
+        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${PLATFORM}_kvm_guest${os_opt}_release_defconfig" "" "${LINUX_BRANCH}"
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -173,9 +173,9 @@ function Clone {
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
 
-    # Needed for buildroot to be able to checkout xen branch
+    # Checkout the default branch
     pushd linux
-    git checkout xen
+    git checkout "${LINUX_BRANCH}"
     popd
 
     Gen_configs

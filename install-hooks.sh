@@ -22,6 +22,12 @@ for S in "${SCRIPTS[@]}"; do
     chmod a+x ".git/hooks/${S}"
 done
 
+# If freshly cloned main repo, initialize submodules
+if [ ! -d .git/modules ]; then
+    git submodule init
+    git submodule update -f
+fi
+
 # Link main repo hooks to our subrepos
 for R in "${SUBREPOS[@]}"; do
     if [ -d ".git/modules/${R}" ]; then

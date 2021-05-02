@@ -28,7 +28,7 @@ FLUFFY_BINARY_FILENAME="fluffy-binary-release.tar.xz"
 
 function Prepare_compile_env {
     echo "Prepare_compile_env"
-    Check_2_param_exist "$1" "$2"
+    Check_params 2 "$@"
 
     local IMAGE
     local ROOTFS_DIR
@@ -116,7 +116,7 @@ function All {
 
 function Prepare_boot {
     echo "Prepare_boot"
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     local BOOTFS
 
@@ -154,7 +154,7 @@ function Prepare_boot {
 
 function Prepare_image {
     echo "Prepare_image"
-    Check_6_param_exist "$1" "$2" "$3" "$4" "$5" "$6"
+    Check_params 6 "$@"
 
     local WORKDIR
     local LINUX_OUT_DIR
@@ -234,7 +234,7 @@ function Umount_all {
 
 function Compile_xen_tools {
     echo "Compile_xen_tools"
-    Check_3_param_exist "$1" "$2" "$3"
+    Check_params 3 "$@"
 
     local WORKDIR
     local ARCH
@@ -371,7 +371,7 @@ EOF
 
 function Post_image_tweaks {
     echo "Post_image_tweaks"
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     local WORKDIR
     local ROOTFS_DIR
@@ -459,7 +459,7 @@ EOF
 
 function Post_image_domu_tweaks {
     echo "Post_image_domu_tweaks"
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     local WORKDIR
     local ROOTFS_DIR
@@ -480,7 +480,7 @@ EOF
 }
 
 function Deploy {
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     local device="$1"
 

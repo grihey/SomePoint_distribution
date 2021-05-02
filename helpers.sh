@@ -272,57 +272,50 @@ function Set_deviceipconf {
     export DEVICEIPCONF
 }
 
-function Check_param_exist {
-    if [ -z "$1" ]; then
-        echo "Parameter not defined"
+# Check proper number of parameters given
+# First parameter is the number of parameters expected the rest are the parameters
+# Negative number of parameters turns off empty parameter checking
+function Check_params {
+    local checkempty=1
+    local i=0
+    local expected
+    local param
+
+    expected="${1:?}"
+
+    shift
+
+    if [ "$expected" -lt 0 ]; then
+        # check only the number of parameters, empty parameters allowed
+        expected=$((-expected))
+        checkempty=0
+    fi
+
+    if [ "$#" -lt "$expected" ]; then
+        echo "${FUNCNAME[1]}: Invalid number of parameters (expected $expected got $#)" >&2
         exit 1
     fi
-}
 
-function Check_1_param_exist {
-    Check_param_exist "$1"
-}
-
-function Check_2_param_exist {
-    Check_param_exist "$1"
-    Check_param_exist "$2"
-}
-
-function Check_3_param_exist {
-    Check_param_exist "$1"
-    Check_param_exist "$2"
-    Check_param_exist "$3"
-}
-
-function Check_4_param_exist {
-    Check_param_exist "$1"
-    Check_param_exist "$2"
-    Check_param_exist "$3"
-    Check_param_exist "$4"
-}
-
-function Check_5_param_exist {
-    Check_param_exist "$1"
-    Check_param_exist "$2"
-    Check_param_exist "$3"
-    Check_param_exist "$4"
-    Check_param_exist "$5"
-}
-
-function Check_6_param_exist {
-    Check_param_exist "$1"
-    Check_param_exist "$2"
-    Check_param_exist "$3"
-    Check_param_exist "$4"
-    Check_param_exist "$5"
-    Check_param_exist "$6"
+    if [ "$checkempty" == 1 ]; then
+        for param in "$@"; do
+            if [ "$i" -eq "$expected" ]; then
+                # Only check up to expected number of parameters, extra parameters may be empty
+                break
+            fi
+            if [ -z "$param" ]; then
+                echo "${FUNCNAME[1]}: Empty parameters not allowed" >&2
+                exit 1
+            fi
+            i=$((i + 1))
+        done
+    fi
 }
 
 function Check_sha {
     echo "Check_sha"
     # $1 is sha
     # $2 is file
-    Check_2_param_exist "$1" "$2"
+    Check_params 2 "$@"
     echo "${1} *${2}" | shasum -a 256 --check -s --strict
     ok="$?"
     echo "val: <$ok>"
@@ -333,7 +326,7 @@ function Check_sha {
 }
 
 function Download {
-    Check_3_param_exist "$1" "$2" "$3"
+    Check_params 3 "$@"
 
     Download_artifactory_binary "$1" "$2" "$3" 0
 }
@@ -348,7 +341,7 @@ function Download_artifactory_binary {
 
     echo "Download_artifactory_binary"
 
-    Check_3_param_exist "$1" "$2" "$3" # can be empty"$4"
+    Check_params 3 "$@"
     download_url="$1"
     destdir="$2"
     filename="$3"
@@ -377,13 +370,13 @@ function Download_artifactory_binary {
 }
 
 function Decompress_xz {
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     xz -dk "$1"
 }
 
 function Decompress_image {
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     echo "$1"
 
@@ -391,7 +384,7 @@ function Decompress_image {
 }
 
 function Umount_chroot_devs {
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     local rootfs
 
@@ -405,7 +398,7 @@ function Umount_chroot_devs {
 }
 
 function Mount_chroot_devs {
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     local rootfs
 
@@ -422,7 +415,7 @@ function Mount_chroot_devs {
 
 function Mount_image {
     echo "Mount image"
-    Check_2_param_exist "$1" "$2"
+    Check_params 2 "$@"
 
     if [ -d "$2" ]; then
         echo "Mounting: $1 to $2 -folder. Already mounted."
@@ -437,7 +430,7 @@ function Mount_image {
 
 function Umount_image {
     echo "Umount image"
-    Check_1_param_exist "$1"
+    Check_params 1 "$@"
 
     if ! [ -d "$1" ]; then
         echo "Umounting. $1 folder is not mounted."
@@ -517,7 +510,7 @@ function Compile_kernel {
     local kernel_branch
 
     echo "Compile_kernel"
-    Check_5_param_exist "$1" "$2" "$3" "$4" "$5" # $6 can be empty
+    Check_params 5 "$@"
 
     kernel_src="$1"
     arch="$2"
@@ -572,7 +565,7 @@ function Install_kernel {
     local kernel_install_dir
 
     echo "Install_kernel"
-    Check_3_param_exist "$1" "$2" "$3"
+    Check_params 3 "$@"
 
     arch="$1"
     compile_dir="$2"
@@ -596,7 +589,7 @@ function Install_kernel_modules {
     local mntrootfs
 
     echo "Install_kernel_modules"
-    Check_5_param_exist "$1" "$2" "$3" "$4" "$5"
+    Check_params 5 "$@"
 
     kernel_src="$1"
     arch="$2"
@@ -629,7 +622,7 @@ function Compile_xen {
     local version
 
     echo "Compile_xen"
-    Check_2_param_exist "$1" "$2"
+    Check_params 2 "$@"
 
     src="$1"
     version="$2"
@@ -854,4 +847,3 @@ function Shellcheck_bashate {
 
     return $((sc+bh))
 }
-

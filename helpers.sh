@@ -355,7 +355,7 @@ function Download_artifactory_binary {
 
     if [ ! -f "${DOWNLOAD_CACHE_DIR}/${filename}" ] || [ -z "${DOWNLOAD_CACHE_DIR}" ] ; then
         if [ "${from_artifactory}" != "0" ]; then
-            extra_options="-H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
+            extra_options="-k -H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
         fi
         # extra_options contains options separated with spaces, so it is purposefully unquoted
         # shellcheck disable=SC2086

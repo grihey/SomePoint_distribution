@@ -88,7 +88,7 @@ function All {
         # Docker doens't see the ssrc nameserver
         # TODO: add ssrc nameserver
         Download_artifactory_binary \
-            "http://172.18.20.106:80/artifactory/example-repo-local/fluffychat/manual_builds/fluffy-binary-release.tar.xz" \
+            "https://172.18.20.106/artifactory/example-repo-local/fluffychat/manual_builds/fluffy-binary-release.tar.xz" \
             "${BINARIES}" \
             "${FLUFFY_BINARY_FILENAME}"
         touch ${BINARIES}/download.done

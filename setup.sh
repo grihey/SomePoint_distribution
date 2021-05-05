@@ -395,6 +395,16 @@ function Domu_fs {
     Domu_interfaces > "${domufs}/etc/network/interfaces"
     Inittab domu > "${domufs}/etc/inittab"
     echo "${DEVICEHN}-domu" > "${domufs}/etc/hostname"
+
+    case "$PLATFORM" in
+        x86)
+            rm -rf "${domufs}/lib/modules"
+            mkdir -p "${domufs}/lib/modules"
+            Install_kernel_modules ./linux x86_64 x86_64-linux-gnu- "${GKBUILD}/kvm_domu" "${domufs}" ""
+        ;;
+        *)
+        ;;
+    esac
 }
 
 function Nfs_update {
@@ -694,6 +704,7 @@ function Show_help {
     echo "    uboot_script                      Generate U-boot script"
     echo "    netboot [path]                    Copy boot files needed for network boot"
     echo "    nfsupdate                         Copy boot,root and domufiles for TFTP/NFS boot"
+    echo "    vdaupdate                         Update images for x86/qemu setup"
     echo "    kernel_config_change              Force buildroot to recompile kernel after config changes"
     echo "    ssh_dut [domu]                    Open ssh session with target device"
     echo "    shell                             Open docker shell"
@@ -701,6 +712,7 @@ function Show_help {
     echo "                                      uses selected default config if given"
     echo "                                      (overwrites .setup_sh_config if given)"
     echo "                                      noclone option skips cloning"
+    echo "    build_guest_kernels               Build required guest kernels"
     echo "    distclean                         removes almost everything except main repo local changes"
     echo "                                      (basically resets to just cloned main repo)"
     echo "    clean [keepconfig]                Clean up built files, but keep downloads."
@@ -713,7 +725,7 @@ function Show_help {
 }
 
 function Install_completion {
-    echo 'complete -W "defconfig xenconfig kvmconfig x86config clone mount umount bootfs rootfs domufs fsck uboot_script netboot nfsupdate kernel_config_change ssh_dut shell buildall distclean clean check_script" setup.sh' | sudo tee /etc/bash_completion.d/setup.sh_completion > /dev/null
+    echo 'complete -W "defconfig xenconfig kvmconfig x86config clone mount umount bootfs rootfs domufs fsck uboot_script netboot nfsupdate kernel_config_change ssh_dut shell buildall distclean clean check_script vdaupdate build_guest_kernels" setup.sh' | sudo tee /etc/bash_completion.d/setup.sh_completion > /dev/null
     echo "Bash auto completion installed (you need to reopen bash shell for changes to be in effect)"
 }
 

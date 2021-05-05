@@ -587,6 +587,7 @@ function Install_kernel_modules {
     local compile_dir
     local rootfs
     local mntrootfs
+    local sudocommand
 
     echo "Install_kernel_modules"
     Check_params 5 "$@"
@@ -599,11 +600,16 @@ function Install_kernel_modules {
 
     mntrootfs="$(Sanity_check "$rootfs")"
 
+    # If sixth parameter was given, use it as sudo command (if explicitly empty string, sudo is not used)
+    if [ $# -eq 6 ]; then
+        sudocommand="$6"
+    else
+        sudocommand="sudo"
+    fi
+
     pushd "$kernel_src"
     # RUN in docker
-    # Don't complain about sudo redirect, it's okay here
-    # shellcheck disable=SC2024
-    sudo make "O=${compile_dir}" "ARCH=${arch}" "CROSS_COMPILE=${cross_compile}" "INSTALL_MOD_PATH=${mntrootfs}" \
+    ${sudocommand} make "O=${compile_dir}" "ARCH=${arch}" "CROSS_COMPILE=${cross_compile}" "INSTALL_MOD_PATH=${mntrootfs}" \
         modules_install > "${compile_dir}/modules_install.log"
     # RUN in docker end
     popd
@@ -612,7 +618,7 @@ function Install_kernel_modules {
     echo "Create module dep files"
     KVERSION="$(cut -d "\"" -f 2 "${compile_dir}/include/generated/utsrelease.h")"
     echo "Compiled kernel version: ${KVERSION}"
-    sudo chroot "$mntrootfs" depmod -a "${KVERSION}"
+    ${sudocommand} depmod -b "${mntrootfs}" -a "${KVERSION}"
 
     echo "Install_kernel_modules done"
 }

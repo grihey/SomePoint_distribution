@@ -400,7 +400,9 @@ function Domu_fs {
         x86)
             rm -rf "${domufs}/lib/modules"
             mkdir -p "${domufs}/lib/modules"
-            Install_kernel_modules ./linux x86_64 x86_64-linux-gnu- "${GKBUILD}/kvm_domu" "${domufs}" ""
+            if [ "$SECURE_OS" = "0" ] ; then
+                Install_kernel_modules ./linux x86_64 x86_64-linux-gnu- "${GKBUILD}/kvm_domu" "${domufs}" ""
+            fi
         ;;
         *)
         ;;

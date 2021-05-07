@@ -11,10 +11,33 @@ fi
 
 IMAGE_DIR="buildroot/output/images"
 
-if [ "${1}" = "serial-only" ]; then
-    EXTRA_ARGS='-nographic'
+SERIAL_ONLY=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    -s|serial-only)
+        SERIAL_ONLY=1
+        shift # past value
+    ;;
+    -r|no-reboot)
+        EXTRA_ARGS="${EXTRA_ARGS} -no-reboot"
+        shift # past value
+    ;;
+    *)    # device name and invalid argument
+        # Argument that starts with "-" have been prosessed already.
+        if [[ $1 == * ]]; then
+            echo "Argument <$1> not supported. You might have missed a space before size value!"
+            exit 1
+        fi
+        shift # past argument
+    ;;
+    esac
+done
+
+if [ "${SERIAL_ONLY}" = "1" ]; then
+    EXTRA_ARGS="${EXTRA_ARGS} -nographic"
 else
-    EXTRA_ARGS='-serial stdio'
+    EXTRA_ARGS="${EXTRA_ARGS} -serial stdio"
 fi
 
 case "$BUILDOPT" in

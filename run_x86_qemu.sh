@@ -19,8 +19,14 @@ fi
 
 case "$BUILDOPT" in
 dhcp|static)
-    # Network build uses NFS rootfs
-    FILE_ARG=""
+    # Network build uses NFS rootfs. However, secure-os contains docker
+    # installation which does not work too well with NFS. For that purpose,
+    # lets provide a custom .ext2 filesystem image also.
+    if [ "$SECURE_OS" = "1" ] ; then
+        FILE_ARG="-drive file=${GKBUILD}/docker.ext2,if=virtio,format=raw"
+    else
+        FILE_ARG=""
+    fi
     ROOTFS_ARG="root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,vers=3 ip=::::x86-dom0:eth0:dhcp nfsrootdebug"
 ;;
 *)

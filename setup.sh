@@ -431,6 +431,22 @@ function Nfs_update {
         Domu_fs
         echo "DOMU_NFSROOT" > "${DOMUMNT}/DOMU_NFSROOT"
 
+        if [ "$SECURE_OS" = "1" ] && [ "$PLATFORM" = "x86" ] ; then
+            # Secure-os contains a docker installation that doesn't run
+            # very well over raw NFS file system. To overcome this limitation,
+            # lets create a 100M ext2 virtual disk image for it, and mount
+            # it automatically
+            rm -f "${GKBUILD}/docker.ext2"
+            mkfs.ext2 -L docker-vd "${GKBUILD}/docker.ext2" 100M
+            cp "${GKBUILD}/docker.ext2" "${ROOTMNT}/root/docker.ext2"
+            if ! grep -q docker "${ROOTMNT}/etc/fstab"  ; then
+                echo -e "/dev/vda\t/var/lib/docker\text2\tdefaults\t0\t2" >> "${ROOTMNT}/etc/fstab"
+            fi
+            if ! grep -q docker "${DOMUMNT}/etc/fstab" ; then
+                echo -e "/dev/vda\t/var/lib/docker\text2\tdefaults\t0\t2" >> "${DOMUMNT}/etc/fstab"
+            fi
+        fi
+
         if [ "$PLATFORM" != "x86" ] ; then
             sudo umount "$BOOTMNT"
         fi

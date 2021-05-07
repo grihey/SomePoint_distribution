@@ -382,7 +382,12 @@ function Run_x86_qemu_sh {
     echo "#!/bin/bash"
     case "$BUILDOPT" in
     dhcp|static)
-        echo "ROOTFS_FILE=\"\""
+        if [ "$SECURE_OS" = "1" ] ; then
+            echo "ROOTFS_FILE=\"-drive file=docker.ext2,if=virtio,format=raw\""
+        else
+            echo "ROOTFS_FILE=\"\""
+        fi
+
         echo "ROOTFS_CMD=\"root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,vers=3,nolock ip=::::${DEVICEHN}-domu:eth0:dhcp\""
     ;;
     *)
@@ -390,7 +395,7 @@ function Run_x86_qemu_sh {
         echo "ROOTFS_CMD=\"root=/dev/vda\""
     ;;
     esac
-    echo "qemu-system-x86_64 -m 128 -M pc -device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on -enable-kvm \\"
+    echo "qemu-system-x86_64 -m 256 -M pc -device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on -enable-kvm \\"
     echo "    -kernel Image \${ROOTFS_FILE} -append \"rootwait \${ROOTFS_CMD} console=tty1 console=ttyS0\" \\"
     echo "    -net nic,model=virtio -net user,hostfwd=tcp::222-:22 -nographic \"\$@\""
 }

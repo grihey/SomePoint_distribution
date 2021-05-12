@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ -f tmp_config ]; then
+    echo "Using tmp config file: tmp_config"
+    . tmp_config
+fi
+
+CONFIG_DIR="$(dirname "${BASH_SOURCE[0]}")"
+CONFIG_DIR="$(realpath "$CONFIG_DIR")"
+
+if [ -z ${IMAGE_DIR} ]; then
+    echo "Using default IMAGE_DIR: ${IMAGE_DIR}"
+    IMAGE_DIR=${CONFIG_DIR}/../../images
+fi
+
+if [ -z ${ID_RSA} ]; then
+    ID_RSA="${IMAGE_DIR}/device_id_rsa"
+fi
+
+if ! [ -f ${ID_RSA} ]; then
+    echo "Identiry file <${ID_RSA}> not found"
+    exit 1
+fi
+
+USER=root
+DUT=localhost
+PORT=${PORT:-2222}
+
+SSH="ssh -i ${ID_RSA} ${USER}@${DUT} -p ${PORT} -o StrictHostKeyChecking=accept-new"

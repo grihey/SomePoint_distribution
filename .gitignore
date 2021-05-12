@@ -6,3 +6,4 @@ mnt/
 .buildroot-ccache/
 .setup_sh_config
 .download_cache/
+avocado/tests/tmp_*

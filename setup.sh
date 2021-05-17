@@ -8,11 +8,15 @@ function On_exit_cleanup {
     popd > /dev/null
 }
 
+# Stop script on error
 set -e
 
 # Get actual directory of this bash script
 SDIR="$(dirname "${BASH_SOURCE[0]}")"
 SDIR="$(realpath "$SDIR")"
+
+# Save original working dir
+OPWD=$PWD
 
 # Change to the script directory and set cleanup on exit
 pushd "$SDIR" > /dev/null
@@ -172,6 +176,9 @@ function Clone {
 
     cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
     cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
+
+    # Make sure all branches are available in linux repo
+    Fetch_all linux
 
     # Checkout the default branch
     pushd linux
@@ -600,7 +607,7 @@ function Build_all {
         Kvmconfig
     ;;
     xen)
-        Defconfig
+        Xenconfig
     ;;
     "")
         # Don't touch config unless explicitly told to

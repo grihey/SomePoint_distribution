@@ -14,6 +14,15 @@ HDIR="$(realpath "$HDIR")"
 # Disable complaints about arguments they are optional here
 # shellcheck disable=SC2120
 function Load_config {
+    local flags
+
+    # Save flags
+    flags="$-"
+
+    # Enable automatic export of global environment variables
+    # So config settings are all exported (for e.g. Makefile use)
+    set -a
+
     # Load defaults in case .setup_sh_config is missing any settings
     # for example .setup_sh_config could be from older revision
     # disable shellchecking of default_setup_sh_config and warnings about it
@@ -32,10 +41,17 @@ function Load_config {
     TCDIST_BUILDOPT="${TCDIST_BUILDOPT,,}"
     TCDIST_SUDOTYPE="${TCDIST_SUDOTYPE,,}"
 
+    # Restore a flag
+    if [[ "$flags" =~ "a" ]]; then
+        set -a
+    else
+        set +a
+    fi
+
     if [ "$1" != "nocheck" ]; then
         case "$TCDIST_PLATFORM" in
         raspi4)
-            if [ "$TCDIST_SUB_PLATFORM" != "" ] ; then
+            if [ -n "$TCDIST_SUB_PLATFORM" ] ; then
                 echo "Invalid TCDIST_SUB_PLATFORM for $TCDIST_PLATFORM, please leave blank." >&2
                 exit 1
             fi
@@ -91,10 +107,6 @@ function Load_config {
         ;;
         esac
     fi
-
-    export CCACHE
-    export CCACHE_DIR
-    export CCACHE_MAXSIZE
 
     Set_deviceipconf
 }
@@ -852,4 +864,46 @@ function Shellcheck_bashate {
     fi
 
     return $((sc+bh))
+}
+
+# Fetches all branches from remote repo and makes them track remote branches
+function Fetch_all {
+    local dir
+    local outp
+    local remote
+
+    dir="$1"
+
+    # If directory not given, use original current directory
+    if [ -z "$dir" ]; then
+        dir="$OPWD"
+        if [ -z "$dir" ]; then
+            # If OPWD is not set, something is wrong
+            echo "OPWD is not set, did you run fetch_all via setup.sh?" >&2
+            return 1
+        fi
+    fi
+
+    pushd "$dir" > /dev/null
+
+    outp="$(git branch -r | grep -v '\->')"
+    while read -r remote; do
+        # Try to create matching branch
+        if ! git branch --track "${remote#origin/}" "$remote" 2> /dev/null; then
+            # If failed, assume branch exists, so make sure it tracks branch from origin
+            git branch --set-upstream-to="$remote" "${remote#origin/}"
+        fi
+    done <<< "$outp"
+
+    # Fetch all branches
+    git fetch --all
+
+    popd > /dev/null
+}
+
+# Just run make (with currently loaded configuration)
+function Make {
+    pushd "$OPWD" > /dev/null
+    make "$@"
+    popd > /dev/null
 }

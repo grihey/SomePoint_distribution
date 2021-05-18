@@ -4,10 +4,10 @@
 # Included into setup.sh
 
 function Domu_config {
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
         echo "kernel = \"/root/Image\""
-        echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:${DEVICEHN}-domu:eth0:off:${DEVICEDNS}\""
+        echo "cmdline = \"console=hvc0 earlyprintk=xen sync_console root=/dev/nfs rootfstype=nfs nfsroot=${TCDIST_NFSSERVER}:${TCDIST_NFSDOMU},tcp,rw,vers=3 ip=10.123.123.2::10.123.123.1:255.255.255.0:${TCDIST_DEVICEHN}-domu:eth0:off:${TCDIST_DEVICEDNS}\""
         echo "memory = \"1024\""
         echo "name = \"rpi4-xen-guest\""
         echo "vcpus = 2"
@@ -23,15 +23,15 @@ function Domu_config {
         echo "vnc = 1"
     ;;
     *)
-        cat "configs/domu.cfg.${BUILDOPT}"
+        cat "configs/domu.cfg.${TCDIST_BUILDOPT}"
     ;;
     esac
 }
 
 function Dom0_interfaces {
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
-        case "$BUILDOPT" in
+        case "$TCDIST_BUILDOPT" in
         dhcp)
             echo "auto lo"
             echo "iface lo inet loopback"
@@ -45,9 +45,9 @@ function Dom0_interfaces {
             echo "iface lo inet loopback"
             echo ""
             echo "iface eth0 inet static"
-            echo "    address ${DEVICEIP}"
-            echo "    netmask ${DEVICENM}"
-            echo "    gateway ${DEVICEGW}"
+            echo "    address ${TCDIST_DEVICEIP}"
+            echo "    netmask ${TCDIST_DEVICENM}"
+            echo "    gateway ${TCDIST_DEVICEGW}"
             echo ""
             echo "iface default inet dhcp"
         ;;
@@ -63,7 +63,7 @@ function Dom0_interfaces {
         esac
     ;;
     *)
-        case "$BUILDOPT" in
+        case "$TCDIST_BUILDOPT" in
         dhcp)
             echo "auto lo"
             echo "iface lo inet loopback"
@@ -77,9 +77,9 @@ function Dom0_interfaces {
             echo "iface lo inet loopback"
             echo ""
             echo "iface eth0 inet static"
-            echo "    address ${DEVICEIP}"
-            echo "    netmask ${DEVICENM}"
-            echo "    gateway ${DEVICEGW}"
+            echo "    address ${TCDIST_DEVICEIP}"
+            echo "    netmask ${TCDIST_DEVICENM}"
+            echo "    gateway ${TCDIST_DEVICEGW}"
             echo ""
             echo "iface default inet dhcp"
         ;;
@@ -92,12 +92,12 @@ function Dom0_interfaces {
 }
 
 function Domu_interfaces {
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
         echo "auto lo"
         echo "iface lo inet loopback"
         echo ""
-        case "$BUILDOPT" in
+        case "$TCDIST_BUILDOPT" in
         dhcp)
             echo "iface eth0 inet dhcp"
         ;;
@@ -116,7 +116,7 @@ function Domu_interfaces {
         echo "iface default inet dhcp"
     ;;
     *)
-        case "$BUILDOPT" in
+        case "$TCDIST_BUILDOPT" in
         static)
             echo "auto lo"
             echo "iface lo inet loopback"
@@ -145,20 +145,20 @@ function Domu_interfaces {
 }
 
 function Uboot_stub {
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     mmc)
         echo "fatload mmc 0:1 0x100000 boot2.scr"
         echo "source 0x100000"
     ;;
     dhcp)
-        echo "dhcp 0x100000 ${TFTPSERVER}:boot2.scr"
-        echo "setenv serverip ${TFTPSERVER}"
+        echo "dhcp 0x100000 ${TCDIST_TFTPSERVER}:boot2.scr"
+        echo "setenv serverip ${TCDIST_TFTPSERVER}"
         echo "source 0x100000"
     ;;
     static)
-        echo "setenv ipaddr ${DEVICEIP}"
-        echo "setenv netmask ${DEVICENM}"
-        echo "setenv serverip ${TFTPSERVER}"
+        echo "setenv ipaddr ${TCDIST_DEVICEIP}"
+        echo "setenv netmask ${TCDIST_DEVICENM}"
+        echo "setenv serverip ${TCDIST_TFTPSERVER}"
         echo "tftp 0x100000 boot2.scr"
         echo "source 0x100000"
     ;;
@@ -170,7 +170,7 @@ function Uboot_stub {
 }
 
 function Fdt_addr {
-    case "$FWFDT" in
+    case "$TCDIST_FWFDT" in
     1)
         # No address set in this case
     ;;
@@ -181,12 +181,12 @@ function Fdt_addr {
 }
 
 function Fdt_load {
-    case "$FWFDT" in
+    case "$TCDIST_FWFDT" in
     1)
         # No load in this case
     ;;
     *)
-        echo "${1} 0x\${fdt_addr} ${DEVTREE}"
+        echo "${1} 0x\${fdt_addr} ${TCDIST_DEVTREE}"
     ;;
     esac
 }
@@ -194,7 +194,7 @@ function Fdt_load {
 function Uboot_source {
     local BOOTARGS="dwc_otg.lpm_enable=0"
 
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
         local CONSOLE=" console=tty1 console=ttyS0,115200"
         local ADDITIONAL=""
@@ -205,14 +205,14 @@ function Uboot_source {
     ;;
     esac
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     mmc)
         local LOAD="fatload mmc 0:1"
         local ROOTPARM=" root=/dev/mmcblk0p2 rootfstype=ext4"
     ;;
     dhcp|static)
         local LOAD="tftp"
-        local ROOTPARM=" root=/dev/nfs rootfstype=nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,rw,vers=3 ip=${DEVICEIPCONF}"
+        local ROOTPARM=" root=/dev/nfs rootfstype=nfs nfsroot=${TCDIST_NFSSERVER}:${TCDIST_NFSDOM0},tcp,rw,vers=3 ip=${TCDIST_DEVICEIPCONF}"
     ;;
     *)
         local LOAD="fatload usb 0:1"
@@ -243,7 +243,7 @@ function Uboot_source {
     echo "setenv lin_addr 1000000"
     echo "${LOAD} 0x\${lin_addr} vmlinuz"
 
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
         echo "setenv bootargs \"${BOOTARGS}\""
         echo "setenv fdt_high 0xffffffffffffffff"
@@ -256,7 +256,7 @@ function Uboot_source {
         echo "fdt resize 1024"
         echo "fdt set /chosen \\#address-cells <1>"
         echo "fdt set /chosen \\#size-cells <1>"
-        echo "fdt set /chosen xen,xen-bootargs \"console=dtuart dtuart=serial0 sync_console dom0_mem=${XEN_DOM0_MEMORY:?} dom0_max_vcpus=${XEN_DOM0_CPUCOUNT:?} bootscrub=0 vwfi=native sched=credit2\""
+        echo "fdt set /chosen xen,xen-bootargs \"console=dtuart dtuart=serial0 sync_console dom0_mem=${TCDIST_XEN_DOM0_MEMORY:?} dom0_max_vcpus=${TCDIST_XEN_DOM0_CPUCOUNT:?} bootscrub=0 vwfi=native sched=credit2\""
         echo "fdt mknod /chosen dom0"
         echo "fdt set /chosen/dom0 compatible \"xen,linux-zimage\" \"xen,multiboot-module\""
         echo "fdt set /chosen/dom0 reg <0x\${lin_addr} 0x\${lin_size}>"
@@ -271,14 +271,14 @@ function Net_rc_add {
     echo "#!/bin/bash"
     echo ""
 
-    if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "kvm" ] ; then
+    if [ "$1" == "dom0" ] && [ "$TCDIST_HYPERVISOR" == "kvm" ] ; then
         # Allow ping from guest VMs under kvm
         echo "sysctl -w net.ipv4.ping_group_range='0 2147483647'"
     fi
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
-        if [ "$1" == "dom0" ] && [ "$HYPERVISOR" == "xen" ] ; then
+        if [ "$1" == "dom0" ] && [ "$TCDIST_HYPERVISOR" == "xen" ] ; then
             echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
             echo "iptables -t nat -A PREROUTING -p tcp --dport 222 -j DNAT --to-destination 10.123.123.2:22"
             echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"
@@ -291,7 +291,7 @@ function Net_rc_add {
         echo "    DNS0=\${DNS0##*nameserver0=}"
         echo "    DNS0=\${DNS0%%,*}"
         echo "else"
-        echo "    DNS0=${DEVICEDNS}"
+        echo "    DNS0=${TCDIST_DEVICEDNS}"
         echo "fi"
         echo ""
         echo "echo \"nameserver \$DNS0\" > /etc/resolv.conf"
@@ -306,12 +306,12 @@ function Inittab {
     dom0)
         cat configs/inittab.pre
 
-        case "$HYPERVISOR" in
+        case "$TCDIST_HYPERVISOR" in
         kvm)
             echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
             echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
             echo "S0::respawn:/sbin/getty -L ttyS0 0 vt100 # Serial console"
-            #if [ "$PLATFORM" = "x86" ] ; then
+            #if [ "$TCDIST_PLATFORM" = "x86" ] ; then
             #    echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic Serial"
             #fi
         ;;
@@ -324,9 +324,9 @@ function Inittab {
     ;;
     domu)
         cat configs/inittab.pre
-        case "$HYPERVISOR" in
+        case "$TCDIST_HYPERVISOR" in
         kvm)
-            if [ "$PLATFORM" = "x86" ] ; then
+            if [ "$TCDIST_PLATFORM" = "x86" ] ; then
                 echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic serial"
             else
                 echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # kvm virtual serial"
@@ -346,7 +346,7 @@ function Inittab {
 }
 
 function Config_txt {
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
         cat configs/config_kvm.txt
     ;;
@@ -358,17 +358,17 @@ function Config_txt {
 
 function Rq_sh {
     echo "#!/bin/bash"
-    case "$PLATFORM" in
+    case "$TCDIST_PLATFORM" in
     x86)
         echo "./run-x86-qemu.sh \"\$@\""
     ;;
     *)
-        case "$BUILDOPT" in
+        case "$TCDIST_BUILDOPT" in
         mmc)
             echo "./run-qemu.sh /dev/mmcblk0p3 \"\$@\""
         ;;
         dhcp|static)
-            echo "./run-qemu.sh /dev/nfs ${NFSSERVER}:${NFSDOMU} \"\$@\""
+            echo "./run-qemu.sh /dev/nfs ${TCDIST_NFSSERVER}:${TCDIST_NFSDOMU} \"\$@\""
         ;;
         *)
             echo "./run-qemu.sh /dev/sda3 \"\$@\""
@@ -380,15 +380,15 @@ function Rq_sh {
 
 function Run_x86_qemu_sh {
     echo "#!/bin/bash"
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
-        if [ "$SECURE_OS" = "1" ] ; then
+        if [ "$TCDIST_SECUREOS" = "1" ] ; then
             echo "ROOTFS_FILE=\"-drive file=docker.ext2,if=virtio,format=raw\""
         else
             echo "ROOTFS_FILE=\"\""
         fi
 
-        echo "ROOTFS_CMD=\"root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOMU},tcp,vers=3,nolock ip=::::${DEVICEHN}-domu:eth0:dhcp\""
+        echo "ROOTFS_CMD=\"root=/dev/nfs nfsroot=${TCDIST_NFSSERVER}:${TCDIST_NFSDOMU},tcp,vers=3,nolock ip=::::${TCDIST_DEVICEHN}-domu:eth0:dhcp\""
     ;;
     *)
         echo "ROOTFS_FILE=\"-drive file=rootfs.ext2,if=virtio,format=raw\""

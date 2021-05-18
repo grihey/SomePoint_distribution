@@ -122,7 +122,7 @@ function Prepare_boot {
 
     BOOTFS=$1
 
-    case "${BUILDOPT}" in
+    case "${TCDIST_BUILDOPT}" in
     usb|mmc)
         Uboot_source > "${WORK_DIR}/boot.source"
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d "${WORK_DIR}/boot.source" "${BOOTFS}/boot.scr"
@@ -135,7 +135,7 @@ function Prepare_boot {
     #    mkimage -A arm64 -T script -C none -a 0x100000 -e 0x100000 -d "${WORK_DIR}"boot2.source "${WORK_DIR}"boot2.scr
     #;;
     *)
-        echo "Invalid BUILDOPT <${BUILDOPT}> setting" >&2
+        echo "Invalid TCDIST_BUILDOPT <${TCDIST_BUILDOPT}> setting" >&2
         exit 1
     ;;
     esac

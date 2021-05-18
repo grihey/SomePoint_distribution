@@ -4,7 +4,7 @@
 . helpers.sh
 Load_config
 
-if [ "$PLATFORM" != "x86" ] || [ "$HYPERVISOR" != "kvm" ] ; then
+if [ "$TCDIST_PLATFORM" != "x86" ] || [ "$TCDIST_HYPERVISOR" != "kvm" ] ; then
     echo "Bad platform, only supported for x86 / kvm." >&2
     exit
 fi
@@ -64,17 +64,17 @@ else
     EXTRA_ARGS="${EXTRA_ARGS} -serial stdio"
 fi
 
-case "$BUILDOPT" in
+case "$TCDIST_BUILDOPT" in
 dhcp|static)
     # Network build uses NFS rootfs. However, secure-os contains docker
     # installation which does not work too well with NFS. For that purpose,
     # lets provide a custom .ext2 filesystem image also.
-    if [ "$SECURE_OS" = "1" ] ; then
-        FILE_ARG="-drive file=${GKBUILD}/docker.ext2,if=virtio,format=raw"
+    if [ "$TCDIST_SECUREOS" = "1" ] ; then
+        FILE_ARG="-drive file=${TCDIST_GKBUILD}/docker.ext2,if=virtio,format=raw"
     else
         FILE_ARG=""
     fi
-    ROOTFS_ARG="root=/dev/nfs nfsroot=${NFSSERVER}:${NFSDOM0},tcp,vers=3 ip=::::x86-dom0:eth0:dhcp nfsrootdebug"
+    ROOTFS_ARG="root=/dev/nfs nfsroot=${TCDIST_NFSSERVER}:${TCDIST_NFSDOM0},tcp,vers=3 ip=::::x86-dom0:eth0:dhcp nfsrootdebug"
 ;;
 *)
     # SD or USB boot, use static image

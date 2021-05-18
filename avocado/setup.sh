@@ -13,7 +13,7 @@ function Config {
 function Dom0_update {
     local idir
 
-    Is_mounted "$ROOTMNT"
+    Is_mounted "$TCDIST_ROOTMNT"
 
     idir=$(pwd)
 
@@ -22,35 +22,35 @@ function Dom0_update {
     ./docker.sh export
     popd
 
-    sudo mkdir -p "${ROOTMNT}/var/lib/avocado/data/avocado-vt/"
+    sudo mkdir -p "${TCDIST_ROOTMNT}/var/lib/avocado/data/avocado-vt/"
 
-    pushd "${ROOTMNT}/var/lib/avocado/data/avocado-vt/"
+    pushd "${TCDIST_ROOTMNT}/var/lib/avocado/data/avocado-vt/"
     tar xf "${idir}/images/avocado-vt-bootstrap.tar.gz"
     popd
-    cp host-tools/*.sh "${ROOTMNT}/root/"
-    cp host-tools/kvm "${ROOTMNT}/usr/bin/"
-    cp cfg/qemu-base.cfg "${ROOTMNT}/var/lib/avocado/data/avocado-vt/backends/qemu/cfg/base.cfg"
-    rm -f "${ROOTMNT}/root/rootfs.ext2"
-    cp images/CustomLinux.qcow2 "${ROOTMNT}/var/lib/avocado/data/avocado-vt/images/"
-    sed -i 's/rootfs.ext2/\/var\/lib\/avocado\/data\/avocado-vt\/images\/CustomLinux.qcow2/' "${ROOTMNT}/root/run-x86-qemu.sh"
-    sed -i 's/,format=raw//' "${ROOTMNT}/root/run-x86-qemu.sh"
+    cp host-tools/*.sh "${TCDIST_ROOTMNT}/root/"
+    cp host-tools/kvm "${TCDIST_ROOTMNT}/usr/bin/"
+    cp cfg/qemu-base.cfg "${TCDIST_ROOTMNT}/var/lib/avocado/data/avocado-vt/backends/qemu/cfg/base.cfg"
+    rm -f "${TCDIST_ROOTMNT}/root/rootfs.ext2"
+    cp images/CustomLinux.qcow2 "${TCDIST_ROOTMNT}/var/lib/avocado/data/avocado-vt/images/"
+    sed -i 's/rootfs.ext2/\/var\/lib\/avocado\/data\/avocado-vt\/images\/CustomLinux.qcow2/' "${TCDIST_ROOTMNT}/root/run-x86-qemu.sh"
+    sed -i 's/,format=raw//' "${TCDIST_ROOTMNT}/root/run-x86-qemu.sh"
 }
 
 function Domu_update {
     local domuroot
-    Is_mounted "$DOMUMNT"
+    Is_mounted "$TCDIST_DOMUMNT"
 
-    cp guest-tools/* "${DOMUMNT}/usr/bin/"
-    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' "${DOMUMNT}/etc/ssh/sshd_config"
+    cp guest-tools/* "${TCDIST_DOMUMNT}/usr/bin/"
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' "${TCDIST_DOMUMNT}/etc/ssh/sshd_config"
 
     echo "Generating guest-os image, this may take a while..."
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     usb|mmc)
-        domuroot="${DOMUMNT}-su/"
+        domuroot="${TCDIST_DOMUMNT}-su/"
     ;;
     dhcp|static)
-        domuroot="${NFSDOMU}/"
+        domuroot="${TCDIST_NFSDOMU}/"
     ;;
     esac
 
@@ -64,37 +64,37 @@ function Domu_update {
 function Updatefs {
     local idir
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
         Set_my_ids
         Create_mount_points
-        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOM0" "$ROOTMNT"
-        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOMU" "$DOMUMNT"
+        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$TCDIST_NFSDOM0" "$TCDIST_ROOTMNT"
+        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$TCDIST_NFSDOMU" "$TCDIST_DOMUMNT"
 
         Domu_update
 
         Dom0_update
 
-        sudo umount "$ROOTMNT"
-        sudo umount "$DOMUMNT"
+        sudo umount "$TCDIST_ROOTMNT"
+        sudo umount "$TCDIST_DOMUMNT"
 
     ;;
     usb|mmc)
         Set_my_ids
         Create_mount_points
         idir="${PWD}/../buildroot/output/images"
-        sudo mount "${idir}/rootfs-withdomu.ext2" "${ROOTMNT}-su"
-        sudo mount "${idir}/rootfs.ext2" "${DOMUMNT}-su"
+        sudo mount "${idir}/rootfs-withdomu.ext2" "${TCDIST_ROOTMNT}-su"
+        sudo mount "${idir}/rootfs.ext2" "${TCDIST_DOMUMNT}-su"
         Bind_mounts
 
         Domu_update
 
         Dom0_update
 
-        sudo umount "$DOMUMNT"
-        sudo umount "${DOMUMNT}-su"
-        sudo umount "$ROOTMNT"
-        sudo umount "${ROOTMNT}-su"
+        sudo umount "$TCDIST_DOMUMNT"
+        sudo umount "${TCDIST_DOMUMNT}-su"
+        sudo umount "$TCDIST_ROOTMNT"
+        sudo umount "${TCDIST_ROOTMNT}-su"
     ;;
     esac
 

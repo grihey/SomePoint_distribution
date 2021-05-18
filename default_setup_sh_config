@@ -6,101 +6,101 @@
 # keep assignments at the start of the line!
 
 # Platform selection (raspi4 or x86)
-PLATFORM=raspi4
+TCDIST_PLATFORM=raspi4
 
 # Sub platform selection, only valid for x86 (intel or amd), leave blank
 # for others
-SUB_PLATFORM=
+TCDIST_SUB_PLATFORM=
 
 # Hypervisor selection (xen or kvm)
-HYPERVISOR=xen
+TCDIST_HYPERVISOR=xen
 
 # Default linux branch for the build for both buildroot and guest-os setups.
 # 'xen' is used for raspi4 for now, but should be renamed later once the branch
 # for it is updated. For x86 builds, this should be of form tc-x86-5.10-dev;
 # and running x86config sets it properly.
-LINUX_BRANCH=xen
+TCDIST_LINUX_BRANCH=xen
 
-# BUILDOPT defines type of build
+# TCDIST_BUILDOPT defines type of build
 # 'usb' for USB build
 # 'mmc' for MMC/SD build
 # 'dhcp' for dynamic network configuration tftp/nfsroot build
 # 'static' for static network configuration tftp/nfsroot build
-BUILDOPT=usb
+TCDIST_BUILDOPT=usb
 
-# SECURE_OS defines if we are building a secure-os or not
-SECURE_OS=0
+# TCDIST_SECUREOS defines if we are building a secure-os or not
+TCDIST_SECUREOS=0
 
-# SUDOTYPE selects the way sudo command/function is used
+# TCDIST_SUDOTYPE selects the way sudo command/function is used
 # 'standard' will use standard sudo executable as it is
 # 'showonpassword' will show command to be run when password is prompted
 # 'verbose' will show all sudoed commands even if password is not needed
 # 'confirm' will show and confirm all sudoed commands
-SUDOTYPE=showonpassword
+TCDIST_SUDOTYPE=showonpassword
 
 # Update bootfs/rootfs/domufs only, do not wipe (rm -rf) contents
-FS_UPDATE_ONLY=0
+TCDIST_FS_UPDATE_ONLY=0
 
 # Automount sd/usb if not mounted when doing e.g. rootfs (0=off, 1=on)
-AUTOMOUNT=0
+TCDIST_AUTOMOUNT=0
 
 # Default device for mount operations
-DEFDEV=/dev/sda
+TCDIST_DEFDEV=/dev/sda
 
 # Device tree used
-DEVTREE=bcm2711-rpi-4-b.dtb
+TCDIST_DEVTREE=bcm2711-rpi-4-b.dtb
 
 # 0 = load device tree in u-boot, 1 = use firmware provided device tree
-FWFDT=0
+TCDIST_FWFDT=0
 
 # API key for downloading binaries etc. from Artifactory
 # Generate key from JFrog and place it into the .setup_sh_config file
-ARTIFACTORY_API_KEY=
+TCDIST_ARTIFACTORY_API_KEY=
 
 # Path where downloads are cached. If empty cache is not used.
-DOWNLOAD_CACHE_DIR="$(pwd)/.download_cache"
+TCDIST_DL_CACHE_DIR="$(pwd)/.download_cache"
 
 # Directories where partitions are mounted
-MNT_DIR="$(pwd)/mnt"
-BOOTMNT="$MNT_DIR/bootfs"
-ROOTMNT="$MNT_DIR/rootfs"
-DOMUMNT="$MNT_DIR/domufs"
+TCDIST_MNT_DIR="$(pwd)/mnt"
+TCDIST_BOOTMNT="$TCDIST_MNT_DIR/bootfs"
+TCDIST_ROOTMNT="$TCDIST_MNT_DIR/rootfs"
+TCDIST_DOMUMNT="$TCDIST_MNT_DIR/domufs"
 
 # Where guest kernels are built by default
-GKBUILD="$(pwd)/images"
+TCDIST_GKBUILD="$(pwd)/images"
 
 # Where filesystem dirs are generated to and where disk image is placed
-IMGBUILD="$(pwd)/images/genimage"
+TCDIST_IMGBUILD="$(pwd)/images/genimage"
 
 # Temporary directory
-TMPDIR="$(pwd)/images/tmp"
+TCDIST_TMPDIR="$(pwd)/images/tmp"
 
 # Where buildroot is storing images
-IMAGES="$(pwd)/buildroot/output/images"
-KERNEL_IMAGE="${IMAGES}/Image"
+TCDIST_IMAGES="$(pwd)/buildroot/output/images"
+TCDIST_KERNEL_IMAGE="${TCDIST_IMAGES}/Image"
+
+# Xen cpu and memory options
+TCDIST_XEN_DOM0_CPUCOUNT=2
+TCDIST_XEN_DOM0_MEMORY=4G
+
+# RasPi dom0 static IP Configuration
+TCDIST_DEVICEIP=192.168.1.170
+TCDIST_DEVICENM=255.255.255.0
+TCDIST_DEVICEGW=192.168.1.1
+
+# These settings should be valid both in DHCP and static IP configurations
+TCDIST_DEVICEDNS=1.1.1.1
+TCDIST_DEVICEHN=raspi
+
+# TFTP and NFS server settings
+TCDIST_TFTPSERVER=192.168.1.145
+TCDIST_TFTPPATH=/srv/tftp
+TCDIST_NFSSERVER="$TCDIST_TFTPSERVER"
+TCDIST_NFSDOM0=/srv/nfsdom0
+TCDIST_NFSDOMU=/srv/nfsdomu
 
 # ccache options
 CCACHE="$(command -v ccache || true)"
 CCACHE_DIR="$(pwd)/.ccache"
 CCACHE_MAXSIZE=10G
-
-# Xen cpu and memory options
-XEN_DOM0_CPUCOUNT=2
-XEN_DOM0_MEMORY=4G
-
-# RasPi dom0 static IP Configuration
-DEVICEIP=192.168.1.170
-DEVICENM=255.255.255.0
-DEVICEGW=192.168.1.1
-
-# These settings should be valid both in DHCP and static IP configurations
-DEVICEDNS=1.1.1.1
-DEVICEHN=raspi
-
-# TFTP and NFS server settings
-TFTPSERVER=192.168.1.145
-TFTPPATH=/srv/tftp
-NFSSERVER="$TFTPSERVER"
-NFSDOM0=/srv/nfsdom0
-NFSDOMU=/srv/nfsdomu
 

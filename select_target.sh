@@ -1,6 +1,6 @@
-BUILDOPT=mmc
-FWFDT=1 # FW defined device tree
-HYPERVISOR=xen
+TCDIST_BUILDOPT=mmc
+TCDIST_FWFDT=1 # FW defined device tree
+TCDIST_HYPERVISOR=xen
 TARGET=mate
 TARGET_DIR="images/${TARGET}-images"
 TARGET_IMAGE="${TARGET}.img"
@@ -11,8 +11,8 @@ DOM0_KERNEL_BUILD_BOOT="arch/${KERNEL_ARCH}/boot"
 DOM0_DTS="${DOM0_KERNEL_BUILD_BOOT}/dts"
 DOM0_DTB_RASP="${DOM0_DTS}/broadcom/bcm2711-rpi-4-b.dtb"
 
-XEN_DOM0_CPUCOUNT=4
-XEN_DOM0_MEMORY=4G
+TCDIST_XEN_DOM0_CPUCOUNT=4
+TCDIST_XEN_DOM0_MEMORY=4G
 
 DOM0_KERNEL_EXTRA_CONFIGS=$(echo -e "\
 # Option to disable swiotlb. There is bug in kernel's swiotlb with Xen\n\
@@ -60,7 +60,7 @@ case "${TARGET}" in
     ;;
 esac
 
-echo "Using ${BUILDOPT} boot."
+echo "Using ${TCDIST_BUILDOPT} boot."
 
 XEN_DOMU0=2020-12-02-raspios-buster-armhf
 XEN_DOMU0_FILE="${XEN_DOMU0}.zip"

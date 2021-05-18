@@ -2,8 +2,8 @@
 
 function On_exit_cleanup {
     set +e
-    if [ -n "$TMPDIR" ]; then
-        rm -rf "$TMPDIR"
+    if [ -n "$TCDIST_TMPDIR" ]; then
+        rm -rf "$TCDIST_TMPDIR"
     fi
     popd > /dev/null
 }
@@ -30,25 +30,25 @@ function Generate_disk_image {
     if [ -n "$1" ]; then
         idir="$(Sanity_check "$1" ne)"
     else
-        idir="$(Sanity_check "$IMGBUILD" ne)"
+        idir="$(Sanity_check "$TCDIST_IMGBUILD" ne)"
     fi
 
-    if [ -z "$ROOTSIZE" ]; then
-        local ROOTSIZE
-        ROOTSIZE=$((1024*1024))
+    if [ -z "$TCDIST_ROOTSIZE" ]; then
+        local TCDIST_ROOTSIZE
+        TCDIST_ROOTSIZE=$((1024*1024))
     fi
 
-    if [ -z "$DOMUSIZE" ]; then
-        local DOMUSIZE
-        DOMUSIZE=$((1024*1024))
+    if [ -z "$TCDIST_DOMUSIZE" ]; then
+        local TCDIST_DOMUSIZE
+        TCDIST_DOMUSIZE=$((1024*1024))
     fi
 
-    if [ -z "$BRHOSTDIR" ]; then
-        local BRHOSTDIR
-        BRHOSTDIR=./buildroot/output/host
+    if [ -z "$TCDIST_BRHOSTDIR" ]; then
+        local TCDIST_BRHOSTDIR
+        TCDIST_BRHOSTDIR=./buildroot/output/host
     fi
 
-    if [ "$PLATFORM" != "x86" ] && [ ! -x "$BRHOSTDIR/bin/genimage" ]; then
+    if [ "$TCDIST_PLATFORM" != "x86" ] && [ ! -x "$TCDIST_BRHOSTDIR/bin/genimage" ]; then
         echo "Buildroot must be built before generate_disk_image command can be used" >&2
         exit 1
     fi
@@ -71,25 +71,25 @@ function Generate_disk_image {
 
     mkdir -p "${idir}/input"
     rm -f "${idir}/input/rootfs.ext4"
-    fakeroot mke2fs -t ext4 -d "$rdir" "${idir}/input/rootfs.ext4" "$ROOTSIZE"
+    fakeroot mke2fs -t ext4 -d "$rdir" "${idir}/input/rootfs.ext4" "$TCDIST_ROOTSIZE"
 
     rm -f "${idir}/input/domufs.ext4"
-    fakeroot mke2fs -t ext4 -d "$ddir" "${idir}/input/domufs.ext4" "$DOMUSIZE"
+    fakeroot mke2fs -t ext4 -d "$ddir" "${idir}/input/domufs.ext4" "$TCDIST_DOMUSIZE"
 
-    if [ "$PLATFORM" = "x86" ] ; then
+    if [ "$TCDIST_PLATFORM" = "x86" ] ; then
         return 0
     fi
 
-    rm -rf "${TMPDIR}/genimage"
+    rm -rf "${TCDIST_TMPDIR}/genimage"
 
-    LD_LIBRARY_PATH="${BRHOSTDIR}/lib" \
-    PATH="${BRHOSTDIR}/bin:${BRHOSTDIR}/sbin:${PATH}" \
+    LD_LIBRARY_PATH="${TCDIST_BRHOSTDIR}/lib" \
+    PATH="${TCDIST_BRHOSTDIR}/bin:${TCDIST_BRHOSTDIR}/sbin:${PATH}" \
         genimage \
             --config ./configs/genimage-sp-distro.cfg \
             --rootpath "${idir}/root" \
             --inputpath "${idir}/input" \
             --outputpath "${idir}/output" \
-            --tmppath "$TMPDIR/genimage"
+            --tmppath "$TCDIST_TMPDIR/genimage"
 }
 
 function Build_guest_kernels {
@@ -101,10 +101,10 @@ function Build_guest_kernels {
     if [ -n "$1" ]; then
         odir="$(Sanity_check "$1" ne)"
     else
-        odir="$(Sanity_check "$GKBUILD" ne)"
+        odir="$(Sanity_check "$TCDIST_GKBUILD" ne)"
     fi
 
-    case "$SECURE_OS" in
+    case "$TCDIST_SECUREOS" in
     1)
         os_opt="_secure"
     ;;
@@ -113,7 +113,7 @@ function Build_guest_kernels {
     ;;
     esac
 
-    case "$PLATFORM" in
+    case "$TCDIST_PLATFORM" in
     x86)
         arch="x86_64"
         prefix="x86_64-linux-gnu-"
@@ -124,10 +124,10 @@ function Build_guest_kernels {
     ;;
     esac
 
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
         mkdir -p "${odir}/kvm_domu"
-        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${PLATFORM}_kvm_guest${os_opt}_release_defconfig" "" "${LINUX_BRANCH}"
+        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${TCDIST_PLATFORM}_kvm_guest${os_opt}_release_defconfig" "" "${TCDIST_LINUX_BRANCH}"
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -138,7 +138,7 @@ function Build_guest_kernels {
 function Gen_configs {
     local os_opt
 
-    case "$SECURE_OS" in
+    case "$TCDIST_SECUREOS" in
     1)
         os_opt="_secure"
     ;;
@@ -147,21 +147,21 @@ function Gen_configs {
     ;;
     esac
 
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
-        configs/linux/defconfig_builder.sh -t "${PLATFORM}_kvm_guest${os_opt}_release" -k linux
-        if [ "$PLATFORM" = "x86" ] && [ "$SUB_PLATFORM" = "amd" ] ; then
-            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${PLATFORM}_kvm_guest${os_opt}_release_defconfig"
+        configs/linux/defconfig_builder.sh -t "${TCDIST_PLATFORM}_kvm_guest${os_opt}_release" -k linux
+        if [ "$TCDIST_PLATFORM" = "x86" ] && [ "$TCDIST_SUB_PLATFORM" = "amd" ] ; then
+            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_PLATFORM}_kvm_guest${os_opt}_release_defconfig"
         fi
     ;;
     *)
     ;;
     esac
 
-    configs/linux/defconfig_builder.sh -t "${PLATFORM}_${HYPERVISOR}${os_opt}_release" -k linux
-    cp "configs/buildroot_config_${PLATFORM}_${HYPERVISOR}${os_opt}" buildroot/.config
-    if [ "$PLATFORM" = "x86" ] && [ "$SUB_PLATFORM" = "amd" ] ; then
-        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${PLATFORM}_${HYPERVISOR}${os_opt}_release_defconfig"
+    configs/linux/defconfig_builder.sh -t "${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}" buildroot/.config
+    if [ "$TCDIST_PLATFORM" = "x86" ] && [ "$TCDIST_SUB_PLATFORM" = "amd" ] ; then
+        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}_release_defconfig"
     fi
 }
 
@@ -175,25 +175,25 @@ function Clone {
 
     # Checkout the default branch
     pushd linux
-    git checkout "${LINUX_BRANCH}"
+    git checkout "${TCDIST_LINUX_BRANCH}"
     popd
 
     Gen_configs
 }
 
 function Uboot_script {
-    if [ "$PLATFORM" = "x86" ] ; then
+    if [ "$TCDIST_PLATFORM" = "x86" ] ; then
         echo "INFO: Uboot_script generated scripts not needed for x86 build."
         return 0
     fi
 
     mkdir -p images/xen
 
-    cp "${IMAGES}/xen" images/xen/
-    cp "$KERNEL_IMAGE" images/xen/vmlinuz
+    cp "${TCDIST_IMAGES}/xen" images/xen/
+    cp "$TCDIST_KERNEL_IMAGE" images/xen/vmlinuz
 
-    cp "${IMAGES}/$DEVTREE" images/xen
-    case "$BUILDOPT" in
+    cp "${TCDIST_IMAGES}/$TCDIST_DEVTREE" images/xen
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
         Uboot_stub > images/xen/boot.source
         mkimage -A arm64 -T script -C none -a 0x2400000 -e 0x2400000 -d images/xen/boot.source images/xen/boot.scr
@@ -210,19 +210,19 @@ function Uboot_script {
 function Boot_fs {
     local bootfs
 
-    if [ "$PLATFORM" = "x86" ] ; then
+    if [ "$TCDIST_PLATFORM" = "x86" ] ; then
         echo "INFO: x86 does not require bootfs setup."
         return 0
     fi
 
     if [ -z "$1" ]; then
-        bootfs="$BOOTMNT"
-        Is_mounted "$BOOTMNT"
+        bootfs="$TCDIST_BOOTMNT"
+        Is_mounted "$TCDIST_BOOTMNT"
     else
         bootfs="$(Sanity_check "$1")"
     fi
 
-    if [ "$FS_UPDATE_ONLY" != "1" ] ; then
+    if [ "$TCDIST_FS_UPDATE_ONLY" != "1" ] ; then
         pushd "$bootfs"
         rm -rf ./*
         popd
@@ -230,8 +230,8 @@ function Boot_fs {
 
     Config_txt > "${bootfs}/config.txt"
     cp u-boot.bin "$bootfs"
-    cp "$KERNEL_IMAGE" "${bootfs}/vmlinuz"
-    case "$BUILDOPT" in
+    cp "$TCDIST_KERNEL_IMAGE" "${bootfs}/vmlinuz"
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
         cp images/xen/boot2.scr "$bootfs"
     ;;
@@ -240,17 +240,17 @@ function Boot_fs {
     ;;
     esac
 
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
         # Nothing to copy at this point
     ;;
     *)
-        cp "${IMAGES}/xen" "$bootfs"
+        cp "${TCDIST_IMAGES}/xen" "$bootfs"
     ;;
     esac
 
-    cp "${IMAGES}/$DEVTREE" "$bootfs"
-    cp -r "${IMAGES}/rpi-firmware/overlays" "$bootfs"
+    cp "${TCDIST_IMAGES}/$TCDIST_DEVTREE" "$bootfs"
+    cp -r "${TCDIST_IMAGES}/rpi-firmware/overlays" "$bootfs"
     cp usbfix/fixup4.dat "$bootfs"
     cp usbfix/start4.elf "$bootfs"
 }
@@ -258,11 +258,11 @@ function Boot_fs {
 function Net_boot_fs {
     local bootfs
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
         if [ -z "$1" ]; then
-            bootfs="$BOOTMNT"
-            Is_mounted "$BOOTMNT"
+            bootfs="$TCDIST_BOOTMNT"
+            Is_mounted "$TCDIST_BOOTMNT"
         else
             bootfs="$(Sanity_check "$1")"
         fi
@@ -276,7 +276,7 @@ function Net_boot_fs {
         cp usbfix/fixup4.dat "$bootfs"
         cp usbfix/start4.elf "$bootfs"
         cp images/xen/boot.scr "$bootfs"
-        cp "${IMAGES}/$DEVTREE" "$bootfs"
+        cp "${TCDIST_IMAGES}/$TCDIST_DEVTREE" "$bootfs"
     ;;
     *)
         echo "Not configured for network boot" >&2
@@ -289,8 +289,8 @@ function Root_fs {
     local rootfs
 
     if [ -z "$1" ]; then
-        rootfs="$ROOTMNT"
-        Is_mounted "$ROOTMNT"
+        rootfs="$TCDIST_ROOTMNT"
+        Is_mounted "$TCDIST_ROOTMNT"
     else
         rootfs="$(Sanity_check "$1")"
     fi
@@ -298,10 +298,10 @@ function Root_fs {
     if [ "$VDAUPDATE" != "1" ] ; then
         pushd "$rootfs"
         echo "Updating $rootfs/"
-        if [ "$FS_UPDATE_ONLY" != "1" ] ; then
+        if [ "$TCDIST_FS_UPDATE_ONLY" != "1" ] ; then
             rm -rf ./*
         fi
-        fakeroot tar xf "${IMAGES}/rootfs.tar" > /dev/null
+        fakeroot tar xf "${TCDIST_IMAGES}/rootfs.tar" > /dev/null
         popd
     fi
 
@@ -321,9 +321,9 @@ function Root_fs {
     Net_rc_add dom0 > "${rootfs}/etc/init.d/S41netadditions"
     chmod 755 "${rootfs}/etc/init.d/S41netadditions"
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
-        if [ "$HYPERVISOR" == "xen" ] ; then
+        if [ "$TCDIST_HYPERVISOR" == "xen" ] ; then
             echo 'vif.default.script="vif-nat"' >> "${rootfs}/etc/xen/xl.conf"
         fi
     ;;
@@ -335,26 +335,26 @@ function Root_fs {
     chmod 755 "${rootfs}/etc/init.d/S10mdev"
     cp buildroot/package/busybox/mdev.conf "${rootfs}/etc/mdev.conf"
 
-    if [ "$PLATFORM" == "raspi4" ] ; then
+    if [ "$TCDIST_PLATFORM" == "raspi4" ] ; then
         cp "$rootfs/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${rootfs}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
     fi
     Inittab dom0 > "${rootfs}/etc/inittab"
     echo '. .bashrc' > "${rootfs}/root/.profile"
     echo 'PS1="\u@\h:\w# "' > "${rootfs}/root/.bashrc"
-    echo "${DEVICEHN}-dom0" > "${rootfs}/etc/hostname"
+    echo "${TCDIST_DEVICEHN}-dom0" > "${rootfs}/etc/hostname"
 
-    case "$HYPERVISOR" in
+    case "$TCDIST_HYPERVISOR" in
     kvm)
-        case "$PLATFORM" in
+        case "$TCDIST_PLATFORM" in
         x86)
-            cp "${GKBUILD}/kvm_domu/arch/x86/boot/bzImage" "${rootfs}/root/Image"
-            #cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+            cp "${TCDIST_GKBUILD}/kvm_domu/arch/x86/boot/bzImage" "${rootfs}/root/Image"
+            #cp "$TCDIST_KERNEL_IMAGE" "${rootfs}/root/Image"
             Run_x86_qemu_sh > "${rootfs}/root/run-x86-qemu.sh"
             chmod a+x "${rootfs}/root/run-x86-qemu.sh"
         ;;
         *)
-            cp "${GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${rootfs}/root/Image"
-            #cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+            cp "${TCDIST_GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${rootfs}/root/Image"
+            #cp "$TCDIST_KERNEL_IMAGE" "${rootfs}/root/Image"
             cp qemu/efi-virtio.rom "${rootfs}/root"
             cp qemu/qemu-system-aarch64 "${rootfs}/root"
             cp qemu/run-qemu.sh "${rootfs}/root"
@@ -371,7 +371,7 @@ function Root_fs {
         chmod a+x "${rootfs}/root/virt_socat.sh"
     ;;
     *)
-        cp "$KERNEL_IMAGE" "${rootfs}/root/Image"
+        cp "$TCDIST_KERNEL_IMAGE" "${rootfs}/root/Image"
         Domu_config > "${rootfs}/root/domu.cfg"
     ;;
     esac
@@ -381,8 +381,8 @@ function Domu_fs {
     local domufs
 
     if [ -z "$1" ]; then
-        domufs="$DOMUMNT"
-        Is_mounted "$DOMUMNT"
+        domufs="$TCDIST_DOMUMNT"
+        Is_mounted "$TCDIST_DOMUMNT"
     else
         domufs="$(Sanity_check "$1")"
     fi
@@ -394,14 +394,14 @@ function Domu_fs {
 
     Domu_interfaces > "${domufs}/etc/network/interfaces"
     Inittab domu > "${domufs}/etc/inittab"
-    echo "${DEVICEHN}-domu" > "${domufs}/etc/hostname"
+    echo "${TCDIST_DEVICEHN}-domu" > "${domufs}/etc/hostname"
 
-    case "$PLATFORM" in
+    case "$TCDIST_PLATFORM" in
         x86)
             rm -rf "${domufs}/lib/modules"
             mkdir -p "${domufs}/lib/modules"
-            if [ "$SECURE_OS" = "0" ] ; then
-                Install_kernel_modules ./linux x86_64 x86_64-linux-gnu- "${GKBUILD}/kvm_domu" "${domufs}" ""
+            if [ "$TCDIST_SECUREOS" = "0" ] ; then
+                Install_kernel_modules ./linux x86_64 x86_64-linux-gnu- "${TCDIST_GKBUILD}/kvm_domu" "${domufs}" ""
             fi
         ;;
         *)
@@ -410,51 +410,51 @@ function Domu_fs {
 }
 
 function Nfs_update {
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     dhcp|static)
         Set_my_ids
         Create_mount_points
-        if [ "$PLATFORM" != "x86" ] ; then
-            sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TFTPPATH" "$BOOTMNT"
+        if [ "$TCDIST_PLATFORM" != "x86" ] ; then
+            sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TCDIST_TFTPPATH" "$TCDIST_BOOTMNT"
         fi
-        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOM0" "$ROOTMNT"
-        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$NFSDOMU" "$DOMUMNT"
+        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$TCDIST_NFSDOM0" "$TCDIST_ROOTMNT"
+        sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$TCDIST_NFSDOMU" "$TCDIST_DOMUMNT"
 
-        if [ "$PLATFORM" != "x86" ] ; then
+        if [ "$TCDIST_PLATFORM" != "x86" ] ; then
             Boot_fs
-            chmod -R 744 "$BOOTMNT"
-            chmod 755 "$BOOTMNT"
-            chmod 755 "${BOOTMNT}/overlays"
+            chmod -R 744 "$TCDIST_BOOTMNT"
+            chmod 755 "$TCDIST_BOOTMNT"
+            chmod 755 "${TCDIST_BOOTMNT}/overlays"
         fi
         Root_fs
-        echo "DOM0_NFSROOT" > "${ROOTMNT}/DOM0_NFSROOT"
+        echo "DOM0_NFSROOT" > "${TCDIST_ROOTMNT}/DOM0_NFSROOT"
         Domu_fs
-        echo "DOMU_NFSROOT" > "${DOMUMNT}/DOMU_NFSROOT"
+        echo "DOMU_NFSROOT" > "${TCDIST_DOMUMNT}/DOMU_NFSROOT"
 
-        if [ "$SECURE_OS" = "1" ] && [ "$PLATFORM" = "x86" ] ; then
+        if [ "$TCDIST_SECUREOS" = "1" ] && [ "$TCDIST_PLATFORM" = "x86" ] ; then
             # Secure-os contains a docker installation that doesn't run
             # very well over raw NFS file system. To overcome this limitation,
             # lets create a 100M ext2 virtual disk image for it, and mount
             # it automatically
-            rm -f "${GKBUILD}/docker.ext2"
-            mkfs.ext2 -L docker-vd "${GKBUILD}/docker.ext2" 100M
-            cp "${GKBUILD}/docker.ext2" "${ROOTMNT}/root/docker.ext2"
-            if ! grep -q docker "${ROOTMNT}/etc/fstab"  ; then
-                echo -e "/dev/vda\t/var/lib/docker\text2\tdefaults\t0\t2" >> "${ROOTMNT}/etc/fstab"
+            rm -f "${TCDIST_GKBUILD}/docker.ext2"
+            mkfs.ext2 -L docker-vd "${TCDIST_GKBUILD}/docker.ext2" 100M
+            cp "${TCDIST_GKBUILD}/docker.ext2" "${TCDIST_ROOTMNT}/root/docker.ext2"
+            if ! grep -q docker "${TCDIST_ROOTMNT}/etc/fstab"  ; then
+                echo -e "/dev/vda\t/var/lib/docker\text2\tdefaults\t0\t2" >> "${TCDIST_ROOTMNT}/etc/fstab"
             fi
-            if ! grep -q docker "${DOMUMNT}/etc/fstab" ; then
-                echo -e "/dev/vda\t/var/lib/docker\text2\tdefaults\t0\t2" >> "${DOMUMNT}/etc/fstab"
+            if ! grep -q docker "${TCDIST_DOMUMNT}/etc/fstab" ; then
+                echo -e "/dev/vda\t/var/lib/docker\text2\tdefaults\t0\t2" >> "${TCDIST_DOMUMNT}/etc/fstab"
             fi
         fi
 
-        if [ "$PLATFORM" != "x86" ] ; then
-            sudo umount "$BOOTMNT"
+        if [ "$TCDIST_PLATFORM" != "x86" ] ; then
+            sudo umount "$TCDIST_BOOTMNT"
         fi
-        sudo umount "$ROOTMNT"
-        sudo umount "$DOMUMNT"
+        sudo umount "$TCDIST_ROOTMNT"
+        sudo umount "$TCDIST_DOMUMNT"
     ;;
     *)
-        echo "BUILDOPT is not set for network boot: $BUILDOPT" >&2
+        echo "TCDIST_BUILDOPT is not set for network boot: $TCDIST_BUILDOPT" >&2
         exit 1
     ;;
     esac
@@ -463,12 +463,12 @@ function Nfs_update {
 function Vdaupdate {
     local size
 
-    if [ "$PLATFORM" != "x86" ] ; then
+    if [ "$TCDIST_PLATFORM" != "x86" ] ; then
         echo "VDA update is only supported for x86." >&2
         exit 1
     fi
 
-    case "$BUILDOPT" in
+    case "$TCDIST_BUILDOPT" in
     usb|mmc)
         Set_my_ids
         Create_mount_points
@@ -476,33 +476,33 @@ function Vdaupdate {
         # Create a copy of the rootfs.ext2 image for including domu.
         # The rootfs image gets copied inside the rootfs-withdomu.ext2
         # thus we must also double the size of rootfs-withdomu.ext2 image.
-        e2fsck -f "${IMAGES}/rootfs.ext2"
-        cp -f "${IMAGES}/rootfs.ext2" "${IMAGES}/rootfs-withdomu.ext2"
-        size="$(wc -c "${IMAGES}/rootfs-withdomu.ext2" | cut -d " " -f 1)"
+        e2fsck -f "${TCDIST_IMAGES}/rootfs.ext2"
+        cp -f "${TCDIST_IMAGES}/rootfs.ext2" "${TCDIST_IMAGES}/rootfs-withdomu.ext2"
+        size="$(wc -c "${TCDIST_IMAGES}/rootfs-withdomu.ext2" | cut -d " " -f 1)"
         size="$((size * 2 / 1024 / 1024 + 10))"
         echo "Resizing rootfs to ${size}M bytes"
-        resize2fs "${IMAGES}/rootfs-withdomu.ext2" "${size}M"
+        resize2fs "${TCDIST_IMAGES}/rootfs-withdomu.ext2" "${size}M"
 
-        sudo mount "${IMAGES}/rootfs-withdomu.ext2" "${ROOTMNT}-su"
-        sudo mount "${IMAGES}/rootfs.ext2" "${DOMUMNT}-su"
+        sudo mount "${TCDIST_IMAGES}/rootfs-withdomu.ext2" "${TCDIST_ROOTMNT}-su"
+        sudo mount "${TCDIST_IMAGES}/rootfs.ext2" "${TCDIST_DOMUMNT}-su"
         Bind_mounts
 
         VDAUPDATE=1
 
         Root_fs
-        echo "DOM0_VDAROOT" > "${ROOTMNT}/DOM0_VDAROOT"
+        echo "DOM0_VDAROOT" > "${TCDIST_ROOTMNT}/DOM0_VDAROOT"
         Domu_fs
-        echo "DOMU_VDAROOT" > "${DOMUMNT}/DOMU_VDAROOT"
+        echo "DOMU_VDAROOT" > "${TCDIST_DOMUMNT}/DOMU_VDAROOT"
 
-        sudo umount "$DOMUMNT"
-        sudo umount "${DOMUMNT}-su"
+        sudo umount "$TCDIST_DOMUMNT"
+        sudo umount "${TCDIST_DOMUMNT}-su"
 
-        cp "${IMAGES}/rootfs.ext2" "${ROOTMNT}/root/rootfs.ext2"
-        sudo umount "$ROOTMNT"
-        sudo umount "${ROOTMNT}-su"
+        cp "${TCDIST_IMAGES}/rootfs.ext2" "${TCDIST_ROOTMNT}/root/rootfs.ext2"
+        sudo umount "$TCDIST_ROOTMNT"
+        sudo umount "${TCDIST_ROOTMNT}-su"
     ;;
     *)
-        echo "BUILDOPT is not set for VDA boot (USB/SD): $BUILDOPT" >&2
+        echo "TCDIST_BUILDOPT is not set for VDA boot (USB/SD): $TCDIST_BUILDOPT" >&2
         exit 1
     ;;
     esac
@@ -531,22 +531,22 @@ function Kernel_config_change {
 function Ssh_dut {
     case "$1" in
     domu)
-        case "$PLATFORM" in
+        case "$TCDIST_PLATFORM" in
         x86)
             ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 2222 "root@127.0.0.1"
         ;;
         *)
-            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$DEVICEIP"
+            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$TCDIST_DEVICEIP"
         ;;
         esac
     ;;
     *)
-        case "$PLATFORM" in
+        case "$TCDIST_PLATFORM" in
         x86)
             ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@127.0.0.1"
         ;;
         *)
-            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$DEVICEIP"
+            ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@$TCDIST_DEVICEIP"
         ;;
         esac
     esac
@@ -559,7 +559,7 @@ function Fsck {
     set +e
 
     if [ -z "$1" ]; then
-        dev="$DEFDEV"
+        dev="$TCDIST_DEFDEV"
     else
         dev="$1"
     fi
@@ -631,9 +631,9 @@ function Build_all {
 function Clean {
     local entry
 
-    Safer_rmrf "$GKBUILD"
-    Safer_rmrf "$IMGBUILD"
-    Safer_rmrf "$TMPDIR"
+    Safer_rmrf "$TCDIST_GKBUILD"
+    Safer_rmrf "$TCDIST_IMGBUILD"
+    Safer_rmrf "$TCDIST_TMPDIR"
 
     # Try to clean buildroot only if docker and buildroot have been cloned
     if [ -f "docker/Makefile" ] && [ -f "buildroot/Makefile" ]; then

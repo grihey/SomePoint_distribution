@@ -27,57 +27,57 @@ function Load_config {
     fi
 
     # Convert some options to lower case
-    PLATFORM="${PLATFORM,,}"
-    HYPERVISOR="${HYPERVISOR,,}"
-    BUILDOPT="${BUILDOPT,,}"
-    SUDOTYPE="${SUDOTYPE,,}"
+    TCDIST_PLATFORM="${TCDIST_PLATFORM,,}"
+    TCDIST_HYPERVISOR="${TCDIST_HYPERVISOR,,}"
+    TCDIST_BUILDOPT="${TCDIST_BUILDOPT,,}"
+    TCDIST_SUDOTYPE="${TCDIST_SUDOTYPE,,}"
 
     if [ "$1" != "nocheck" ]; then
-        case "$PLATFORM" in
+        case "$TCDIST_PLATFORM" in
         raspi4)
-            if [ "$SUB_PLATFORM" != "" ] ; then
-                echo "Invalid SUB_PLATFORM for $PLATFORM, please leave blank." >&2
+            if [ "$TCDIST_SUB_PLATFORM" != "" ] ; then
+                echo "Invalid TCDIST_SUB_PLATFORM for $TCDIST_PLATFORM, please leave blank." >&2
                 exit 1
             fi
             # Options ok
         ;;
         x86)
-            case "$SUB_PLATFORM" in
+            case "$TCDIST_SUB_PLATFORM" in
             intel|amd)
                 # Options ok
             ;;
             *)
-                echo "Invalid SUB_PLATFORM: $SUB_PLATFORM" >&2
+                echo "Invalid TCDIST_SUB_PLATFORM: $TCDIST_SUB_PLATFORM" >&2
                 exit 1
             ;;
             esac
         ;;
         *)
-            echo "Invalid PLATFORM: $PLATFORM" >&2
+            echo "Invalid TCDIST_PLATFORM: $TCDIST_PLATFORM" >&2
             exit 1
         ;;
         esac
 
-        case "$HYPERVISOR" in
+        case "$TCDIST_HYPERVISOR" in
         xen|kvm)
             # Options ok
         ;;
         *)
-            echo "Invalid HYPERVISOR: $HYPERVISOR" >&2
+            echo "Invalid TCDIST_HYPERVISOR: $TCDIST_HYPERVISOR" >&2
             exit 1
         ;;
         esac
 
-        case "$BUILDOPT" in
+        case "$TCDIST_BUILDOPT" in
         usb|mmc|dhcp|static)
             # Options ok
         ;;
         *)
-            echo "Invalid BUILDOPT: $BUILDOPT" >&2
+            echo "Invalid TCDIST_BUILDOPT: $TCDIST_BUILDOPT" >&2
             exit 1
         esac
 
-        case "$SUDOTYPE" in
+        case "$TCDIST_SUDOTYPE" in
         standard)
             # Disable sudo function if standard sudo is requested
             unset sudo
@@ -86,7 +86,7 @@ function Load_config {
             # Options ok
         ;;
         *)
-            echo "Invalid SUDOTYPE: $SUDOTYPE" >&2
+            echo "Invalid TCDIST_SUDOTYPE: $TCDIST_SUDOTYPE" >&2
             exit 1
         ;;
         esac
@@ -103,8 +103,8 @@ function Load_config {
 SUDOCMD="$(command -v sudo || true)"
 
 # sudo function will show the command about to be run if password is prompted for
-# if SUDOTYPE=verbose then all commands will be shown
-# if SUDOTYPE=confirm then all commands will be confirmed regardless of password prompting
+# if TCDIST_SUDOTYPE=verbose then all commands will be shown
+# if TCDIST_SUDOTYPE=confirm then all commands will be confirmed regardless of password prompting
 # if left in the confirm prompt for a long time, then sudo might ask password again after confirmation, but it is what it is
 # sudo function meant to replace sudo command, so it is not capitalized like other functions
 function sudo {
@@ -115,7 +115,7 @@ function sudo {
 
     # Check if sudo is going to ask password or not
     if "${SUDOCMD:?}" -n true 2> /dev/null; then
-        case "$SUDOTYPE" in
+        case "$TCDIST_SUDOTYPE" in
         confirm)
             # Ask for confirmation if confirm mode enabled
             inp="x"
@@ -157,20 +157,20 @@ function Xenconfig {
 
 function Kvmconfig {
     echo "Creating .setup_sh_config with kvm configuration" >&2
-    # Change HYPERVISOR option to kvm
-    sed "s/^HYPERVISOR=.*/HYPERVISOR=kvm/" < default_setup_sh_config > .setup_sh_config
+    # Change TCDIST_HYPERVISOR option to kvm
+    sed "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" < default_setup_sh_config > .setup_sh_config
 }
 
 function X86config {
     echo "Creating .setup_sh_config for x86" >&2
     # Change several options for x86 build
-    sed -e "s/^HYPERVISOR=.*/HYPERVISOR=kvm/" \
-        -e "s/^PLATFORM=.*/PLATFORM=x86/" \
-        -e "s/^SUB_PLATFORM=.*/SUB_PLATFORM=intel/" \
-        -e "s/^BUILDOPT=.*/BUILDOPT=dhcp/" \
-        -e "s/^KERNEL_IMAGE=.*/KERNEL_IMAGE=\$IMAGES\/bzImage/" \
-        -e "s/^LINUX_BRANCH=.*/LINUX_BRANCH=tc-x86-5.10-dev/" \
-        -e "s/^DEVICEHN=.*/DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
+    sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
+        -e "s/^TCDIST_PLATFORM=.*/TCDIST_PLATFORM=x86/" \
+        -e "s/^TCDIST_SUB_PLATFORM=.*/TCDIST_SUB_PLATFORM=intel/" \
+        -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=dhcp/" \
+        -e "s/^TCDIST_KERNEL_IMAGE=.*/TCDIST_KERNEL_IMAGE=\$TCDIST_IMAGES\/bzImage/" \
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-x86-5.10-dev/" \
+        -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
 }
 
 # Returns 0 if function exists, 1 if not
@@ -253,23 +253,23 @@ function Remove_ignores {
 }
 
 function Set_deviceipconf {
-    # DEVICEIPCONF defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
-    case "$BUILDOPT" in
+    # TCDIST_DEVICEIPCONF defines ip settings for dom0 (for nfsroot these are needed during kernel boot already)
+    case "$TCDIST_BUILDOPT" in
     dhcp)
         # dhcp configuration
-        DEVICEIPCONF="::::${DEVICEHN}-dom0:eth0:dhcp"
+        TCDIST_DEVICEIPCONF="::::${TCDIST_DEVICEHN}-dom0:eth0:dhcp"
     ;;
     static)
         # static IP configuration
-        DEVICEIPCONF="${DEVICEIP}::${DEVICEGW}:${DEVICENM}:${DEVICEHN}-dom0:eth0:off:${DEVICEDNS}"
+        TCDIST_DEVICEIPCONF="${TCDIST_DEVICEIP}::${TCDIST_DEVICEGW}:${TCDIST_DEVICENM}:${TCDIST_DEVICEHN}-dom0:eth0:off:${TCDIST_DEVICEDNS}"
     ;;
     *)
         # IP configuration not used at boot time (SD/USB)
-        DEVICEIPCONF="invalid"
+        TCDIST_DEVICEIPCONF="invalid"
     ;;
     esac
 
-    export DEVICEIPCONF
+    export TCDIST_DEVICEIPCONF
 }
 
 # Check proper number of parameters given
@@ -348,22 +348,22 @@ function Download_artifactory_binary {
     tmpoutput="${destdir}/${filename}"
     from_artifactory="${4}"
 
-    if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
-        tmpoutput="${DOWNLOAD_CACHE_DIR}/${filename}"
-        mkdir -p "${DOWNLOAD_CACHE_DIR}"
+    if [ -n "${TCDIST_DL_CACHE_DIR}" ]; then
+        tmpoutput="${TCDIST_DL_CACHE_DIR}/${filename}"
+        mkdir -p "${TCDIST_DL_CACHE_DIR}"
     fi
 
-    if [ ! -f "${DOWNLOAD_CACHE_DIR}/${filename}" ] || [ -z "${DOWNLOAD_CACHE_DIR}" ] ; then
+    if [ ! -f "${TCDIST_DL_CACHE_DIR}/${filename}" ] || [ -z "${TCDIST_DL_CACHE_DIR}" ] ; then
         if [ "${from_artifactory}" != "0" ]; then
-            extra_options="-k -H X-JFrog-Art-Api:${ARTIFACTORY_API_KEY:?}"
+            extra_options="-k -H X-JFrog-Art-Api:${TCDIST_ARTIFACTORY_API_KEY:?}"
         fi
         # extra_options contains options separated with spaces, so it is purposefully unquoted
         # shellcheck disable=SC2086
         curl ${extra_options} -L "${download_url}" -o "${tmpoutput}"
     fi
 
-    if [ -n "${DOWNLOAD_CACHE_DIR}" ]; then
-        cp "${DOWNLOAD_CACHE_DIR}/${filename}" "${destdir}/${filename}"
+    if [ -n "${TCDIST_DL_CACHE_DIR}" ]; then
+        cp "${TCDIST_DL_CACHE_DIR}/${filename}" "${destdir}/${filename}"
     fi
 
     echo "Download_artifactory_binary done"
@@ -530,7 +530,7 @@ function Compile_kernel {
     esac
 
     # Secure-os disables modules, so only try to build them with !secure-os
-    if [ "$SECURE_OS" = "0" ] ; then
+    if [ "$TCDIST_SECUREOS" = "0" ] ; then
         build_targets+=" modules"
     fi
 
@@ -651,16 +651,16 @@ function Compile_xen {
 }
 
 function Create_mount_points {
-    mkdir -p "$BOOTMNT"
-    mkdir -p "$ROOTMNT"
-    mkdir -p "${ROOTMNT}-su"
-    mkdir -p "$DOMUMNT"
-    mkdir -p "${DOMUMNT}-su"
+    mkdir -p "$TCDIST_BOOTMNT"
+    mkdir -p "$TCDIST_ROOTMNT"
+    mkdir -p "${TCDIST_ROOTMNT}-su"
+    mkdir -p "$TCDIST_DOMUMNT"
+    mkdir -p "${TCDIST_DOMUMNT}-su"
 }
 
 function Bind_mounts {
-    sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${ROOTMNT}-su" "$ROOTMNT"
-    sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${DOMUMNT}-su" "$DOMUMNT"
+    sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${TCDIST_ROOTMNT}-su" "$TCDIST_ROOTMNT"
+    sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "${TCDIST_DOMUMNT}-su" "$TCDIST_DOMUMNT"
 }
 
 function Set_my_ids {
@@ -685,7 +685,7 @@ function Is_mounted {
         set -e
     fi
     if [ -z "$mounted" ]; then
-        if [ "$AUTOMOUNT" == "1" ]; then
+        if [ "$TCDIST_AUTOMOUNT" == "1" ]; then
             echo "Block device is not mounted. Automounting!" >&2
             Mount
         else
@@ -714,9 +714,9 @@ function Mount_img {
 
     Set_my_ids
 
-    sudo mount -o "uid=${MYUID},gid=$MYGID" "$PART1" "$BOOTMNT"
-    sudo mount "$PART2" "${ROOTMNT}-su"
-    sudo mount "$PART3" "${DOMUMNT}-su"
+    sudo mount -o "uid=${MYUID},gid=$MYGID" "$PART1" "$TCDIST_BOOTMNT"
+    sudo mount "$PART2" "${TCDIST_ROOTMNT}-su"
+    sudo mount "$PART3" "${TCDIST_DOMUMNT}-su"
     Bind_mounts
 }
 
@@ -727,7 +727,7 @@ function Mount {
     set +e
 
     if [ -z "$1" ]; then
-        dev="$DEFDEV"
+        dev="$TCDIST_DEFDEV"
     else
         dev="$1"
     fi
@@ -747,9 +747,9 @@ function Mount {
 
         Set_my_ids
 
-        sudo mount -o "uid=${MYUID},gid=$MYGID" "${dev}${midp}1" "$BOOTMNT"
-        sudo mount "${dev}${midp}2" "${ROOTMNT}-su"
-        sudo mount "${dev}${midp}3" "${DOMUMNT}-su"
+        sudo mount -o "uid=${MYUID},gid=$MYGID" "${dev}${midp}1" "$TCDIST_BOOTMNT"
+        sudo mount "${dev}${midp}2" "${TCDIST_ROOTMNT}-su"
+        sudo mount "${dev}${midp}3" "${TCDIST_DOMUMNT}-su"
         Bind_mounts
     fi
 }
@@ -771,11 +771,11 @@ function Uloop_img {
 function Umount_img {
     set +e
     if [ -f .mountimg ]; then
-        sudo umount "$BOOTMNT"
-        sudo umount "$ROOTMNT"
-        sudo umount "$DOMUMNT"
-        sudo umount "${ROOTMNT}-su"
-        sudo umount "${DOMUMNT}-su"
+        sudo umount "$TCDIST_BOOTMNT"
+        sudo umount "$TCDIST_ROOTMNT"
+        sudo umount "$TCDIST_DOMUMNT"
+        sudo umount "${TCDIST_ROOTMNT}-su"
+        sudo umount "${TCDIST_DOMUMNT}-su"
         Uloop_img
     else
         echo "No image currently mounted" >&2
@@ -807,21 +807,21 @@ function Umount {
         return 0
     fi
 
-    mounted="$(mount | grep "$BOOTMNT")"
+    mounted="$(mount | grep "$TCDIST_BOOTMNT")"
     if [ -z "$mounted" ]; then
         return 0
     fi
 
     if [ "$1" == "mark" ]; then
-        echo 'THIS_IS_BOOTFS' > "${BOOTMNT}/THIS_IS_BOOTFS"
-        echo 'THIS_IS_ROOTFS' > "${ROOTMNT}/THIS_IS_ROOTFS"
-        echo 'THIS_IS_DOMUFS' > "${DOMUMNT}/THIS_IS_DOMUFS"
+        echo 'THIS_IS_BOOTFS' > "${TCDIST_BOOTMNT}/THIS_IS_BOOTFS"
+        echo 'THIS_IS_ROOTFS' > "${TCDIST_ROOTMNT}/THIS_IS_ROOTFS"
+        echo 'THIS_IS_DOMUFS' > "${TCDIST_DOMUMNT}/THIS_IS_DOMUFS"
     fi
-    sudo umount "$BOOTMNT"
-    sudo umount "$ROOTMNT"
-    sudo umount "$DOMUMNT"
-    sudo umount "${ROOTMNT}-su"
-    sudo umount "${DOMUMNT}-su"
+    sudo umount "$TCDIST_BOOTMNT"
+    sudo umount "$TCDIST_ROOTMNT"
+    sudo umount "$TCDIST_DOMUMNT"
+    sudo umount "${TCDIST_ROOTMNT}-su"
+    sudo umount "${TCDIST_DOMUMNT}-su"
     sync
 }
 

@@ -40,7 +40,7 @@ Append_tmp_config_file "ID_RSA=${ID_RSA}"
 
 PORT=2222
 # Serial-only & snapshot of the image
-${SDIR}/../run_x86_qemu.sh -s -ss -p1 ${PORT} -i ${IMAGE} &> ${TMP_LOG} &
+${SDIR}/../run_x86_qemu.sh -s -ss -p1 ${PORT} -i ${IMAGE} & #&> ${TMP_LOG} &
 QEMU_PID=$!
 echo "Qemu PID: ${QEMU_PID}"
 
@@ -77,7 +77,7 @@ trap cleanup TERM
 
 # Declare test commands
 declare -a arr=( \
-    "cd ${TESTS_DIR} && avocado run --job-timeout 10 test_* --tap ${RESULTS} &"
+    "cd ${TESTS_DIR} && avocado run --job-timeout 60 test_* --tap ${RESULTS} &"
 )
 
 for (( i = 0; i < ${#arr[@]} ; i++ )); do
@@ -95,9 +95,9 @@ done
 
 echo "Result file ${RESULTS}"
 cat ${RESULTS}
-ret=$(grep "not ok" ${RESULTS})
+ret=$(grep -e "not ok" -e "SKIP Test" ${RESULTS})
 
-if [ ${ret} ]; then
+if [ "${ret}" ]; then
     echo "Test failed"
     exit 1
 fi

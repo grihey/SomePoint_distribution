@@ -416,6 +416,128 @@ function Domu_fs {
     esac
 }
 
+function Root_fs_e2tools {
+    local rootfs
+
+    if [ -z "$1" ]; then
+        echo "Image missing"
+        exit 1
+    fi
+
+    if ! [ -a "images/device_id_rsa" ]; then
+        echo "Generate ssh key"
+        ssh-keygen -t rsa -q -f "images/device_id_rsa" -N ""
+    fi
+    rootfs="${1}:"
+    echo "Updating rootfs: ${rootfs}"
+
+    e2mkdir  "${rootfs}/root/.ssh" -P 700 -G 0 -O 0
+    e2cp images/device_id_rsa.pub "${rootfs}/root/.ssh/authorized_keys" -P 700 -G 0 -O 0
+
+    Dom0_interfaces > tmpfile
+    e2cp tmpfile "${rootfs}/etc/network/interfaces" -G 0 -O 0
+    e2cp configs/wpa_supplicant.conf "${rootfs}/etc/wpa_supplicant.conf" -G 0 -O 0
+
+    Net_rc_add dom0 > tmpfile
+    e2cp tmpfile "${rootfs}/etc/init.d/S41netadditions" -P 755 -G 0 -O 0
+
+    case "$TCDIST_BUILDOPT" in
+    dhcp|static)
+        if [ "$TCDIST_HYPERVISOR" == "xen" ] ; then
+            e2cp "${rootfs}/etc/xen/xl.conf" tmpfile
+            echo 'vif.default.script="vif-nat"' >> tmpfile
+            e2cp tmpfile "${rootfs}/etc/xen/xl.conf"
+        fi
+    ;;
+    *)
+    ;;
+    esac
+
+    e2cp buildroot/package/busybox/S10mdev "${rootfs}/etc/init.d/S10mdev" -P 755 -G 0 -O 0
+    e2cp buildroot/package/busybox/mdev.conf "${rootfs}/etc/mdev.conf" -P 755 -G 0 -O 0
+
+    if [ "$TCDIST_PLATFORM" == "raspi4" ] ; then
+        e2cp "$rootfs/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${rootfs}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+    fi
+    Inittab dom0 > tmpfile
+    e2cp tmpfile "${rootfs}/etc/inittab"  -P 755 -G 0 -O 0
+
+    echo '. .bashrc' >  tmpfile
+    e2cp tmpfile "${rootfs}/root/.profile" -P 755 -G 0 -O 0
+    echo 'PS1="\u@\h:\w# "' > tmpfile
+    e2cp tmpfile "${rootfs}/root/.bashrc" -P 755 -G 0 -O 0
+    echo "${TCDIST_DEVICEHN}-dom0" > tmpfile
+    e2cp tmpfile "${rootfs}/etc/hostname" -P 755 -G 0 -O 0
+
+    case "$TCDIST_HYPERVISOR" in
+    kvm)
+        case "$TCDIST_PLATFORM" in
+        x86)
+            e2cp "${TCDIST_GKBUILD}/kvm_domu/arch/x86/boot/bzImage" "${rootfs}/root/Image"
+            Run_x86_qemu_sh > tmpfile
+            e2cp tmpfile "${rootfs}/root/run-x86-qemu.sh" -P 777
+        ;;
+        *)
+            e2cp "${TCDIST_GKBUILD}/kvm_domu/arch/arm64/boot/Image" "${rootfs}/root/Image"
+            e2cp qemu/efi-virtio.rom "${rootfs}/root"
+            e2cp qemu/qemu-system-aarch64 "${rootfs}/root"
+            e2cp qemu/run-qemu.sh "${rootfs}/root"
+        ;;
+        esac
+
+        Rq_sh > tmpfile
+        e2cp tmpfile "${rootfs}/root/rq.sh" -P 755
+
+        Host_socat_sh > tmpfile
+        e2cp tmpfile "${rootfs}/root/host_socat.sh" -P 755
+
+        Virt_socat_sh > tmpfile
+        e2cp tmpfile "${rootfs}/root/virt_socat.sh" -P 755
+    ;;
+    *)
+        e2cp "$TCDIST_KERNEL_IMAGE" "${rootfs}/root/Image"
+        Domu_config > tmpfile
+        e2cp tmpfile "${rootfs}/root/domu.cfg"
+    ;;
+    esac
+}
+
+function Domu_fs_e2tools {
+    local domufs
+
+    if [ -z "$1" ]; then
+        echo "Image missing"
+        exit 1
+    fi
+
+    domufs="$1:"
+    Root_fs_e2tools "$1"
+
+    Net_rc_add domu > tmpfile
+    e2cp tmpfile "${domufs}/etc/init.d/S41netadditions" -P 755
+
+    Domu_interfaces > tmpfile
+    e2cp tmpfile "${domufs}/etc/network/interfaces"
+    Inittab domu > tmpfile
+    e2cp tmpfile "${domufs}/etc/inittab"
+    echo "${TCDIST_DEVICEHN}-domu" > tmpfile
+    e2cp tmpfile "${domufs}/etc/hostname"
+
+    case "$TCDIST_PLATFORM" in
+        x86)
+            e2rm -r "${domufs}/lib/modules"
+            e2mkdir "${domufs}/lib/modules"
+            # TODO: Fix this if needed
+            #if [ "$TCDIST_SECUREOS" = "0" ] ; then
+                #Install_kernel_modules ./linux x86_64 x86_64-linux-gnu- "${TCDIST_GKBUILD}/kvm_domu" "${domufs}" ""
+            #fi
+            set -e
+        ;;
+        *)
+        ;;
+    esac
+}
+
 function Nfs_update {
     case "$TCDIST_BUILDOPT" in
     dhcp|static)
@@ -469,6 +591,8 @@ function Nfs_update {
 
 function Vdaupdate {
     local size
+    local rootfs_file
+    local domufs_file
 
     if [ "$TCDIST_PLATFORM" != "x86" ] ; then
         echo "VDA update is only supported for x86." >&2
@@ -477,9 +601,6 @@ function Vdaupdate {
 
     case "$TCDIST_BUILDOPT" in
     usb|mmc)
-        Set_my_ids
-        Create_mount_points
-
         # Create a copy of the rootfs.ext2 image for including domu.
         # The rootfs image gets copied inside the rootfs-withdomu.ext2
         # thus we must also double the size of rootfs-withdomu.ext2 image.
@@ -490,23 +611,19 @@ function Vdaupdate {
         echo "Resizing rootfs to ${size}M bytes"
         resize2fs "${TCDIST_IMAGES}/rootfs-withdomu.ext2" "${size}M"
 
-        sudo mount "${TCDIST_IMAGES}/rootfs-withdomu.ext2" "${TCDIST_ROOTMNT}-su"
-        sudo mount "${TCDIST_IMAGES}/rootfs.ext2" "${TCDIST_DOMUMNT}-su"
-        Bind_mounts
+        rootfs_file="${TCDIST_IMAGES}/rootfs-withdomu.ext2"
+        domufs_file="${TCDIST_IMAGES}/rootfs.ext2"
 
-        VDAUPDATE=1
+        echo "Update image: ${rootfs_file}"
 
-        Root_fs
-        echo "DOM0_VDAROOT" > "${TCDIST_ROOTMNT}/DOM0_VDAROOT"
-        Domu_fs
-        echo "DOMU_VDAROOT" > "${TCDIST_DOMUMNT}/DOMU_VDAROOT"
+        Root_fs_e2tools ${rootfs_file}
+        echo "DOM0_VDAROOT" > tmpfile
+        e2cp tmpfile "${rootfs_file}:/DOM0_VDAROOT"
+        Domu_fs_e2tools  ${domufs_file}
+        echo "DOMU_VDAROOT" > tmpfile
+        e2cp tmpfile "${domufs_file}:/DOMU_VDAROOT"
 
-        sudo umount "$TCDIST_DOMUMNT"
-        sudo umount "${TCDIST_DOMUMNT}-su"
-
-        cp "${TCDIST_IMAGES}/rootfs.ext2" "${TCDIST_ROOTMNT}/root/rootfs.ext2"
-        sudo umount "$TCDIST_ROOTMNT"
-        sudo umount "${TCDIST_ROOTMNT}-su"
+        e2cp "${TCDIST_IMAGES}/rootfs.ext2" "${rootfs_file}:/root/rootfs.ext2"
     ;;
     *)
         echo "TCDIST_BUILDOPT is not set for VDA boot (USB/SD): $TCDIST_BUILDOPT" >&2
@@ -514,6 +631,7 @@ function Vdaupdate {
     ;;
     esac
 
+    echo "Vdaupdate successful"
 }
 
 # If you have changed for example linux/arch/arm64/configs/xen_defconfig and want buildroot to recompile kernel

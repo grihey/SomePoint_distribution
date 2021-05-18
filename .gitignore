@@ -7,3 +7,4 @@ mnt/
 .setup_sh_config
 .download_cache/
 avocado/tests/tmp_*
+tmpfile

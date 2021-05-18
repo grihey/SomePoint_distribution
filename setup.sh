@@ -483,7 +483,7 @@ function Vdaupdate {
         # Create a copy of the rootfs.ext2 image for including domu.
         # The rootfs image gets copied inside the rootfs-withdomu.ext2
         # thus we must also double the size of rootfs-withdomu.ext2 image.
-        e2fsck -f "${TCDIST_IMAGES}/rootfs.ext2"
+        e2fsck -y -f "${TCDIST_IMAGES}/rootfs.ext2"
         cp -f "${TCDIST_IMAGES}/rootfs.ext2" "${TCDIST_IMAGES}/rootfs-withdomu.ext2"
         size="$(wc -c "${TCDIST_IMAGES}/rootfs-withdomu.ext2" | cut -d " " -f 1)"
         size="$((size * 2 / 1024 / 1024 + 10))"

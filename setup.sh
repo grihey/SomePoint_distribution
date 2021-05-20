@@ -525,7 +525,10 @@ function Domu_fs_e2tools {
 
     case "$TCDIST_PLATFORM" in
         x86)
+            set +e
+            # We don't want to fail if modules is already removed
             e2rm -r "${domufs}/lib/modules"
+            set -e
             e2mkdir "${domufs}/lib/modules"
             # TODO: Fix this if needed
             #if [ "$TCDIST_SECUREOS" = "0" ] ; then

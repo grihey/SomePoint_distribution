@@ -1,0 +1,5 @@
+br_admin.ext2
+br_admin.bzImage
+output
+x86_kvm_release_defconfig
+*.tmp

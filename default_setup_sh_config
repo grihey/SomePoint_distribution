@@ -5,6 +5,9 @@
 # Do not insert whitespace before variable names,
 # keep assignments at the start of the line!
 
+# Main directory
+TCDIST_DIR="$(pwd)"
+
 # Platform selection (raspi4 or x86)
 TCDIST_PLATFORM=raspi4
 
@@ -20,6 +23,20 @@ TCDIST_HYPERVISOR=xen
 # for it is updated. For x86 builds, this should be of form tc-x86-5.10-dev;
 # and running x86config sets it properly.
 TCDIST_LINUX_BRANCH=xen
+
+# TCDIST_VMLIST is an array which lists all selected VMs for system image
+# Admin is always first and connection VM second, rest can be arranged freely
+TCDIST_VMLIST=(br_admin br_conn)
+
+# Internal network address, three octets
+TCDIST_INTERNAL_NET=10.10.10
+
+# Change this to point your wired external network interface device
+# Used for setting up bridging for admin machine
+TCDIST_ETHDEV="eth0"
+
+# Bridge name used for bridging admin machine
+TCDIST_ADMINBR="adminbr0"
 
 # TCDIST_BUILDOPT defines type of build
 # 'usb' for USB build

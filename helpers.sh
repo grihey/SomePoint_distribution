@@ -907,3 +907,33 @@ function Make {
     make "$@"
     popd > /dev/null
 }
+
+# Amake runs make for all selected vms with given parameters
+function Amake {
+    local vm
+
+    for vm in "${TCDIST_VMLIST[@]}"; do
+        pushd "$vm"
+            make "$@"
+        popd
+    done
+}
+
+# Finds first argument in the following list of arguments
+# Can be used e.g. to get index of an element in an array
+function Index_of {
+    local i=0
+    local j
+    local elm
+
+    elm="$1"
+    shift
+
+    for j in "$@"; do
+        if [ "$elm" == "$j" ]; then
+            echo "$i"
+            return 0
+        fi
+        i=$((i+1))
+    done
+}

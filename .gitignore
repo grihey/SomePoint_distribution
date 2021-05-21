@@ -8,3 +8,4 @@ mnt/
 .download_cache/
 avocado/tests/tmp_*
 tmpfile
+*.tmp

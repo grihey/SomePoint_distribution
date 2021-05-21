@@ -40,7 +40,7 @@ Append_tmp_config_file "ID_RSA=${ID_RSA}"
 
 PORT=2222
 # Serial-only & snapshot of the image
-${SDIR}/../run_x86_qemu.sh -s -ss -p1 ${PORT} -i ${IMAGE} & #&> ${TMP_LOG} &
+${SDIR}/../run_x86_qemu.sh -r -s -ss -p1 ${PORT} -i ${IMAGE} & #&> ${TMP_LOG} &
 QEMU_PID=$!
 echo "Qemu PID: ${QEMU_PID}"
 

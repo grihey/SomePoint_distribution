@@ -619,10 +619,10 @@ function Vdaupdate {
 
         echo "Update image: ${rootfs_file}"
 
-        Root_fs_e2tools ${rootfs_file}
+        Root_fs_e2tools "${rootfs_file}"
         echo "DOM0_VDAROOT" > tmpfile
         e2cp tmpfile "${rootfs_file}:/DOM0_VDAROOT"
-        Domu_fs_e2tools  ${domufs_file}
+        Domu_fs_e2tools "${domufs_file}"
         echo "DOMU_VDAROOT" > tmpfile
         e2cp tmpfile "${domufs_file}:/DOMU_VDAROOT"
 
@@ -829,7 +829,7 @@ function Shell {
 }
 
 function Check_script {
-    Shellcheck_bashate setup.sh helpers.sh text_generators.sh default_setup_sh_config
+    Shellcheck_bashate setup.sh helpers.sh text_generators.sh default_setup_sh_config tests/secure_os_tests.sh
 }
 
 function Show_help {

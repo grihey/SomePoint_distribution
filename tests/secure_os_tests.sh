@@ -4,7 +4,7 @@
 SDIR="$(dirname "${BASH_SOURCE[0]}")"
 SDIR="$(realpath "$SDIR")"
 
-if [ -z ${IMAGE} ]; then
+if [ -z "${IMAGE}" ]; then
     IMAGE="${SDIR}/../buildroot/output/images/rootfs-withdomu.ext2"
 fi
 
@@ -13,8 +13,8 @@ IMAGE_DIR="$(realpath "$IMAGE_DIR")"
 
 RESULTS=$(mktemp)
 
-if [ -z ${ID_RSA} ]; then
-    ID_RSA=${SDIR}/../images/device_id_rsa
+if [ -z "${ID_RSA}" ]; then
+    ID_RSA="${SDIR}/../images/device_id_rsa"
 fi
 
 TESTS_DIR=${SDIR}/../avocado/tests
@@ -23,12 +23,12 @@ TMP_LOG=$(mktemp)
 
 # Populate tmp config
 function Append_tmp_config_file {
-    echo $1 >> ${TMP_CONFIG}
+    echo "$1" >> "${TMP_CONFIG}"
 }
 
 function Remove_tmp_config {
-    if [ -f ${TMP_CONFIG} ]; then
-        rm ${TMP_CONFIG}
+    if [ -f "${TMP_CONFIG}" ]; then
+        rm "${TMP_CONFIG}"
     fi
 }
 
@@ -40,18 +40,19 @@ Append_tmp_config_file "ID_RSA=${ID_RSA}"
 
 PORT=2222
 # Serial-only & snapshot of the image
-${SDIR}/../run_x86_qemu.sh -r -s -ss -p1 ${PORT} -i ${IMAGE} & #&> ${TMP_LOG} &
+"${SDIR}"/../run_x86_qemu.sh -r -s -ss -p1 "${PORT}" -i "${IMAGE}" & # &> "${TMP_LOG}" &
 QEMU_PID=$!
 echo "Qemu PID: ${QEMU_PID}"
 
 # Remove old known key
-ssh-keygen -R "[localhost]:$PORT" &>2 /dev/null
+echo "Removing existing keys"
+ssh-keygen -R "[localhost]:$PORT"
 
 echo "Waiting for VM to start"
 for i in  {1..10}; do
     printf "."
     sleep 1
-    ret=`ssh -i ${ID_RSA} root@localhost -o StrictHostKeyChecking=accept-new -p ${PORT} echo "hello"`
+    ret=$(ssh -i "${ID_RSA}" root@localhost -o StrictHostKeyChecking=accept-new -p "${PORT}" echo "hello")
     if [ "${ret}" == "hello" ]; then
         break
     fi
@@ -67,10 +68,10 @@ echo "VM running"
 function cleanup {
     # Shutdown VM
     echo "Shutting down VM"
-    ${SDIR}/../stop_x86_qemu.sh ${IMAGE_DIR} ${PORT} ${ID_RSA} ${QEMU_PID}
+    "${SDIR}/../stop_x86_qemu.sh" "${IMAGE_DIR}" "${PORT}" "${ID_RSA}" "${QEMU_PID}"
     Remove_tmp_config
-    rm ${RESULTS}
-    rm ${TMP_LOG}
+    rm "${RESULTS}"
+    rm "${TMP_LOG}"
 }
 trap cleanup EXIT
 trap cleanup TERM
@@ -81,7 +82,7 @@ declare -a arr=( \
 )
 
 for (( i = 0; i < ${#arr[@]} ; i++ )); do
-    printf "\n      Running: ${arr[$i]}\n\n"
+    printf "\n      Running: %s\n\n" "${arr[$i]}"
 
     # Run each command in array
     eval "${PASS_ENV} ${arr[$i]}"
@@ -94,8 +95,8 @@ for pid in ${pids[*]}; do
 done
 
 echo "Result file ${RESULTS}"
-cat ${RESULTS}
-ret=$(grep -e "not ok" -e "SKIP Test" ${RESULTS})
+cat "${RESULTS}"
+ret=$(grep -e "not ok" -e "SKIP Test" "${RESULTS}")
 
 if [ "${ret}" ]; then
     echo "Test failed"

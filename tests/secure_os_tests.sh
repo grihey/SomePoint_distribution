@@ -45,7 +45,7 @@ QEMU_PID=$!
 echo "Qemu PID: ${QEMU_PID}"
 
 # Remove old known key
-ssh-keygen -R "[localhost]:2222" &>2 /dev/null
+ssh-keygen -R "[localhost]:$PORT" &>2 /dev/null
 
 echo "Waiting for VM to start"
 for i in  {1..10}; do

@@ -425,3 +425,57 @@ function Wg_client_config {
     echo "Endpoint = 52.169.138.111:51820"
     echo "PersistentKeepalive = 25"
 }
+
+function Makefile {
+    local vm
+    local admin
+    local outp
+    local dep
+
+    admin="${TCDIST_VMLIST[0]}"
+
+    # shellcheck disable=SC1090
+    . "${admin}/${admin}_config.sh"
+
+    printf "# Generated from Makefile function in text_generators.sh\n"
+    printf "# Manual changes will be lost\n\n"
+
+    printf "all: %s.ext2 %s.bzImage\n" "$TCDIST_NAME" "$TCDIST_NAME"
+
+    printf "\n%s.ext2: " "$TCDIST_NAME"
+
+    for vm in "${TCDIST_VMLIST[@]}"; do
+        # shellcheck disable=SC1090
+        . "${vm}/${vm}_config.sh"
+        for dep in $TCDIST_VM_DEPS; do
+            printf " %s/%s" "$vm" "$dep"
+        done
+    done
+
+    printf "\n"
+    printf "\tcp -f %s/%s.ext2 ./%s.ext2\n" "$admin" "$admin" "$TCDIST_NAME"
+
+    for vm in "${TCDIST_VMLIST[@]}"; do
+        if [ "$vm" != "$admin" ]; then
+            # shellcheck disable=SC1090
+            . "${vm}/${vm}_config.sh"
+            for outp in $TCDIST_VM_OUTPUTS; do
+                printf "\te2cp -P %s -O %s -G %s %s/%s ./%s.ext2:%s\n" "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID" "$vm" "$outp" "$TCDIST_NAME" "$TCDIST_ADMIN_DIR"
+            done
+        fi
+    done
+
+    printf "\n%s.bzImage: %s/%s.bzImage\n" "$TCDIST_NAME" "$admin" "$admin"
+    printf "\tcp -f %s/%s.bzImage ./%s.bzImage\n" "$admin" "$admin" "$TCDIST_NAME"
+
+    for vm in "${TCDIST_VMLIST[@]}"; do
+        # shellcheck disable=SC1090
+        . "${vm}/${vm}_config.sh"
+        for dep in $TCDIST_VM_DEPS; do
+            printf "\n%s/%s:\n" "$vm" "$dep"
+            printf "\tcd %s; make %s\n" "$vm" "$dep"
+        done
+    done
+
+    printf "\n.PHONY: all\n"
+}

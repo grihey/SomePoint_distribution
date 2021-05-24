@@ -8,6 +8,9 @@
 # Main directory
 TCDIST_DIR="$(pwd)"
 
+# Name for project (used as output filename prefix also)
+TCDIST_NAME="tc_distro"
+
 # Platform selection (raspi4 or x86)
 TCDIST_PLATFORM=raspi4
 

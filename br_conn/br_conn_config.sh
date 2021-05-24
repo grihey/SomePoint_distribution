@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TCDIST_VM_NAME="br_conn"
+
 function Interfaces {
     echo "auto lo"
     echo "iface lo inet loopback"
@@ -11,3 +13,6 @@ function Interfaces {
     echo ""
     echo "iface default inet dhcp"
 }
+
+TCDIST_VM_OUTPUTS="${TCDIST_VM_NAME}.ext2 ${TCDIST_VM_NAME}.bzImage vm_1.sh"
+TCDIST_VM_DEPS="${TCDIST_VM_OUTPUTS}"

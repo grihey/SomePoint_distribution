@@ -9,3 +9,7 @@ mnt/
 avocado/tests/tmp_*
 tmpfile
 *.tmp
+Makefile
+*.bzImage
+*.ext2
+

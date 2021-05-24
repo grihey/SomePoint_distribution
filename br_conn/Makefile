@@ -6,6 +6,9 @@ clean:
 	if [ -d output ]; then make "O=${PWD}/output" -C ../buildroot clean; fi
 	rm -rf x86_kvm_guest_release_defconfig output/.config
 
+menuconfig:
+	make O=${PWD}/output -C ../buildroot menuconfig
+
 distclean:
 	rm -rf output x86_kvm_guest_release_defconfig
 
@@ -37,4 +40,4 @@ ifeq ("${TCDIST_SUB_PLATFORM}","amd")
 	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' x86_kvm_release_defconfig
 endif
 
-.PHONY: all clean distclean config image
+.PHONY: all clean distclean config image menuconfig

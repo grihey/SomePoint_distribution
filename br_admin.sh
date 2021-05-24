@@ -4,7 +4,7 @@
 # Select serial connection from qemu window to access
 # It is assumed that adminbr0 bridge is set up earlier with e.g. host_eth.sh
 
-. ../helpers.sh
+. ./helpers.sh
 Load_config
 
 function Interface_up {
@@ -23,8 +23,8 @@ PIDFILE=".br_admin.pid.tmp"
 QEMUEXE="qemu-system-x86_64"
 
 QEMUOPT=(-m 4096 -M pc -cpu host -enable-kvm)
-QEMUOPT+=(-kernel br_admin.bzImage)
-QEMUOPT+=(-drive file=br_admin.ext2,if=virtio,format=raw)
+QEMUOPT+=(-kernel ${TCDIST_NAME}.bzImage)
+QEMUOPT+=(-drive file=${TCDIST_NAME}.ext2,if=virtio,format=raw)
 QEMUOPT+=(-append "rootwait root=/dev/vda console=ttyS0")
 QEMUOPT+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on)
 QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=${TAPIF},mac=CE:11:CA:11:01:00,script=no)

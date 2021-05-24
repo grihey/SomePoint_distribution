@@ -903,6 +903,12 @@ function Fetch_all {
 
 # Just run make (with currently loaded configuration)
 function Make {
+
+    # If running make on main level, (re)generate Makefile
+    if [ "$OPWD" == "$TCDIST_DIR" ]; then
+        Makefile > ./Makefile
+    fi
+
     pushd "$OPWD" > /dev/null
     make "$@"
     popd > /dev/null

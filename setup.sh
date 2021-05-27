@@ -657,6 +657,13 @@ function Kernel_config_change {
 }
 
 function Ssh_dut {
+    local dut_ip
+    local subnet
+    local st
+    local ip
+    local ips
+    local vm_id
+
     case "$1" in
     domu)
         case "$TCDIST_PLATFORM" in
@@ -665,6 +672,67 @@ function Ssh_dut {
         ;;
         *)
             ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@$TCDIST_DEVICEIP"
+        ;;
+        esac
+    ;;
+    vm_*)
+        # SSH to target VM, e.g. vm_admin. The code below checks if the IP
+        # address for the VM is known already (.br_admin.ip.tmp file exists),
+        # and we check with ping to see if the IP address is still valid or
+        # whether it has gone stale. In case we don't know the current IP
+        # address for the VM, we attempt to discover it with use of NMAP
+        # over the network bridge that is used for the VM network
+        vm_id=$1
+        case "$TCDIST_PLATFORM" in
+        x86)
+            vm_id=${vm_id/#vm_/br_}
+
+            # Check if we know VM IP address already
+            if [ -f ".${vm_id}.ip.tmp" ] ; then
+                dut_ip=$(cat ".${vm_id}.ip.tmp")
+                set +e
+
+                # Check if the VM responds to ping (i.e., our IP address is still valid)
+                st=$(ping -c 1 -W 1 "$dut_ip" | grep "from $dut_ip")
+                set -e
+                if [ -z "${st}" ] ; then
+                    # No response, mark our address as invalid
+                    dut_ip=""
+                fi
+            fi
+            if [ -z ${dut_ip} ] ; then
+                echo "No DUT IP known, exploring..."
+                rm -f ".${vm_id}.ip.tmp"
+
+                # Generate subnet mask for our bridge, get current IP address
+                # for it and grab first three values.
+                subnet=$(ifconfig | grep -A 1 "$TCDIST_ADMINBR" | grep -o "inet [0-9\.]*" | cut -d " " -f 2 | cut -d "." -f 1-3)
+                echo "Our subnet is ${subnet}.0/24"
+
+                # Scan the generated subnet for anybody home, cut first address
+                # away as that is our own address
+                ips=$(nmap -sP "${subnet}.0/24" | grep "${subnet}" | tail -n +2 | grep -o "[0-9\.]*")
+                set +e
+
+                # We have a list of everybody in the subnet, now try our
+                # VM SSH key against each to see which of them accepts it,
+                # and run "uname -a" on them to match our target VM name.
+                for ip in ${ips} ; do
+                    echo "Trying IP: $ip"
+                    st=$(ssh -i "${vm_id}/device_id_rsa" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no "root@${ip}" uname -a | grep "${vm_id}")
+                    if [ -n "$st" ] ; then
+                        echo "IP $ip mapped to dut"
+                        dut_ip=$ip
+                    fi
+                done
+                set -e
+
+                # Found our target IP address, save it for later use as the
+                # VMs in most cases retain their IP address.
+                echo "$dut_ip" > ".${vm_id}.ip.tmp"
+            fi
+
+            ssh -i "${vm_id}/device_id_rsa" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@${dut_ip}"
         ;;
         esac
     ;;

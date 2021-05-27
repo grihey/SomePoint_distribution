@@ -17,7 +17,7 @@ if [ "$DISABLED" -ne 1 ]; then
 
     case "$1" in
         netup)
-            Interface_up tap1 "$VMBR"
+            Interface_up tap1 "$CONBR"
         ;;
         netdn)
             Interface_dn tap1

@@ -40,6 +40,9 @@ while [ "${1:0:1}" == "-" ]; do
         -interfaces|if)
             ARFS_INTERFACES=1
         ;;
+        -ssh|ssh)
+            ARFS_SSH=1
+        ;;
         --)
             # explicit end of options
             shift
@@ -73,6 +76,18 @@ fi
 set -x
 cp -f "$1" "$2"
 set +x
+
+if [ -n "$ARFS_SSH" ] ; then
+    set -x
+    # Generate ssh key
+    if ! [ -a "device_id_rsa" ] ; then
+        ssh-keygen -t rsa -q -f "device_id_rsa" -N ""
+    fi
+
+    e2mkdir "${2}:/root/.ssh" -P 700 -G 0 -O 0
+    e2cp "device_id_rsa.pub" "${2}:/root/.ssh/authorized_keys" -P 700 -G 0 -O 0
+    set +x
+fi
 
 # Set hostname if requested
 if [ -n "$ARFS_HOSTNAME" ]; then

@@ -455,6 +455,22 @@ function Makefile {
     printf "\n"
     printf "\tcp -f %s/%s.ext2 ./%s.ext2\n" "$admin" "$admin" "$TCDIST_NAME"
 
+    # Following loop goes through the sizes of all the VM images, and
+    # sums up their sizes into makefile variable $(SZ).
+    printf "\t\$(eval SZ := 0)\n"
+
+    for vm in "${TCDIST_VMLIST[@]}"; do
+        printf "\t\$(eval SZ_%s := \$(shell stat --printf \"%%s\" %s/%s.ext2))\n" "$vm" "$vm" "$vm"
+        printf "\t\$(eval SZ_%s := \$(shell echo \$\$(( \$(SZ_%s) / 1048576)) ))\n" "$vm" "$vm"
+        printf "\t\$(info %s rootfs size = \$(SZ_%s)M)\n" "$vm" "$vm"
+        printf "\t\$(eval SZ := \$(shell echo \$\$(( \$(SZ) + \$(SZ_%s) )) ))\n" "$vm"
+    done
+
+    # Report out the resulting required rootfs size, and resize the final
+    # rootfs to fit all the VM images also.
+    printf "\t\$(info final rootfs size = \$(SZ)M)\n"
+    printf "\tresize2fs ./%s.ext2 \$(SZ)M\n" "$TCDIST_NAME"
+
     for vm in "${TCDIST_VMLIST[@]}"; do
         if [ "$vm" != "$admin" ]; then
             # shellcheck disable=SC1090

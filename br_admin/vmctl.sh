@@ -68,8 +68,7 @@ case "$1" in
     ;;
     start)
         for S in vm_*.sh; do
-            . "$S" start
-            sleep 0.5s
+            . "$S" start > /dev/null
         done
     ;;
     stop)

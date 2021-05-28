@@ -1,0 +1,6 @@
+br_secure.ext2
+br_secure.bzImage
+output
+x86_kvm_guest_secure_release_defconfig
+*.tmp
+device_id_rsa*

@@ -29,7 +29,7 @@ TCDIST_LINUX_BRANCH=xen
 
 # TCDIST_VMLIST is an array which lists all selected VMs for system image
 # Admin is always first and connection VM second, rest can be arranged freely
-TCDIST_VMLIST=(br_admin br_conn)
+TCDIST_VMLIST=(br_admin br_conn br_secure)
 
 # Internal network address, three octets
 TCDIST_INTERNAL_NET=10.10.10

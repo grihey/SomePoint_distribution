@@ -1,6 +1,3 @@
-br_admin.ext2
-br_admin.bzImage
-output
-x86_kvm_release_defconfig
+*_kvm_release_defconfig
 *.tmp
 device_id_rsa*

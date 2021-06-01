@@ -300,10 +300,10 @@ BR2_BINUTILS_EXTRA_CONFIG_OPTIONS=""
 # GCC Options
 #
 # BR2_GCC_VERSION_8_X is not set
-# BR2_GCC_VERSION_9_X is not set
-BR2_GCC_VERSION_10_X=y
+BR2_GCC_VERSION_9_X=y
+# BR2_GCC_VERSION_10_X is not set
 BR2_GCC_SUPPORTS_DLANG=y
-# BR2_GCC_VERSION is not set
+BR2_GCC_VERSION="9.3.0"
 BR2_EXTRA_GCC_CONFIG_OPTIONS=""
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
 # BR2_TOOLCHAIN_BUILDROOT_FORTRAN is not set
@@ -489,11 +489,11 @@ BR2_LINUX_KERNEL_CUSTOM_GIT=y
 BR2_LINUX_KERNEL_CUSTOM_REPO_URL="/usr/src/linux/.git"
 BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="xen"
 BR2_LINUX_KERNEL_VERSION="xen"
-BR2_LINUX_KERNEL_PATCH="../configs/linux/patches/gcc-plugins"
+BR2_LINUX_KERNEL_PATCH=""
 # BR2_LINUX_KERNEL_USE_DEFCONFIG is not set
 # BR2_LINUX_KERNEL_USE_ARCH_DEFAULT_CONFIG is not set
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
-BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="../linux/arch/arm64/configs/raspi4_kvm_secure_release_defconfig"
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="../linux/arch/arm64/configs/arm64_raspi4_xen_secure_release_defconfig"
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES=""
 BR2_LINUX_KERNEL_CUSTOM_LOGO_PATH=""
 BR2_LINUX_KERNEL_IMAGE=y
@@ -3044,7 +3044,7 @@ BR2_PACKAGE_RPCBIND=y
 # BR2_PACKAGE_SNGREP is not set
 # BR2_PACKAGE_SNMPCLITOOLS is not set
 # BR2_PACKAGE_SNORT is not set
-BR2_PACKAGE_SOCAT=y
+# BR2_PACKAGE_SOCAT is not set
 # BR2_PACKAGE_SOCKETCAND is not set
 # BR2_PACKAGE_SOFTETHER is not set
 # BR2_PACKAGE_SPAWN_FCGI is not set
@@ -3120,35 +3120,35 @@ BR2_PACKAGE_WPA_SUPPLICANT_PASSPHRASE=y
 #
 
 #
-# Please note:                                           
+# Please note:
 #
 
 #
-# - Buildroot does *not* generate binary packages,       
+# - Buildroot does *not* generate binary packages,
 #
 
 #
-# - Buildroot does *not* install any package database.   
+# - Buildroot does *not* install any package database.
 #
 
 #
-# *                                                      
+# *
 #
 
 #
-# It is up to you to provide those by yourself if you    
+# It is up to you to provide those by yourself if you
 #
 
 #
-# want to use any of those package managers.             
+# want to use any of those package managers.
 #
 
 #
-# *                                                      
+# *
 #
 
 #
-# See the manual:                                        
+# See the manual:
 #
 
 #
@@ -3399,9 +3399,9 @@ BR2_PACKAGE_UTIL_LINUX_UUIDD=y
 # BR2_PACKAGE_UTIL_LINUX_ZRAMCTL is not set
 # BR2_PACKAGE_WATCHDOG is not set
 # BR2_PACKAGE_XDG_DBUS_PROXY is not set
-# BR2_PACKAGE_XEN is not set
-# BR2_PACKAGE_XEN_HYPERVISOR is not set
-# BR2_PACKAGE_XEN_TOOLS is not set
+BR2_PACKAGE_XEN=y
+BR2_PACKAGE_XEN_HYPERVISOR=y
+BR2_PACKAGE_XEN_TOOLS=y
 BR2_PACKAGE_XVISOR_ARCH_SUPPORTS=y
 # BR2_PACKAGE_XVISOR is not set
 

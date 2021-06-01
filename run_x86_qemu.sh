@@ -4,8 +4,8 @@
 . helpers.sh
 Load_config
 
-if [ "$TCDIST_PLATFORM" != "x86" ] || [ "$TCDIST_HYPERVISOR" != "kvm" ] ; then
-    echo "Bad platform, only supported for x86 / kvm." >&2
+if [ "$TCDIST_PLATFORM" != "qemu" ] || [ "$TCDIST_HYPERVISOR" != "kvm" ] ; then
+    echo "Bad platform, only supported for qemu / kvm." >&2
     exit
 fi
 

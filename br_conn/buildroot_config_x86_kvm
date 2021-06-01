@@ -444,7 +444,7 @@ BR2_LINUX_KERNEL_PATCH=""
 # BR2_LINUX_KERNEL_USE_DEFCONFIG is not set
 # BR2_LINUX_KERNEL_USE_ARCH_DEFAULT_CONFIG is not set
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
-BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(TCDIST_DIR)/br_conn/x86_kvm_guest_release_defconfig"
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(TCDIST_DIR)/TC_BR_VM_KERNEL_DEFCONFIG"
 BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES=""
 BR2_LINUX_KERNEL_CUSTOM_LOGO_PATH=""
 BR2_LINUX_KERNEL_BZIMAGE=y
@@ -1076,7 +1076,7 @@ BR2_PACKAGE_QT5_JSCORE_AVAILABLE=y
 # BR2_PACKAGE_BRLTTY is not set
 
 #
-# cc-tool needs a toolchain w/ C++, threads, wchar, gcc >= 4.9 
+# cc-tool needs a toolchain w/ C++, threads, wchar, gcc >= 4.9
 #
 # BR2_PACKAGE_CDRKIT is not set
 # BR2_PACKAGE_CRYPTSETUP is not set
@@ -3128,35 +3128,35 @@ BR2_PACKAGE_SOCAT=y
 #
 
 #
-# Please note:                                           
+# Please note:
 #
 
 #
-# - Buildroot does *not* generate binary packages,       
+# - Buildroot does *not* generate binary packages,
 #
 
 #
-# - Buildroot does *not* install any package database.   
+# - Buildroot does *not* install any package database.
 #
 
 #
-# *                                                      
+# *
 #
 
 #
-# It is up to you to provide those by yourself if you    
+# It is up to you to provide those by yourself if you
 #
 
 #
-# want to use any of those package managers.             
+# want to use any of those package managers.
 #
 
 #
-# *                                                      
+# *
 #
 
 #
-# See the manual:                                        
+# See the manual:
 #
 
 #

@@ -11,5 +11,8 @@ tmpfile
 *.tmp
 Makefile
 *.bzImage
+*.Image
 *.ext2
-
+*/output_*
+*/*_defconfig
+*/generated_*

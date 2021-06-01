@@ -311,7 +311,7 @@ function Inittab {
             echo "#AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # Raspi serial"
             echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # HDMI console"
             echo "S0::respawn:/sbin/getty -L ttyS0 0 vt100 # Serial console"
-            #if [ "$TCDIST_PLATFORM" = "x86" ] ; then
+            #if [ "$TCDIST_ARCH" = "x86" ] ; then
             #    echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic Serial"
             #fi
         ;;
@@ -326,7 +326,7 @@ function Inittab {
         cat configs/inittab.pre
         case "$TCDIST_HYPERVISOR" in
         kvm)
-            if [ "$TCDIST_PLATFORM" = "x86" ] ; then
+            if [ "$TCDIST_ARCH" = "x86" ] ; then
                 echo "cons::respawn:/sbin/getty -L console 0 vt100 # Generic serial"
             else
                 echo "AMA0::respawn:/sbin/getty -L ttyAMA0 0 vt100 # kvm virtual serial"
@@ -440,9 +440,9 @@ function Makefile {
     printf "# Generated from Makefile function in text_generators.sh\n"
     printf "# Manual changes will be lost\n\n"
 
-    printf "all: %s.ext2 %s.bzImage\n" "$TCDIST_NAME" "$TCDIST_NAME"
+    printf "all: %s_%s_%s.ext2 %s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
 
-    printf "\n%s.ext2: " "$TCDIST_NAME"
+    printf "\n%s_%s_%s.ext2: " "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
         # shellcheck disable=SC1090
@@ -453,14 +453,14 @@ function Makefile {
     done
 
     printf "\n"
-    printf "\tcp -f %s/%s.ext2 ./%s.ext2\n" "$admin" "$admin" "$TCDIST_NAME"
+    printf "\tcp -f %s/%s_%s_%s.ext2 ./%s_%s_%s.ext2\n" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
     # Following loop goes through the sizes of all the VM images, and
     # sums up their sizes into makefile variable $(SZ).
     printf "\t\$(eval SZ := 0)\n"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
-        printf "\t\$(eval SZ_%s := \$(shell stat --printf \"%%s\" %s/%s.ext2))\n" "$vm" "$vm" "$vm"
+        printf "\t\$(eval SZ_%s := \$(shell stat --printf \"%%s\" %s/%s_%s_%s.ext2))\n" "$vm" "$vm" "$vm" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
         printf "\t\$(eval SZ_%s := \$(shell echo \$\$(( \$(SZ_%s) / 1048576)) ))\n" "$vm" "$vm"
         printf "\t\$(info %s rootfs size = \$(SZ_%s)M)\n" "$vm" "$vm"
         printf "\t\$(eval SZ := \$(shell echo \$\$(( \$(SZ) + \$(SZ_%s) )) ))\n" "$vm"
@@ -469,20 +469,20 @@ function Makefile {
     # Report out the resulting required rootfs size, and resize the final
     # rootfs to fit all the VM images also.
     printf "\t\$(info final rootfs size = \$(SZ)M)\n"
-    printf "\tresize2fs ./%s.ext2 \$(SZ)M\n" "$TCDIST_NAME"
+    printf "\tresize2fs ./%s_%s_%s.ext2 \$(SZ)M\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
         if [ "$vm" != "$admin" ]; then
             # shellcheck disable=SC1090
             . "${vm}/${vm}_config.sh"
             for outp in $TCDIST_VM_OUTPUTS; do
-                printf "\te2cp -P %s -O %s -G %s %s/%s ./%s.ext2:%s\n" "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID" "$vm" "$outp" "$TCDIST_NAME" "$TCDIST_ADMIN_DIR"
+                printf "\te2cp -P %s -O %s -G %s %s/%s ./%s_%s_%s.ext2:%s\n" "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID" "$vm" "$outp" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_ADMIN_DIR"
             done
         fi
     done
 
-    printf "\n%s.bzImage: %s/%s.bzImage\n" "$TCDIST_NAME" "$admin" "$admin"
-    printf "\tcp -f %s/%s.bzImage ./%s.bzImage\n" "$admin" "$admin" "$TCDIST_NAME"
+    printf "\n%s_%s_%s.%s: %s/%s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "\tcp -f %s/%s_%s_%s.%s ./%s_%s_%s.%s\n" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
         # shellcheck disable=SC1090

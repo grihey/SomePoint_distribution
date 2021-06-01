@@ -52,7 +52,7 @@ function Generate_disk_image {
         TCDIST_BRHOSTDIR=./buildroot/output/host
     fi
 
-    if [ "$TCDIST_PLATFORM" != "x86" ] && [ ! -x "$TCDIST_BRHOSTDIR/bin/genimage" ]; then
+    if [ "$TCDIST_ARCH" != "x86" ] && [ ! -x "$TCDIST_BRHOSTDIR/bin/genimage" ]; then
         echo "Buildroot must be built before generate_disk_image command can be used" >&2
         exit 1
     fi
@@ -80,7 +80,7 @@ function Generate_disk_image {
     rm -f "${idir}/input/domufs.ext4"
     fakeroot mke2fs -t ext4 -d "$ddir" "${idir}/input/domufs.ext4" "$TCDIST_DOMUSIZE"
 
-    if [ "$TCDIST_PLATFORM" = "x86" ] ; then
+    if [ "$TCDIST_ARCH" = "x86" ] ; then
         return 0
     fi
 
@@ -117,7 +117,7 @@ function Build_guest_kernels {
     ;;
     esac
 
-    case "$TCDIST_PLATFORM" in
+    case "$TCDIST_ARCH" in
     x86)
         arch="x86_64"
         prefix="x86_64-linux-gnu-"
@@ -131,7 +131,7 @@ function Build_guest_kernels {
     case "$TCDIST_HYPERVISOR" in
     kvm)
         mkdir -p "${odir}/kvm_domu"
-        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${TCDIST_PLATFORM}_kvm_guest${os_opt}_release_defconfig" "" "${TCDIST_LINUX_BRANCH}"
+        Compile_kernel ./linux "$arch" "$prefix" "${odir}/kvm_domu" "${TCDIST_ARCH}_${TCDIST_PLATFORM}_kvm_guest${os_opt}_release_defconfig" "" "${TCDIST_LINUX_BRANCH}"
     ;;
     *)
         # Atm xen buildroot uses the same kernel for host and guest
@@ -153,19 +153,19 @@ function Gen_configs {
 
     case "$TCDIST_HYPERVISOR" in
     kvm)
-        configs/linux/defconfig_builder.sh -t "${TCDIST_PLATFORM}_kvm_guest${os_opt}_release" -k linux
-        if [ "$TCDIST_PLATFORM" = "x86" ] && [ "$TCDIST_SUB_PLATFORM" = "amd" ] ; then
-            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_PLATFORM}_kvm_guest${os_opt}_release_defconfig"
+        configs/linux/defconfig_builder.sh -t "${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}_guest${os_opt}_release" -k linux
+        if [ "$TCDIST_ARCH" = "x86" ] && [ "$TCDIST_SUB_ARCH" = "amd" ] ; then
+            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}_guest${os_opt}_release_defconfig"
         fi
     ;;
     *)
     ;;
     esac
 
-    configs/linux/defconfig_builder.sh -t "${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}_release" -k linux
-    cp "configs/buildroot_config_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}" buildroot/.config
-    if [ "$TCDIST_PLATFORM" = "x86" ] && [ "$TCDIST_SUB_PLATFORM" = "amd" ] ; then
-        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}_release_defconfig"
+    configs/linux/defconfig_builder.sh -t "${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}_release" -k linux
+    cp "configs/buildroot_config_${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}" buildroot/.config
+    if [ "$TCDIST_ARCH" = "x86" ] && [ "$TCDIST_SUB_ARCH" = "amd" ] ; then
+        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_ARCH}_${TCDIST_HYPERVISOR}${os_opt}_release_defconfig"
     fi
 }
 
@@ -189,7 +189,7 @@ function Clone {
 }
 
 function Uboot_script {
-    if [ "$TCDIST_PLATFORM" = "x86" ] ; then
+    if [ "$TCDIST_ARCH" = "x86" ] ; then
         echo "INFO: Uboot_script generated scripts not needed for x86 build."
         return 0
     fi
@@ -217,7 +217,7 @@ function Uboot_script {
 function Boot_fs {
     local bootfs
 
-    if [ "$TCDIST_PLATFORM" = "x86" ] ; then
+    if [ "$TCDIST_ARCH" = "x86" ] ; then
         echo "INFO: x86 does not require bootfs setup."
         return 0
     fi
@@ -352,7 +352,7 @@ function Root_fs {
 
     case "$TCDIST_HYPERVISOR" in
     kvm)
-        case "$TCDIST_PLATFORM" in
+        case "$TCDIST_ARCH" in
         x86)
             cp "${TCDIST_GKBUILD}/kvm_domu/arch/x86/boot/bzImage" "${rootfs}/root/Image"
             #cp "$TCDIST_KERNEL_IMAGE" "${rootfs}/root/Image"
@@ -403,7 +403,7 @@ function Domu_fs {
     Inittab domu > "${domufs}/etc/inittab"
     echo "${TCDIST_DEVICEHN}-domu" > "${domufs}/etc/hostname"
 
-    case "$TCDIST_PLATFORM" in
+    case "$TCDIST_ARCH" in
         x86)
             rm -rf "${domufs}/lib/modules"
             mkdir -p "${domufs}/lib/modules"
@@ -471,7 +471,7 @@ function Root_fs_e2tools {
 
     case "$TCDIST_HYPERVISOR" in
     kvm)
-        case "$TCDIST_PLATFORM" in
+        case "$TCDIST_ARCH" in
         x86)
             e2cp "${TCDIST_GKBUILD}/kvm_domu/arch/x86/boot/bzImage" "${rootfs}/root/Image"
             Run_x86_qemu_sh > tmpfile
@@ -523,7 +523,7 @@ function Domu_fs_e2tools {
     echo "${TCDIST_DEVICEHN}-domu" > tmpfile
     e2cp tmpfile "${domufs}/etc/hostname"
 
-    case "$TCDIST_PLATFORM" in
+    case "$TCDIST_ARCH" in
         x86)
             set +e
             # We don't want to fail if modules is already removed
@@ -546,13 +546,13 @@ function Nfs_update {
     dhcp|static)
         Set_my_ids
         Create_mount_points
-        if [ "$TCDIST_PLATFORM" != "x86" ] ; then
+        if [ "$TCDIST_ARCH" != "x86" ] ; then
             sudo bindfs "--map=0/${MYUID}:@nogroup/@$MYGID" "$TCDIST_TFTPPATH" "$TCDIST_BOOTMNT"
         fi
         sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$TCDIST_NFSDOM0" "$TCDIST_ROOTMNT"
         sudo bindfs "--map=0/${MYUID}:@0/@$MYGID" "$TCDIST_NFSDOMU" "$TCDIST_DOMUMNT"
 
-        if [ "$TCDIST_PLATFORM" != "x86" ] ; then
+        if [ "$TCDIST_ARCH" != "x86" ] ; then
             Boot_fs
             chmod -R 744 "$TCDIST_BOOTMNT"
             chmod 755 "$TCDIST_BOOTMNT"
@@ -563,7 +563,7 @@ function Nfs_update {
         Domu_fs
         echo "DOMU_NFSROOT" > "${TCDIST_DOMUMNT}/DOMU_NFSROOT"
 
-        if [ "$TCDIST_SECUREOS" = "1" ] && [ "$TCDIST_PLATFORM" = "x86" ] ; then
+        if [ "$TCDIST_SECUREOS" = "1" ] && [ "$TCDIST_ARCH" = "x86" ] ; then
             # Secure-os contains a docker installation that doesn't run
             # very well over raw NFS file system. To overcome this limitation,
             # lets create a 100M ext2 virtual disk image for it, and mount
@@ -579,7 +579,7 @@ function Nfs_update {
             fi
         fi
 
-        if [ "$TCDIST_PLATFORM" != "x86" ] ; then
+        if [ "$TCDIST_ARCH" != "x86" ] ; then
             sudo umount "$TCDIST_BOOTMNT"
         fi
         sudo umount "$TCDIST_ROOTMNT"
@@ -597,7 +597,7 @@ function Vdaupdate {
     local rootfs_file
     local domufs_file
 
-    if [ "$TCDIST_PLATFORM" != "x86" ] ; then
+    if [ "$TCDIST_ARCH" != "x86" ] ; then
         echo "VDA update is only supported for x86." >&2
         exit 1
     fi
@@ -666,7 +666,7 @@ function Ssh_dut {
 
     case "$1" in
     domu)
-        case "$TCDIST_PLATFORM" in
+        case "$TCDIST_ARCH" in
         x86)
             ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 2222 "root@127.0.0.1"
         ;;
@@ -683,7 +683,7 @@ function Ssh_dut {
         # address for the VM, we attempt to discover it with use of NMAP
         # over the network bridge that is used for the VM network
         vm_id=$1
-        case "$TCDIST_PLATFORM" in
+        case "$TCDIST_ARCH" in
         x86)
             vm_id=${vm_id/#vm_/br_}
 
@@ -737,7 +737,7 @@ function Ssh_dut {
         esac
     ;;
     *)
-        case "$TCDIST_PLATFORM" in
+        case "$TCDIST_ARCH" in
         x86)
             ssh -i images/device_id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 222 "root@127.0.0.1"
         ;;
@@ -791,6 +791,9 @@ function Build_all {
     case "${1,,}" in
     x86)
         X86config
+    ;;
+    arm64)
+        Arm64config
     ;;
     kvm)
         Kvmconfig

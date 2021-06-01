@@ -11,12 +11,15 @@ TCDIST_DIR="$(pwd)"
 # Name for project (used as output filename prefix also)
 TCDIST_NAME="tc_distro"
 
-# Platform selection (raspi4 or x86)
+# HW architechture (x86|arm64)
+TCDIST_ARCH=arm64
+
+# Platform selection (raspi4 | qemu | ls1012afrwy)
 TCDIST_PLATFORM=raspi4
 
-# Sub platform selection, only valid for x86 (intel or amd), leave blank
+# Sub architecture selection, currently valid for x86 (intel or amd), leave blank
 # for others
-TCDIST_SUB_PLATFORM=
+TCDIST_SUB_ARCH=
 
 # Hypervisor selection (xen or kvm)
 TCDIST_HYPERVISOR=xen
@@ -95,9 +98,12 @@ TCDIST_IMGBUILD="$(pwd)/images/genimage"
 # Temporary directory
 TCDIST_TMPDIR="$(pwd)/images/tmp"
 
+# kernel image filename usually: bzImage | Image
+TCDIST_KERNEL_IMAGE_FILE=Image
+
 # Where buildroot is storing images
 TCDIST_IMAGES="$(pwd)/buildroot/output/images"
-TCDIST_KERNEL_IMAGE="${TCDIST_IMAGES}/Image"
+TCDIST_KERNEL_IMAGE="${TCDIST_IMAGES}/${TCDIST_KERNEL_IMAGE_FILE}"
 
 # Xen cpu and memory options
 TCDIST_XEN_DOM0_CPUCOUNT=2

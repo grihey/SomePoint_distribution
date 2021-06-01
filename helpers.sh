@@ -36,6 +36,7 @@ function Load_config {
     fi
 
     # Convert some options to lower case
+    TCDIST_ARCH="${TCDIST_ARCH,,}"
     TCDIST_PLATFORM="${TCDIST_PLATFORM,,}"
     TCDIST_HYPERVISOR="${TCDIST_HYPERVISOR,,}"
     TCDIST_BUILDOPT="${TCDIST_BUILDOPT,,}"
@@ -49,24 +50,39 @@ function Load_config {
     fi
 
     if [ "$1" != "nocheck" ]; then
-        case "$TCDIST_PLATFORM" in
-        raspi4)
-            if [ -n "$TCDIST_SUB_PLATFORM" ] ; then
-                echo "Invalid TCDIST_SUB_PLATFORM for $TCDIST_PLATFORM, please leave blank." >&2
-                exit 1
-            fi
-            # Options ok
-        ;;
+        case "$TCDIST_ARCH" in
         x86)
-            case "$TCDIST_SUB_PLATFORM" in
+            case "$TCDIST_SUB_ARCH" in
             intel|amd)
                 # Options ok
             ;;
             *)
-                echo "Invalid TCDIST_SUB_PLATFORM: $TCDIST_SUB_PLATFORM" >&2
+                echo "Invalid TCDIST_SUB_ARCH: $TCDIST_SUB_ARCH" >&2
                 exit 1
             ;;
             esac
+        ;;
+        arm64)
+            if [ -n "$TCDIST_SUB_ARCH" ] ; then
+                echo "Invalid TCDIST_SUB_ARCH for $TCDIST_PLATFORM, please leave blank." >&2
+                exit 1
+            fi
+        ;;
+        *)
+            echo "Invalid TCDIST_ARCH: $TCDIST_ARCH" >&2
+            exit 1
+        ;;
+        esac
+
+        case "$TCDIST_PLATFORM" in
+        raspi4)
+            # Options ok
+        ;;
+        ls1012afrwy)
+            # Options ok
+        ;;
+        qemu)
+            # Options ok
         ;;
         *)
             echo "Invalid TCDIST_PLATFORM: $TCDIST_PLATFORM" >&2
@@ -174,15 +190,24 @@ function Kvmconfig {
 }
 
 function X86config {
-    echo "Creating .setup_sh_config for x86" >&2
+    echo "Creating .setup_sh_config for x86 qemu" >&2
     # Change several options for x86 build
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
-        -e "s/^TCDIST_PLATFORM=.*/TCDIST_PLATFORM=x86/" \
-        -e "s/^TCDIST_SUB_PLATFORM=.*/TCDIST_SUB_PLATFORM=intel/" \
+        -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=x86/" \
+        -e "s/^TCDIST_PLATFORM=.*/TCDIST_PLATFORM=qemu/" \
+        -e "s/^TCDIST_SUB_ARCH=.*/TCDIST_SUB_ARCH=intel/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=dhcp/" \
-        -e "s/^TCDIST_KERNEL_IMAGE=.*/TCDIST_KERNEL_IMAGE=\$TCDIST_IMAGES\/bzImage/" \
+        -e "s/^TCDIST_KERNEL_IMAGE_FILE=.*/TCDIST_KERNEL_IMAGE_FILE=bzImage/" \
         -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-x86-5.10-dev/" \
         -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
+}
+
+function Arm64config {
+    echo "Creating .setup_sh_config for arm64" >&2
+    sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
+        -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
+        -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-arm64-5.10-sec/" < default_setup_sh_config > .setup_sh_config
 }
 
 # Returns 0 if function exists, 1 if not

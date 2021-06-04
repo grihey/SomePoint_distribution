@@ -4,7 +4,7 @@ images/
 mnt/
 .mountimg
 .buildroot-ccache/
-.setup_sh_config
+.setup_sh_config*
 .download_cache/
 avocado/tests/tmp_*
 tmpfile

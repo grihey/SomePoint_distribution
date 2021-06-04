@@ -29,10 +29,10 @@ function Load_config {
     # shellcheck disable=SC1091,SC1090
     . "${HDIR}/default_setup_sh_config"
 
-    if [ -f "${HDIR}/.setup_sh_config" ]; then
-        # disable shellchecking of .setup_sh_config and warnings about it
+    if [ -f "${HDIR}/.setup_sh_config${TCDIST_PRODUCT}" ]; then
+        # disable shellchecking of .setup_sh_config${TCDIST_PRODUCT} and warnings about it
         # shellcheck disable=SC1091,SC1090
-        . "${HDIR}/.setup_sh_config"
+        . "${HDIR}/.setup_sh_config${TCDIST_PRODUCT}"
     fi
 
     # Convert some options to lower case

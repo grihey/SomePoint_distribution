@@ -7,13 +7,17 @@ config: output_$(vm_product)/.config $(vm_kernel_defconfig)
 
 clean:
 	if [ -d output_$(vm_product) ]; then make "O=${PWD}/output_$(vm_product)" -C ../buildroot clean; fi
-	rm -rf $(vm_kernel_defconfig) output_$(vm_product)/.config
+	rm -rf $(vm_kernel_defconfig) \
+		output_$(vm_product)/.config \
+		generated_buildroot_config_$(vm_product)_kvm \
+		$(vm_output).ext2 \
+		$(vm_output).${TCDIST_KERNEL_IMAGE_FILE}
 
 menuconfig:
 	make O=${PWD}/output_$(vm_product) -C ../buildroot menuconfig
 
 distclean:
-	rm -rf output_$(vm_product) $(vm_kernel_defconfig)
+	rm -rf output_* $(vm_kernel_defconfig) generated_buildroot_config_*
 
 image:
 	@echo This target would get the latest working image from artifactory without building anything

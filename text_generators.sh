@@ -503,5 +503,13 @@ function Makefile {
         done
     done
 
-    printf "\n.PHONY: all\n"
+    printf "\nclean:\n"
+    for vm in "${TCDIST_VMLIST[@]}"; do
+        printf "\tcd %s; make clean\n" "$vm"
+    done
+    printf "\trm -fr %s_%s_%s.*\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
+
+    printf "\n"
+
+    printf "\n.PHONY: all clean\n"
 }

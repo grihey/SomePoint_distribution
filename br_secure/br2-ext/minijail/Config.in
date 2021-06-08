@@ -1,0 +1,7 @@
+config BR2_PACKAGE_MINIJAIL
+	bool "minijail"
+	depends on BR2_PACKAGE_LIBCAP
+	help
+	  Minijail is a sandboxing tool maintained by google.
+
+	  https://google.github.io/minijail/

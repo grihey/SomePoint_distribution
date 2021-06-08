@@ -33,7 +33,13 @@ $(vm_output).${TCDIST_KERNEL_IMAGE_FILE}: output_$(vm_product)/images/${TCDIST_K
 output_$(vm_product)/images/${TCDIST_KERNEL_IMAGE_FILE}: output_$(vm_product)/images/rootfs.ext2
 
 output_$(vm_product)/images/rootfs.ext2: output_$(vm_product)/.config $(vm_kernel_defconfig)
-	make O=${PWD}/output_$(vm_product) -C ../buildroot
+	@# Check if br_*/br2-ext directory exists, if it does, setup
+	@# EXT makefile variable to "BR2_EXTERNAL=br_*/br2-ext". This
+	@# will be passed to buildroot make to build the external
+	@# packages
+	$(eval EXT := $(shell if [ -d ${PWD}/br2-ext ] ; then \
+		echo "BR2_EXTERNAL=${PWD}/br2-ext"; fi ))
+	make $(EXT) O=${PWD}/output_$(vm_product) -C ../buildroot
 
 output_$(vm_product)/.config: $(vm_buildroot_config)
 	mkdir -p output_$(vm_product)

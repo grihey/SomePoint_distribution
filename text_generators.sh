@@ -431,6 +431,8 @@ function Makefile {
     local admin
     local outp
     local dep
+    local fext
+    local output
 
     admin="${TCDIST_VMLIST[0]}"
 
@@ -476,7 +478,15 @@ function Makefile {
             # shellcheck disable=SC1090
             . "${vm}/${vm}_config.sh"
             for outp in $TCDIST_VM_OUTPUTS; do
-                printf "\te2cp -P %s -O %s -G %s %s/%s ./%s_%s_%s.ext2:%s\n" "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID" "$vm" "$outp" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_ADMIN_DIR"
+                fext="${outp##*.}"
+                # .sh files retain the file name, others take VM name and add
+                # the extension
+                if [ "$fext" = "sh" ] ; then
+                    output="$outp"
+                else
+                    output="${vm}.${fext}"
+                fi
+                printf "\te2cp -P %s -O %s -G %s %s/%s ./%s_%s_%s.ext2:%s/%s\n" "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID" "$vm" "$outp" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_ADMIN_DIR" "$output"
             done
         fi
     done

@@ -24,11 +24,14 @@ image:
 	@echo If it was implemented
 	@exit 255
 
-$(vm_output).ext2: output_$(vm_product)/images/rootfs.ext2 $(vm_name)_config.sh
+$(vm_output).ext2: output_$(vm_product)/images/rootfs.ext2 $(vm_name)_config.sh ../adjust_rootfs.sh
 	./adjust_rootfs.sh output_$(vm_product)/images/rootfs.ext2 $(vm_output).ext2
 
-$(vm_output).${TCDIST_KERNEL_IMAGE_FILE}: output_$(vm_product)/images/${TCDIST_KERNEL_IMAGE_FILE}
+$(vm_output).${TCDIST_KERNEL_IMAGE_FILE}: output_$(vm_product)/images/${TCDIST_KERNEL_IMAGE_FILE} output_$(vm_product)/images/${TCDIST_DEVTREE}
 	cp -f output_$(vm_product)/images/${TCDIST_KERNEL_IMAGE_FILE} ./$(vm_output).${TCDIST_KERNEL_IMAGE_FILE}
+ifeq ("${TCDIST_ARCH}","arm64")
+	cp -f output_$(vm_product)/images/${TCDIST_DEVTREE} ./$(vm_output).${TCDIST_DEVTREE}
+endif
 
 output_$(vm_product)/images/${TCDIST_KERNEL_IMAGE_FILE}: output_$(vm_product)/images/rootfs.ext2
 

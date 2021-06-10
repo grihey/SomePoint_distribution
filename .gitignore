@@ -17,3 +17,6 @@ Makefile.def
 */*_defconfig
 */generated_*
 .tcdist_output
+*/*.dtb
+*/*.tmp*
+*/*.merge_tmp*

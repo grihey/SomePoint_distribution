@@ -107,3 +107,8 @@ if [ -n "$ARFS_INTERFACES" ]; then
     set +x
 fi
 
+if [ "${TCDIST_ARCH}_${TCDIST_PLATFORM}" == "arm64_ls1012afrwy" ]; then
+    set -x
+    e2cp -P 644 -O 0 -G 0 ../configs/linux/firmware/ppfe* "${2}:/lib/firmware/"
+    set +x
+fi

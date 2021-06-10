@@ -996,8 +996,8 @@ esac
 shift
 
 case "$CMD" in
-    Xenconfig|Kvmconfig|X86config)
-        # Do not load config when generating new one.
+    Xenconfig|Kvmconfig|X86config|Arm64config)
+        Min_config
     ;;
     Clean|Distclean)
         # Do not check config if cleaning

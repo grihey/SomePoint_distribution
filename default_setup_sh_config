@@ -5,9 +5,6 @@
 # Do not insert whitespace before variable names,
 # keep assignments at the start of the line!
 
-# Main directory
-TCDIST_DIR="$(pwd)"
-
 # Name for project (used as output filename prefix also)
 TCDIST_NAME="tc_distro"
 

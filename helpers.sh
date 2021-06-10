@@ -10,11 +10,46 @@ set -e
 HDIR="$(dirname "${BASH_SOURCE[0]}")"
 HDIR="$(realpath "$HDIR")"
 
+# Minimum config for config generation
+function Min_config {
+    local flags
+
+    # Save flags
+    flags="$-"
+
+    # Enable automatic export of global environment variables
+    # So config settings are all exported (for e.g. Makefile use)
+    set -a
+
+    # Set main source directory for other scripts
+    TCDIST_DIR="${HDIR}"
+
+    # Set output dir only if not specified in environment already
+    if [ -z "$TCDIST_OUTPUT" ]; then
+        if [ -f "${TCDIST_DIR}/.tcdist_output" ]; then
+            # Read output dir from file if available
+            TCDIST_OUTPUT="$(< "${TCDIST_DIR}/.tcdist_output")"
+        else
+            # Use main source dir
+            TCDIST_OUTPUT="$TCDIST_DIR"
+        fi
+    fi
+
+    # Restore a flag
+    if [[ "$flags" =~ "a" ]]; then
+        set -a
+    else
+        set +a
+    fi
+}
+
 # Loads build system configurations
 # Disable complaints about arguments they are optional here
 # shellcheck disable=SC2120
 function Load_config {
     local flags
+
+    Min_config
 
     # Save flags
     flags="$-"
@@ -27,12 +62,12 @@ function Load_config {
     # for example .setup_sh_config could be from older revision
     # disable shellchecking of default_setup_sh_config and warnings about it
     # shellcheck disable=SC1091,SC1090
-    . "${HDIR}/default_setup_sh_config"
+    . "${TCDIST_DIR}/default_setup_sh_config"
 
-    if [ -f "${HDIR}/.setup_sh_config${TCDIST_PRODUCT}" ]; then
+    if [ -f "${TCDIST_OUTPUT}/.setup_sh_config${TCDIST_PRODUCT}" ]; then
         # disable shellchecking of .setup_sh_config${TCDIST_PRODUCT} and warnings about it
         # shellcheck disable=SC1091,SC1090
-        . "${HDIR}/.setup_sh_config${TCDIST_PRODUCT}"
+        . "${TCDIST_OUTPUT}/.setup_sh_config${TCDIST_PRODUCT}"
     fi
 
     # Convert some options to lower case
@@ -180,13 +215,13 @@ function sudo {
 
 function Xenconfig {
     echo "Creating .setup_sh_config with xen configuration" >&2
-    cp -f default_setup_sh_config .setup_sh_config
+    cp -f default_setup_sh_config "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
 
 function Kvmconfig {
     echo "Creating .setup_sh_config with kvm configuration" >&2
     # Change TCDIST_HYPERVISOR option to kvm
-    sed "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" < default_setup_sh_config > .setup_sh_config
+    sed "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
 
 function X86config {
@@ -199,7 +234,7 @@ function X86config {
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=dhcp/" \
         -e "s/^TCDIST_KERNEL_IMAGE_FILE=.*/TCDIST_KERNEL_IMAGE_FILE=bzImage/" \
         -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-x86-5.10-dev/" \
-        -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > .setup_sh_config
+        -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
 
 function Arm64config {
@@ -207,7 +242,7 @@ function Arm64config {
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
-        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-arm64-5.10-sec/" < default_setup_sh_config > .setup_sh_config
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-arm64-5.10-sec/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
 
 # Returns 0 if function exists, 1 if not
@@ -516,10 +551,6 @@ function Sanity_check {
     /)
         echo "Will not touch host root directory" >&2
         exit 2
-        ;;
-    "$(pwd)")
-        echo "Will not touch current directory" >&2
-        exit 3
         ;;
     "")
         echo "Path does not exist" >&2
@@ -931,7 +962,7 @@ function Make {
 
     # If running make on main level, (re)generate Makefile
     if [ "$OPWD" == "$TCDIST_DIR" ]; then
-        Makefile > ./Makefile
+        Makefile > "${TCDIST_OUTPUT:?}/Makefile.def"
     fi
 
     pushd "$OPWD" > /dev/null

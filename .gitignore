@@ -9,10 +9,11 @@ mnt/
 avocado/tests/tmp_*
 tmpfile
 *.tmp
-Makefile
+Makefile.def
 *.bzImage
 *.Image
 *.ext2
 */output_*
 */*_defconfig
 */generated_*
+.tcdist_output

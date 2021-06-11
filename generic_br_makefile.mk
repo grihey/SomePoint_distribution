@@ -16,6 +16,12 @@ clean:
 menuconfig:
 	make O=${PWD}/output_$(vm_product) -C ../buildroot menuconfig
 
+linux-menuconfig:
+	make O=${PWD}/output_$(vm_product) -C ../buildroot linux-menuconfig
+
+linux-rebuild:
+	make O=${PWD}/output_$(vm_product) -C ../buildroot linux-rebuild
+
 distclean:
 	rm -rf output_* $(vm_kernel_defconfig) generated_buildroot_config_*
 
@@ -62,4 +68,4 @@ ifeq ("${TCDIST_SUB_ARCH}","amd")
 	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' $(vm_kernel_defconfig)
 endif
 
-.PHONY: all clean distclean config image menuconfig
+.PHONY: all clean distclean config image menuconfig linux-rebuild linux-menuconfig

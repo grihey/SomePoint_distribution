@@ -465,7 +465,7 @@ function Makefile {
         printf "\t\$(eval SZ_%s := \$(shell stat --printf \"%%s\" %s/%s_%s_%s.ext2))\n" "$vm" "$vm" "$vm" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
         printf "\t\$(eval SZ_%s := \$(shell echo \$\$(( \$(SZ_%s) / 1048576)) ))\n" "$vm" "$vm"
         printf "\t\$(info %s rootfs size = \$(SZ_%s)M)\n" "$vm" "$vm"
-        printf "\t\$(eval SZ := \$(shell echo \$\$(( \$(SZ) + \$(SZ_%s) )) ))\n" "$vm"
+        printf "\t\$(eval SZ := \$(shell echo \$\$(( \$(SZ) + \$(SZ_%s) + 70 )) ))\n" "$vm"
     done
 
     # Report out the resulting required rootfs size, and resize the final

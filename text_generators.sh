@@ -473,6 +473,11 @@ function Makefile {
     printf "\t\$(info final rootfs size = \$(SZ)M)\n"
     printf "\tresize2fs ./%s_%s_%s.ext2 \$(SZ)M\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
+    # Copy device tree for arm platform
+    if [ "$TCDIST_ARCH" == "arm64" ]; then
+        printf "\tcp %s/%s_%s_%s.%s %s_%s_%s.%s\n" "${admin}" "${admin}" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+    fi
+
     for vm in "${TCDIST_VMLIST[@]}"; do
         if [ "$vm" != "$admin" ]; then
             # shellcheck disable=SC1090

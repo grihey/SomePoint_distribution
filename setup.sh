@@ -820,10 +820,9 @@ function Build_all {
     if [ -z $noclone ]; then
         Clone
     fi
-    cd docker
-    make build_env
-    make ci
-    cd ..
+
+    make -C docker build_env
+    make -C docker ci
 }
 
 # Clean up so that on next build everything gets rebuilt but nothing gets redownloaded
@@ -836,17 +835,11 @@ function Clean {
 
     # Try to clean buildroot only if docker and buildroot have been cloned
     if [ -f "docker/Makefile" ] && [ -f "buildroot/Makefile" ]; then
-        (
-            cd docker
-            # Create/update build environment in any case
-            make build_env
-            make buildroot_clean
-        )
-        (
-            cd buildroot
-            # Removing kernel to force refecth from local linux kernel tree
-            rm -rf dl/linux
-        )
+        # Create/update build environment in any case
+        make -C docker build_env
+        make -C docker buildroot_clean
+        # Removing kernel to force refecth from local linux kernel tree
+        rm -rf buildroot/dl/linux
     fi
 
     # Run 'cleanup.sh clean' in subdirs, if available
@@ -891,12 +884,10 @@ function Distclean {
 }
 
 function Shell {
-    cd docker
-    if [ ! -f ./gitconfig ]; then
-        make build_env
+    if [ ! -f docker/gitconfig ]; then
+        make -C docker build_env
     fi
-    make shell
-    cd ..
+    make -C docker shell
 }
 
 function Check_script {

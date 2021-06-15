@@ -1,12 +1,18 @@
 # vm_name = br_my_awesome_vm
 # vm_buildroot_config = buildroot_config_${TCDIST_ARCH}_kvm_secure
 
+ifndef TCDIST_DIR
+$(error Environment not set up correctly, please run make via setup.sh)
+endif
+
+export XPWD=$(shell pwd)
+
 all: $(vm_output).ext2 $(vm_output).${TCDIST_KERNEL_IMAGE_FILE}
 
 config: output_$(vm_product)/.config $(vm_kernel_defconfig)
 
 clean:
-	if [ -d output_$(vm_product) ]; then make "O=${PWD}/output_$(vm_product)" -C ../buildroot clean; fi
+	if [ -d output_$(vm_product) ]; then make "O=$(XPWD)/output_$(vm_product)" -C "${TCDIST_DIR}/buildroot" clean; fi
 	rm -rf $(vm_kernel_defconfig) \
 		output_$(vm_product)/.config \
 		generated_buildroot_config_$(vm_product)_kvm \
@@ -14,13 +20,13 @@ clean:
 		$(vm_output).${TCDIST_KERNEL_IMAGE_FILE}
 
 menuconfig:
-	make O=${PWD}/output_$(vm_product) -C ../buildroot menuconfig
+	make O=$(XPWD)/output_$(vm_product) -C "${TCDIST_DIR}/buildroot" menuconfig
 
 linux-menuconfig:
-	make O=${PWD}/output_$(vm_product) -C ../buildroot linux-menuconfig
+	make O=${XPWD}/output_$(vm_product) -C "${TCDIST_DIR}/buildroot" linux-menuconfig
 
 linux-rebuild:
-	make O=${PWD}/output_$(vm_product) -C ../buildroot linux-rebuild
+	make O=${XPWD}/output_$(vm_product) -C "${TCDIST_DIR}/buildroot" linux-rebuild
 
 distclean:
 	rm -rf output_* $(vm_kernel_defconfig) generated_buildroot_config_*
@@ -42,20 +48,20 @@ endif
 output_$(vm_product)/images/${TCDIST_KERNEL_IMAGE_FILE}: output_$(vm_product)/images/rootfs.ext2
 
 output_$(vm_product)/images/rootfs.ext2: output_$(vm_product)/.config $(vm_kernel_defconfig)
-	@# Check if br_*/br2-ext directory exists, if it does, setup
-	@# EXT makefile variable to "BR2_EXTERNAL=br_*/br2-ext". This
-	@# will be passed to buildroot make to build the external
-	@# packages
-	$(eval EXT := $(shell if [ -d ${PWD}/br2-ext ] ; then \
-		echo "BR2_EXTERNAL=${PWD}/br2-ext"; fi ))
-	make $(EXT) O=${PWD}/output_$(vm_product) -C ../buildroot
+#   Check if br_*/br2-ext directory exists, if it does, setup
+#   EXT makefile variable to "BR2_EXTERNAL=br_*/br2-ext". This
+#   will be passed to buildroot make to build the external
+#   packages
+	$(eval EXT := $(shell if [ -d $(XPWD)/br2-ext ] ; then \
+        echo "BR2_EXTERNAL=$(XPWD)/br2-ext"; fi ))
+	make $(EXT) "O=$(XPWD)/output_$(vm_product)" -C "${TCDIST_DIR}/buildroot"
 
 output_$(vm_product)/.config: $(vm_buildroot_config)
 	mkdir -p output_$(vm_product)
 	cat $(vm_buildroot_config) > generated_buildroot_config_$(vm_product)_kvm
 	if [ -f buildroot_config_$(vm_product)_kvm_fragment ]; then \
-		cat buildroot_config_$(vm_product)_kvm_fragment >> generated_buildroot_config_$(vm_product)_kvm; \
-	fi
+        cat buildroot_config_$(vm_product)_kvm_fragment >> generated_buildroot_config_$(vm_product)_kvm; \
+    fi
 	sed -i 's/TC_BR_VM_BUILDROOT_DEFCONFIG/$(vm_name)\/buildroot_config_$(vm_product)_kvm/' generated_buildroot_config_$(vm_product)_kvm
 	sed -i 's/TC_BR_VM_KERNEL_DEFCONFIG/$(vm_name)\/$(vm_kernel_defconfig)/' generated_buildroot_config_$(vm_product)_kvm
 	cp -f generated_buildroot_config_$(vm_product)_kvm output_$(vm_product)/.config
@@ -63,7 +69,7 @@ output_$(vm_product)/.config: $(vm_buildroot_config)
 # Related config fragments from ${TCDIST_DIR}/configs/linux/ could be added as dependency
 # But for now, if you change the fragments, then remove $(vm_kernel_defconfig)
 $(vm_kernel_defconfig):
-	"${TCDIST_DIR}/configs/linux/defconfig_builder.sh" -t "$(vm_kernel_config)" -k "${TCDIST_DIR}/linux" -o .
+	"${TCDIST_DIR}/configs/linux/defconfig_builder.sh" -t "$(vm_kernel_config)" -k "${TCDIST_DIR}/linux" -o "${XPWD}"
 ifeq ("${TCDIST_SUB_ARCH}","amd")
 	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' $(vm_kernel_defconfig)
 endif

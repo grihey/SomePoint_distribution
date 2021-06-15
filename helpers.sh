@@ -27,8 +27,13 @@ function Min_config {
     # Set output dir only if not specified in environment already
     if [ -z "$TCDIST_OUTPUT" ]; then
         if [ -f "${TCDIST_DIR}/.tcdist_output" ]; then
-            # Read output dir from file if available
-            TCDIST_OUTPUT="$(< "${TCDIST_DIR}/.tcdist_output")"
+            # Let .tcdist_output file set TCDIST_OUTPUT
+            # shellcheck disable=SC1091,SC1090
+            . "${TCDIST_DIR}/.tcdist_output"
+            if [ -z "$TCDIST_OUTPUT" ]; then
+                echo "${TCDIST_DIR}/.tcdist_output was sourced, but it did not set TCDIST_OUTPUT" >&2
+                exit 1
+            fi
         else
             # Use main source dir
             TCDIST_OUTPUT="$TCDIST_DIR"
@@ -965,9 +970,7 @@ function Make {
         Makefile > "${TCDIST_OUTPUT:?}/Makefile.def"
     fi
 
-    pushd "$OPWD" > /dev/null
-    make "$@"
-    popd > /dev/null
+    make -C "$OPWD" "$@"
 }
 
 # Amake runs make for all selected vms with given parameters
@@ -975,9 +978,7 @@ function Amake {
     local vm
 
     for vm in "${TCDIST_VMLIST[@]}"; do
-        pushd "$vm"
-            make "$@"
-        popd
+        make -C "$vm" "$@"
     done
 }
 

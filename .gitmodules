@@ -14,7 +14,7 @@
 	url = git://xenbits.xen.org/xen.git
 [submodule "buildroot"]
 	path = buildroot
-	url = git://git.buildroot.net/buildroot
+	url = ../buildroot
 [submodule "flutter-shim"]
 	path = flutter-shim
 	url = ../flutter-shim

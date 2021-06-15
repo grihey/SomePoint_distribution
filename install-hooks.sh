@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPTS=(check-commit.sh commit-msg)
-SUBREPOS=(docker linux flutter-shim)
+SUBREPOS=(docker linux flutter-shim buildroot)
 
 set -e
 

@@ -1,0 +1,7 @@
+config BR2_PACKAGE_AVOCADO
+	bool "avocado"
+	help
+	  Avocado is an automated testing suite containing tests for various
+	  subsystems.
+
+	  https://avocado-framework.readthedocs.io/

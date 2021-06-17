@@ -1,0 +1,4 @@
+source "$BR2_EXTERNAL_ADMIN_VM_ADDITIONS_PATH/avocado/Config.in"
+source "$BR2_EXTERNAL_ADMIN_VM_ADDITIONS_PATH/avocado-vt/Config.in"
+source "$BR2_EXTERNAL_ADMIN_VM_ADDITIONS_PATH/aexpect/Config.in"
+

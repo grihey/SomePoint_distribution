@@ -1,0 +1,30 @@
+#!/bin/bash
+# Buildroot does not have support for a pkill command, but avocado
+# requires (and actually uses) one. Add a very simple implementation it.
+case $1 in
+-*)
+    params=$1
+    pat=$2
+    ;;
+*)
+    params=""
+    pat=$1
+    ;;
+esac
+
+# Grab any process Ids which match a pattern, and just return the integer
+# process Id portion out of it. Shellcheck also complains to use pgrep,
+# which we obviously can't use here, so disable it
+# shellcheck disable=SC2009
+pids=$(ps aux | grep "${pat}" | grep -v grep | sed s'/^ *//' | cut -d " " -f 1)
+
+# Parse any process Ids found, and kill them
+for pid in ${pids} ; do
+    if [ "${pid}" != "$$" ] && [ -d "/proc/${pid}" ] ; then
+        comm=$(cat "/proc/${pid}/comm")
+        echo "Killing ${params} ${pid} ${comm}"
+        kill "${params}" "${pid}"
+    fi
+done
+
+exit 0

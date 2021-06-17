@@ -1,0 +1,5 @@
+#!/bin/sh
+# Buildroot does not support any packaging system, but avocado has a hard
+# coded requirement for one. Fake its existence with this script which
+# does nothing.
+echo "Ok."

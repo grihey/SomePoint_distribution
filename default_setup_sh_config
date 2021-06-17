@@ -21,6 +21,10 @@ TCDIST_SUB_ARCH=
 # Hypervisor selection (xen or kvm)
 TCDIST_HYPERVISOR=xen
 
+# Enable for system testing build. This contains some extra testing tools,
+# like avocado-framework.
+TCDIST_SYS_TEST=0
+
 # Default linux branch for the build for both buildroot and guest-os setups.
 # 'xen' is used for raspi4 for now, but should be renamed later once the branch
 # for it is updated. For x86 builds, this should be of form tc-x86-5.10-dev;

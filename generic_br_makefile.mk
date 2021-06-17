@@ -52,9 +52,15 @@ $(LFIX)/.config: $(IFIX)/$(vm_buildroot_config)
 	if [ -f "$(IFIX)/buildroot_config_$(vm_product)_kvm_fragment" ]; then \
         cat "$(IFIX)/buildroot_config_$(vm_product)_kvm_fragment" >> "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"; \
     fi
+ifeq ($(TCDIST_SYS_TEST),1)
+	if [ -f "$(IFIX)/buildroot_config_$(vm_product)_systest_fragment" ] ; then \
+        cat "$(IFIX)/buildroot_config_$(vm_product)_systest_fragment" >> "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"; \
+	fi
+endif
 	sed -i 's/TC_BR_VM_BUILDROOT_DEFCONFIG/$(vm_name)\/buildroot_config_$(vm_product)_kvm/' "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"
 	sed -i 's/TC_BR_VM_KERNEL_DEFCONFIG/$(vm_name)\/$(vm_kernel_defconfig)/' "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"
 	cp -f "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm" "$(LFIX)/.config"
+	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" olddefconfig
 
 # Related config fragments from ${TCDIST_DIR}/configs/linux/ could be added as dependency
 # But for now, if you change the fragments, then remove $(vm_kernel_defconfig)

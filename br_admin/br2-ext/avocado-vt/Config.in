@@ -1,0 +1,7 @@
+config BR2_PACKAGE_AVOCADO_VT
+	bool "avocado-vt"
+	help
+	  Avocado VT is a virtualization test plugin for avocado test
+	  framework.
+
+	  https://avocado-vt.readthedocs.io/

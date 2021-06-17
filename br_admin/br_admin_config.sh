@@ -13,8 +13,8 @@ function Interfaces {
     echo "iface default inet dhcp"
 }
 
+TCDIST_VM_INPUTS="vmctl.sh"
 TCDIST_VM_OUTPUTS="${TCDIST_VM_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2 ${TCDIST_VM_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.${TCDIST_KERNEL_IMAGE_FILE}"
-TCDIST_VM_DEPS="${TCDIST_VM_OUTPUTS}"
 
 # Where to put the rootfs and kernel images and additional files of the vms
 TCDIST_ADMIN_DIR=/root

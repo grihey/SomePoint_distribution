@@ -441,29 +441,49 @@ function Makefile {
 
     printf "# Generated from Makefile function in text_generators.sh\n"
     printf "# Manual changes will be lost\n\n"
+    printf "ifndef TCDIST_DIR\n"
+    printf "\$(error Environment not set up correctly, please run make via setup.sh)\n"
+    printf "endif\n\n"
 
-    printf "all: %s_%s_%s.ext2 %s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "all: "
+    printf "%s/%s_%s_%s.ext2 " "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
+    printf "%s/%s_%s_%s.%s" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    if [ "$TCDIST_ARCH" == "arm64" ]; then
+        printf " %s/%s_%s_%s.%s" "$TCDIST_OUTPUT" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+    fi
 
-    printf "\n%s_%s_%s.ext2: " "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
+    printf "\n\n%s/%s_%s_%s.%s: " "$TCDIST_OUTPUT" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+    printf "%s/%s_%s_%s.%s\n" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "\tcp -f %s/" "$TCDIST_OUTPUT"
+    printf "%s/images/%s " "$admin" "$TCDIST_DEVTREE"
+    printf "%s/" "$TCDIST_OUTPUT"
+    printf "%s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+
+    printf "\n%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
         # shellcheck disable=SC1090
         . "${vm}/${vm}_config.sh"
-        for dep in $TCDIST_VM_DEPS; do
-            printf " %s/%s" "$vm" "$dep"
+        for inp in $TCDIST_VM_INPUTS; do
+            printf " %s/%s/%s" "$TCDIST_DIR" "$vm" "$inp"
+        done
+        for outp in $TCDIST_VM_OUTPUTS; do
+            printf " %s/%s/%s" "$TCDIST_OUTPUT" "$vm" "$outp"
         done
     done
-
     printf "\n"
-    printf "\tcp -f %s/%s_%s_%s.ext2 ./%s_%s_%s.ext2\n" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
+
+    printf "\tcp -f %s/%s/%s_%s_%s.ext2 " "$TCDIST_OUTPUT" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
+    printf "%s/%s_%s_%s.ext2\n" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
     # Following loop goes through the sizes of all the VM images, and
     # sums up their sizes into makefile variable $(SZ).
     printf "\t\$(eval SZ := 0)\n"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
-        printf "\t\$(eval SZ_%s := \$(shell stat --printf \"%%s\" %s/%s_%s_%s.ext2))\n" "$vm" "$vm" "$vm" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
-        printf "\t\$(eval SZ_%s := \$(shell echo \$\$(( \$(SZ_%s) / 1048576)) ))\n" "$vm" "$vm"
+        printf "\t\$(eval SZ_%s := \$(shell stat --printf \"%%s\" %s/" "$vm" "$TCDIST_OUTPUT"
+        printf "%s/%s_%s_%s.ext2))\n" "$vm" "$vm" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
+        printf "\t\$(eval SZ_%s := \$(shell echo \$\$(((\$(SZ_%s) + 1048575) / 1048576)) ))\n" "$vm" "$vm"
         printf "\t\$(info %s rootfs size = \$(SZ_%s)M)\n" "$vm" "$vm"
         printf "\t\$(eval SZ := \$(shell echo \$\$(( \$(SZ) + \$(SZ_%s) + 70 )) ))\n" "$vm"
     done
@@ -471,17 +491,19 @@ function Makefile {
     # Report out the resulting required rootfs size, and resize the final
     # rootfs to fit all the VM images also.
     printf "\t\$(info final rootfs size = \$(SZ)M)\n"
-    printf "\tresize2fs ./%s_%s_%s.ext2 \$(SZ)M\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
-
-    # Copy device tree for arm platform
-    if [ "$TCDIST_ARCH" == "arm64" ]; then
-        printf "\tcp %s/%s_%s_%s.%s %s_%s_%s.%s\n" "${admin}" "${admin}" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
-    fi
+    printf "\tresize2fs %s/%s_%s_%s.ext2 \$(SZ)M\n" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
         if [ "$vm" != "$admin" ]; then
             # shellcheck disable=SC1090
             . "${vm}/${vm}_config.sh"
+            for inp in $TCDIST_VM_INPUTS; do
+                printf "\te2cp -P %s -O %s -G %s " "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID"
+                printf "%s/%s/%s " "$TCDIST_DIR" "$vm" "$inp"
+                printf "%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" 
+                printf "%s/%s\n" "$TCDIST_ADMIN_DIR" "$inp"
+            done
+
             for outp in $TCDIST_VM_OUTPUTS; do
                 fext="${outp##*.}"
                 # .sh files retain the file name, others take VM name and add
@@ -491,30 +513,37 @@ function Makefile {
                 else
                     output="${vm}.${fext}"
                 fi
-                printf "\te2cp -P %s -O %s -G %s %s/%s ./%s_%s_%s.ext2:%s/%s\n" "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID" "$vm" "$outp" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_ADMIN_DIR" "$output"
+                printf "\te2cp -P %s -O %s -G %s " "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID"
+                printf "%s/%s/%s " "$TCDIST_OUTPUT" "$vm" "$outp"
+                printf "%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" 
+                printf "%s/%s\n" "$TCDIST_ADMIN_DIR" "$output"
             done
         fi
     done
 
-    printf "\n%s_%s_%s.%s: %s/%s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
-    printf "\tcp -f %s/%s_%s_%s.%s ./%s_%s_%s.%s\n" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "\n%s/" "$TCDIST_OUTPUT"
+    printf "%s_%s_%s.%s: " "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "%s/%s/" "$TCDIST_OUTPUT" "$admin"
+    printf "%s_%s_%s.%s\n" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "\tcp -f %s/%s/" "$TCDIST_OUTPUT" "$admin"
+    printf "%s_%s_%s.%s " "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+    printf "%s/" "$TCDIST_OUTPUT"
+    printf "%s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
 
     for vm in "${TCDIST_VMLIST[@]}"; do
         # shellcheck disable=SC1090
-        . "${vm}/${vm}_config.sh"
-        for dep in $TCDIST_VM_DEPS; do
-            printf "\n%s/%s:\n" "$vm" "$dep"
-            printf "\tcd %s; make %s\n" "$vm" "$dep"
+        . "${TCDIST_DIR}/${vm}/${vm}_config.sh"
+        for outp in $TCDIST_VM_OUTPUTS; do
+            printf "\n%s/%s/%s:\n" "$TCDIST_OUTPUT" "$vm" "$outp"
+            printf "\tmake -C \"%s/%s\" %s/%s/%s\n" "$TCDIST_DIR" "$vm" "$TCDIST_OUTPUT" "$vm" "$outp"
         done
     done
 
     printf "\nclean:\n"
     for vm in "${TCDIST_VMLIST[@]}"; do
-        printf "\tcd %s; make clean\n" "$vm"
+        printf "\tmake -C \"%s/%s\" clean\n" "$TCDIST_DIR" "$vm"
     done
-    printf "\trm -fr %s_%s_%s.*\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
-
-    printf "\n"
+    printf "\trm -rf %s/*.ext2 %s/*.bzImage %s/*.Image\n" "$TCDIST_OUTPUT" "$TCDIST_OUTPUT" "$TCDIST_OUTPUT"
 
     printf "\n.PHONY: all clean\n"
 }

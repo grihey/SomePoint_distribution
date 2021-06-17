@@ -220,17 +220,20 @@ function sudo {
 
 function Xenconfig {
     echo "Creating .setup_sh_config with xen configuration" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f default_setup_sh_config "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
 
 function Kvmconfig {
     echo "Creating .setup_sh_config with kvm configuration" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
     # Change TCDIST_HYPERVISOR option to kvm
     sed "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
 
 function X86config {
     echo "Creating .setup_sh_config for x86 qemu" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
     # Change several options for x86 build
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=x86/" \
@@ -244,6 +247,7 @@ function X86config {
 
 function Arm64config {
     echo "Creating .setup_sh_config for arm64" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \

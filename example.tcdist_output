@@ -1,0 +1,7 @@
+# Simple example for .tcdist_output file for specifying output directory
+
+if In_docker; then
+   TCDIST_OUTPUT=/usr/src/my_out
+else
+   TCDIST_OUTPUT=/home/username/sp_distro/my_out
+fi

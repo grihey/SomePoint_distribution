@@ -35,8 +35,8 @@ image:
 	@echo If it was implemented
 	@exit 255
 
-$(OFIX)/$(vm_output).ext2: $(LFIX)/images/rootfs.ext2 $(IFIX)/$(vm_name)_config.sh $(TCDIST_DIR)/adjust_rootfs.sh
-	"$(TCDIST_DIR)/adjust_rootfs.sh" "$(LFIX)/images/rootfs.ext2" "$(OFIX)/$(vm_output).ext2"
+$(OFIX)/$(vm_output).ext2: $(LFIX)/images/rootfs.ext2 $(IFIX)/$(vm_name)_config.sh $(IFIX)/adjust_rootfs.sh
+	"$(IFIX)/adjust_rootfs.sh" "$(LFIX)/images/rootfs.ext2" "$(OFIX)/$(vm_output).ext2"
 
 $(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)
 	cp -f "$(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)" "$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)"

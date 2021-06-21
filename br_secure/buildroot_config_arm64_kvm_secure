@@ -1,8 +1,9 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Buildroot 2020.11-rc2-25-gb359d0e7e5 Configuration
+# Buildroot 2021.02.1 Configuration
 #
 BR2_HAVE_DOT_CONFIG=y
+BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH="/usr/src/br_secure/br2-ext"
 BR2_HOST_GCC_AT_LEAST_4_9=y
 BR2_HOST_GCC_AT_LEAST_5=y
 BR2_HOST_GCC_AT_LEAST_6=y
@@ -3254,35 +3255,35 @@ BR2_PACKAGE_WPA_SUPPLICANT_PASSPHRASE=y
 #
 
 #
-# Please note:
+# Please note:                                           
 #
 
 #
-# - Buildroot does *not* generate binary packages,
+# - Buildroot does *not* generate binary packages,       
 #
 
 #
-# - Buildroot does *not* install any package database.
+# - Buildroot does *not* install any package database.   
 #
 
 #
-# *
+# *                                                      
 #
 
 #
-# It is up to you to provide those by yourself if you
+# It is up to you to provide those by yourself if you    
 #
 
 #
-# want to use any of those package managers.
+# want to use any of those package managers.             
 #
 
 #
-# *
+# *                                                      
 #
 
 #
-# See the manual:
+# See the manual:                                        
 #
 
 #
@@ -3715,123 +3716,7 @@ BR2_PACKAGE_HOST_UTIL_LINUX=y
 # BR2_PACKAGE_HOST_ZSTD is not set
 
 #
-# Legacy detected: check the content of the menu below
-#
-
-#
 # Legacy config options
-#
-
-#
-# ----------------------------------------------------
-#
-
-#
-# Your old configuration uses legacy options that no  
-#
-
-#
-# longer exist in buildroot, as indicated in the menu 
-#
-
-#
-# below. As long as these options stay selected, or in
-#
-
-#
-# case of string options are non-empty, the build     
-#
-
-#
-# will fail.                                          
-#
-
-#
-# *                                                   
-#
-
-#
-# Where possible, an automatic conversion from old to 
-#
-
-#
-# new symbols has been performed. Before making any   
-#
-
-#
-# change in this legacy menu, make sure to exit the   
-#
-
-#
-# configuration editor a first time and save the      
-#
-
-#
-# configuration. Otherwise, the automatic conversion  
-#
-
-#
-# of symbols will be lost.                            
-#
-
-#
-# *                                                   
-#
-
-#
-# After this initial save, reopen the configuration   
-#
-
-#
-# editor, inspect the options selected below, read    
-#
-
-#
-# their help texts, and verify/update the new         
-#
-
-#
-# configuration in the corresponding configuration    
-#
-
-#
-# menus. When everything is ok, you can disable the   
-#
-
-#
-# legacy options in the menu below. Once you have     
-#
-
-#
-# disabled all legacy options, this text will         
-#
-
-#
-# disappear and you will be able to start the build.  
-#
-
-#
-# *                                                   
-#
-
-#
-# Note: legacy options older than 5 years have been   
-#
-
-#
-# removed, and configuration files that still have    
-#
-
-#
-# those options set, will fail to build, or run in    
-#
-
-#
-# unpredictable ways.                                 
-#
-
-#
-# ----------------------------------------------------
 #
 
 #
@@ -3893,7 +3778,7 @@ BR2_PACKAGE_HOST_UTIL_LINUX=y
 # BR2_PACKAGE_COLLECTD_LVM is not set
 # BR2_PACKAGE_PYTHON_PYASN is not set
 # BR2_PACKAGE_PYTHON_PYASN_MODULES is not set
-BR2_PACKAGE_LINUX_FIRMWARE_ATHEROS_10K_QCA6174=y
+# BR2_PACKAGE_LINUX_FIRMWARE_ATHEROS_10K_QCA6174 is not set
 # BR2_PACKAGE_QT5CANVAS3D is not set
 # BR2_PACKAGE_KODI_LIBTHEORA is not set
 # BR2_PACKAGE_CEGUI06 is not set

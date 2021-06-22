@@ -426,6 +426,10 @@ function Wg_client_config {
     echo "PersistentKeepalive = 25"
 }
 
+function Mount_debug_fs {
+    echo "debugfs    /sys/kernel/debug      debugfs  defaults  0 0"
+}
+
 function Makefile {
     local vm
     local admin
@@ -500,7 +504,7 @@ function Makefile {
             for inp in $TCDIST_VM_INPUTS; do
                 printf "\te2cp -P %s -O %s -G %s " "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID"
                 printf "%s/%s/%s " "$TCDIST_DIR" "$vm" "$inp"
-                printf "%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" 
+                printf "%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
                 printf "%s/%s\n" "$TCDIST_ADMIN_DIR" "$inp"
             done
 
@@ -515,7 +519,7 @@ function Makefile {
                 fi
                 printf "\te2cp -P %s -O %s -G %s " "$TCDIST_ADMIN_MODE" "$TCDIST_ADMIN_UID" "$TCDIST_ADMIN_GID"
                 printf "%s/%s/%s " "$TCDIST_OUTPUT" "$vm" "$outp"
-                printf "%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" 
+                printf "%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
                 printf "%s/%s\n" "$TCDIST_ADMIN_DIR" "$output"
             done
         fi

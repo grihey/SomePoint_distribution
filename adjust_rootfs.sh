@@ -25,6 +25,8 @@ CURVM="$(pwd)"
 CURVM="${CURVM##*/}"
 
 . ../helpers.sh
+. ../text_generators.sh
+
 Load_config
 
 if [ "$1" == "check_script" ]; then
@@ -104,11 +106,5 @@ if [ -n "$ARFS_INTERFACES" ]; then
     Interfaces > interfaces.tmp
     e2cp -P 644 -O 0 -G 0 interfaces.tmp "${2}:/etc/network/interfaces"
     rm -f interfaces.tmp
-    set +x
-fi
-
-if [ "${TCDIST_ARCH}_${TCDIST_PLATFORM}" == "arm64_ls1012afrwy" ]; then
-    set -x
-    e2cp -P 644 -O 0 -G 0 ../configs/linux/firmware/ppfe* "${2}:/lib/firmware/"
     set +x
 fi

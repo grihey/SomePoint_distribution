@@ -1,1 +1,2 @@
 source "$BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH/minijail/Config.in"
+source "$BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH/alfred/Config.in"

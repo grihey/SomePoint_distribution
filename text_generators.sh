@@ -434,7 +434,6 @@ function Makefile {
     local vm
     local admin
     local outp
-    local dep
     local fext
     local output
 

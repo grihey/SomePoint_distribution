@@ -19,3 +19,4 @@ Makefile.def
 */*.dtb
 */*.tmp*
 */*.merge_tmp*
+ci_build*

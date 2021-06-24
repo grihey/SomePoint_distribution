@@ -902,6 +902,8 @@ function Show_help {
     echo "    xenconfig                         Create new .setup_sh_config for xen"
     echo "    kvmconfig                         Create new .setup_sh_config for kvm"
     echo "    x86config                         Create new .setup_sh_config for x86"
+    echo "    arm64config                       Create new .setup_sh_config for raspi4"
+    echo "    arm64config_ls1012a               Create new .setup_sh_config for nxp ls1012a-frwy"
     echo "    clone                             Clone the required subrepositories"
     echo "    mount [device|image_file]         Mount given device or image file"
     echo "    umount [mark]                     Unmount and optionally mark partitions"
@@ -987,7 +989,7 @@ esac
 shift
 
 case "$CMD" in
-    Xenconfig|Kvmconfig|X86config|Arm64config)
+    Xenconfig|Kvmconfig|X86config|Arm64config|Arm64config_ls1012a)
         Min_config
     ;;
     Clean|Distclean)

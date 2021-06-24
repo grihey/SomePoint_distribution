@@ -251,8 +251,19 @@ function Arm64config {
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
-        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-arm64-5.10-sec/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=xen/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
 }
+
+function Arm64config_ls1012a {
+    echo "Creating .setup_sh_config for arm64 ls1012afrwy" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
+    sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
+        -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
+        -e "s/^TCDIST_PLATFORM=.*/TCDIST_PLATFORM=ls1012afrwy/" \
+        -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-nxp-5.4-dev/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
+}
+
 
 # Returns 0 if function exists, 1 if not
 function Fn_exists {

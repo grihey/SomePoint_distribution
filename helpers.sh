@@ -1004,3 +1004,27 @@ function Index_of {
         i=$((i+1))
     done
 }
+
+# Escapes given parameters to a string
+function Escape {
+    local a
+
+    printf "%q" "$1"
+    shift
+
+    for a in "$@"; do
+        printf " %q" "$a"
+    done
+
+    printf "\n"
+}
+
+# Runs a command in bash or opens a shell (With configuration loaded in environment)
+function Bash {
+    cd "$OPWD"
+    if [ $# -gt 0 ]; then
+        bash -c "$(Escape "$@")"
+    else
+        bash --init-file <(echo ". \"$HOME/.bashrc\";echo TCDIST shell")
+    fi
+}

@@ -1,7 +1,9 @@
 # Simple example for .tcdist_output file for specifying output directory
 
 if In_docker; then
-   TCDIST_OUTPUT=/usr/src/my_out
+   # By default output directory will be mapped to /output inside docker
+   TCDIST_OUTPUT=/output
 else
-   TCDIST_OUTPUT=/home/username/sp_distro/my_out
+   # This should point to your output directory (Use an absolute path)
+   TCDIST_OUTPUT=/home/username/my_out
 fi

@@ -452,15 +452,13 @@ function Makefile {
     printf "%s/%s_%s_%s.ext2 " "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
     printf "%s/%s_%s_%s.%s" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
     if [ "$TCDIST_ARCH" == "arm64" ]; then
-        printf " %s/%s_%s_%s.%s" "$TCDIST_OUTPUT" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
-    fi
+        printf " %s/%s_%s_%s.%s" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
 
-    printf "\n\n%s/%s_%s_%s.%s: " "$TCDIST_OUTPUT" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
-    printf "%s/%s_%s_%s.%s\n" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
-    printf "\tcp -f %s/" "$TCDIST_OUTPUT"
-    printf "%s/images/%s " "$admin" "$TCDIST_DEVTREE"
-    printf "%s/" "$TCDIST_OUTPUT"
-    printf "%s_%s_%s.%s\n" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+        printf "\n\n%s/%s_%s_%s.%s: " "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+        printf "%s/%s_%s_%s.%s\n" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_KERNEL_IMAGE_FILE"
+        printf "\tcp -f %s/%s/%s_%s_%s.%s " "$TCDIST_OUTPUT" "$admin" "$admin" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+        printf "%s/%s_%s_%s.%s\n"  "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM" "$TCDIST_DEVTREE"
+    fi
 
     printf "\n%s/%s_%s_%s.ext2:" "$TCDIST_OUTPUT" "$TCDIST_NAME" "$TCDIST_ARCH" "$TCDIST_PLATFORM"
 

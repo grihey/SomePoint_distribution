@@ -851,10 +851,10 @@ function Clean {
 
     case "$1" in
     keepconfig)
-        # Keeping .setup_sh_config
+        # Keeping ${TCDIST_SETUP_SH_CONFIG}
     ;;
     *)
-        rm -f .setup_sh_config
+        rm -f ${TCDIST_SETUP_SH_CONFIG}
     ;;
     esac
 }
@@ -898,12 +898,12 @@ function Show_help {
     echo "Usage $0 <command> [parameters]"
     echo ""
     echo "Commands:"
-    echo "    defconfig                         Create new .setup_sh_config from defaults"
-    echo "    xenconfig                         Create new .setup_sh_config for xen"
-    echo "    kvmconfig                         Create new .setup_sh_config for kvm"
-    echo "    x86config                         Create new .setup_sh_config for x86"
-    echo "    arm64config                       Create new .setup_sh_config for raspi4"
-    echo "    arm64config_ls1012a               Create new .setup_sh_config for nxp ls1012a-frwy"
+    echo "    defconfig                         Create new ${TCDIST_SETUP_SH_CONFIG} from defaults"
+    echo "    xenconfig                         Create new ${TCDIST_SETUP_SH_CONFIG} for xen"
+    echo "    kvmconfig                         Create new ${TCDIST_SETUP_SH_CONFIG} for kvm"
+    echo "    x86config                         Create new ${TCDIST_SETUP_SH_CONFIG} for x86"
+    echo "    arm64config                       Create new ${TCDIST_SETUP_SH_CONFIG} for raspi4"
+    echo "    arm64config_ls1012a               Create new ${TCDIST_SETUP_SH_CONFIG} for nxp ls1012a-frwy"
     echo "    clone                             Clone the required subrepositories"
     echo "    mount [device|image_file]         Mount given device or image file"
     echo "    umount [mark]                     Unmount and optionally mark partitions"
@@ -920,13 +920,13 @@ function Show_help {
     echo "    shell                             Open docker shell"
     echo "    buildall [xen|kvm|x86|noclone]    Builds a disk image and filesystem tarballs"
     echo "                                      uses selected default config if given"
-    echo "                                      (overwrites .setup_sh_config if given)"
+    echo "                                      (overwrites ${TCDIST_SETUP_SH_CONFIG} if given)"
     echo "                                      noclone option skips cloning"
     echo "    build_guest_kernels               Build required guest kernels"
     echo "    distclean                         removes almost everything except main repo local changes"
     echo "                                      (basically resets to just cloned main repo)"
     echo "    clean [keepconfig]                Clean up built files, but keep downloads."
-    echo "                                      Use 'keepconfig' option to preserve .setup_sh_config"
+    echo "                                      Use 'keepconfig' option to preserve ${TCDIST_SETUP_SH_CONFIG}"
     echo "    check_script                      Check setup.sh script (and sourced scripts) with"
     echo "                                      shellcheck and bashate"
     echo "    install_completion                Install bash completion for setup.sh commands"
@@ -955,6 +955,7 @@ case "$CMD" in
         CMD="Domu_fs"
     ;;
     ""|Help|-h|--help)
+        Load_config
         Show_help >&2
     ;;
     Uboot_src)
@@ -990,6 +991,9 @@ shift
 
 case "$CMD" in
     Xenconfig|Kvmconfig|X86config|Arm64config|Arm64config_ls1012a)
+        set -a
+        TCDIST_SETUP_SH_CONFIG=".setup_sh_config${TCDIST_PRODUCT}"
+        set +a
         Min_config
     ;;
     Clean|Distclean)

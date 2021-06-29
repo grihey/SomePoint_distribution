@@ -80,6 +80,8 @@ function Load_config {
         fi
     fi
 
+    TCDIST_SETUP_SH_CONFIG=".setup_sh_config${TCDIST_PRODUCT}"
+
     # Convert some options to lower case
     TCDIST_ARCH="${TCDIST_ARCH,,}"
     TCDIST_PLATFORM="${TCDIST_PLATFORM,,}"
@@ -224,20 +226,20 @@ function sudo {
 }
 
 function Xenconfig {
-    echo "Creating .setup_sh_config with xen configuration" >&2
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} with xen configuration" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
-    cp -f default_setup_sh_config "${TCDIST_OUTPUT:?}/.setup_sh_config"
+    cp -f default_setup_sh_config "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Kvmconfig {
-    echo "Creating .setup_sh_config with kvm configuration" >&2
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} with kvm configuration" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     # Change TCDIST_HYPERVISOR option to kvm
-    sed "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
+    sed "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function X86config {
-    echo "Creating .setup_sh_config for x86 qemu" >&2
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} for x86 qemu" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     # Change several options for x86 build
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
@@ -247,26 +249,27 @@ function X86config {
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=dhcp/" \
         -e "s/^TCDIST_KERNEL_IMAGE_FILE=.*/TCDIST_KERNEL_IMAGE_FILE=bzImage/" \
         -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-x86-5.10-dev/" \
-        -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
+        -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config {
-    echo "Creating .setup_sh_config for arm64" >&2
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
-        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=xen/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=xen/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config_ls1012a {
-    echo "Creating .setup_sh_config for arm64 ls1012afrwy" >&2
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64 ls1012afrwy" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
         -e "s/^TCDIST_PLATFORM=.*/TCDIST_PLATFORM=ls1012afrwy/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
-        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-nxp-5.4-dev/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/.setup_sh_config"
+        -e "s/^TCDIST_DEVTREE=.*/TCDIST_DEVTREE=fsl-ls1012a-frwy.dtb/" \
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-nxp-5.4-dev/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 

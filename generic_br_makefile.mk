@@ -6,7 +6,7 @@ OFIX=$(TCDIST_OUTPUT)/$(vm_name)
 LFIX=$(OFIX)/output_$(vm_product)
 IFIX=$(TCDIST_DIR)/$(vm_name)
 
-all: $(OFIX)/$(vm_output).ext2 $(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)
+all: $(OFIX)/$(vm_output).ext2 $(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE) $(if $(TCDIST_DEVTREE), $(OFIX)/$(vm_output).$(TCDIST_DEVTREE), )
 
 config: $(LFIX)/.config $(OFIX)/generated_$(vm_kernel_defconfig)
 
@@ -40,6 +40,9 @@ $(OFIX)/$(vm_output).ext2: $(LFIX)/images/rootfs.ext2 $(IFIX)/$(vm_name)_config.
 
 $(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)
 	cp -f "$(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)" "$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)"
+
+$(OFIX)/$(vm_output).$(TCDIST_DEVTREE): $(LFIX)/images/$(TCDIST_DEVTREE)
+	cp -f "$(LFIX)/images/$(TCDIST_DEVTREE)" "$(OFIX)/$(vm_output).$(TCDIST_DEVTREE)"
 
 $(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/rootfs.ext2
 

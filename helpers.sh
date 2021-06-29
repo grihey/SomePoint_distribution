@@ -73,6 +73,11 @@ function Load_config {
         # disable shellchecking of .setup_sh_config${TCDIST_PRODUCT} and warnings about it
         # shellcheck disable=SC1091,SC1090
         . "${TCDIST_OUTPUT}/.setup_sh_config${TCDIST_PRODUCT}"
+    else
+        if [ -n "${TCDIST_PRODUCT}" ]; then
+            echo "${TCDIST_OUTPUT}/.setup_sh_config${TCDIST_PRODUCT} doesn't exist"
+            exit 1
+        fi
     fi
 
     # Convert some options to lower case

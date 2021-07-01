@@ -23,8 +23,8 @@ PIDFILE=".br_admin.pid.tmp"
 QEMUEXE="qemu-system-x86_64"
 
 QEMUOPT=(-m 4096 -M pc -cpu host -enable-kvm)
-QEMUOPT+=(-kernel ${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.bzImage)
-QEMUOPT+=(-drive file=${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2,if=virtio,format=raw)
+QEMUOPT+=(-kernel "${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.bzImage")
+QEMUOPT+=(-drive "file=${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2,if=virtio,format=raw")
 QEMUOPT+=(-append "rootwait root=/dev/vda console=ttyS0")
 QEMUOPT+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on)
 QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=${TAPIF},mac=CE:11:CA:11:01:00,script=no)

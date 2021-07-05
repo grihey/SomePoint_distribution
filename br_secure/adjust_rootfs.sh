@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Include generic rootfs adjustments (Will load vm specific options too)
-. ../adjust_rootfs.sh -hostname -interfaces -ssh "$@"
+# Include generic rootfs adjustment functions
+. ../adjust_rootfs.sh "$1"
+
+Arfs_load_config
+# Variable purposefully unquoted, it contains list of space separated options
+# shellcheck disable=SC2086
+Arfs_apply ${ARFS_OPTIONS} "$@"
 
 if [ "${TCDIST_ARCH}_${TCDIST_PLATFORM}" == "arm64_ls1012afrwy" ]; then
     echo "Mount debug fs"

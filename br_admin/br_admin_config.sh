@@ -1,9 +1,10 @@
 #!/bin/bash
+# shellcheck disable=SC2034 # disable unused variable warnings
 # Configuration for buildroot admin
 
 TCDIST_VM_NAME="br_admin"
 
-function Interfaces {
+function Arfs_interfaces {
     echo "auto lo"
     echo "iface lo inet loopback"
     echo ""
@@ -21,3 +22,5 @@ TCDIST_ADMIN_DIR=/root
 TCDIST_ADMIN_MODE=755
 TCDIST_ADMIN_UID=0
 TCDIST_ADMIN_GID=0
+
+ARFS_OPTIONS="-hostname -interfaces -ssh -inittab sv"

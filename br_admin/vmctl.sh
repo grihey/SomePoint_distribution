@@ -2,6 +2,9 @@
 
 # This script handles network settings and starting and stopping vms inside admin machine
 
+# Export env variables and functions so they can be used in vm_*.sh
+set -a
+
 function Bridge_up {
     ip link add name "$1" type bridge
     ip link set dev "$1" up
@@ -30,8 +33,7 @@ VMBR="vmbr0"
 CONBR="conbr0"
 QEMUEXE="qemu-system-x86_64"
 SYSCTLSAVE=".sysctl.save"
-
-set -x
+SCRSESSION="tcs"
 
 case "$1" in
     netup)
@@ -42,16 +44,16 @@ case "$1" in
 
         ip a flush dev "$ETHDEV"
         ip link set dev "$ETHDEV" master "$CONBR"
-        killall udhcpc
-        udhcpc -i "$CONBR"
+        killall udhcpc > /dev/null 2>&1
+        udhcpc -i "$CONBR" > /dev/null 2>&1 &
 
         for S in vm_*.sh; do
-            . "$S" netup
+            "./$S" netup
         done
     ;;
     netdn)
         for S in vm_*.sh; do
-            . "$S" netdn
+            "./$S" netdn
         done
 
         ip a flush dev "$ETHDEV"
@@ -67,17 +69,18 @@ case "$1" in
         fi
     ;;
     start)
+        ARG="-d -m"
         for S in vm_*.sh; do
-            . "$S" start > /dev/null
+            screen -S "$SCRSESSION" $ARG "./$S" start
+            sleep 0.5
+            ARG="-X screen"
         done
     ;;
     stop)
-        for S in vm_*.sh; do
-            . "$S" stop
-        done
+        screen -S "$SCRSESSION" -X quit
     ;;
     kill)
+        # Use as a last resort
         killall "$QEMUEXE"
-        rm -f .vm_*.pid
     ;;
 esac

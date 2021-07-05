@@ -3,7 +3,6 @@
 DISABLED=0
 
 if [ "$DISABLED" -ne 1 ]; then
-    PIDFILE=".vm_2.pid"
     MACFILE=".vm_2.mac"
 
     if [ ! -f "$MACFILE" ]; then
@@ -24,24 +23,13 @@ if [ "$DISABLED" -ne 1 ]; then
 
     case "$1" in
         netup)
-            Interface_up tap2 "$CONBR"
+            Interface_up tap2 "$VMBR"
         ;;
         netdn)
             Interface_dn tap2
         ;;
         start)
-            "$QEMUEXE" "${QEMUOPT[@]}" &
-            sleep 0.1s
-            echo "$!" > "$PIDFILE"
-        ;;
-        stop)
-            CPID=$(< "$PIDFILE")
-            if [ -n "$CPID" ]; then
-                kill "$CPID"
-                rm -f "$PIDFILE"
-            else
-                echo "$PIDFILE" not found >&2
-            fi
+            "$QEMUEXE" "${QEMUOPT[@]}"
         ;;
     esac
 fi

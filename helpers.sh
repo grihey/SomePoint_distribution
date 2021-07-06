@@ -249,6 +249,7 @@ function X86config {
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=dhcp/" \
         -e "s/^TCDIST_KERNEL_IMAGE_FILE=.*/TCDIST_KERNEL_IMAGE_FILE=bzImage/" \
         -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-x86-5.10-dev/" \
+        -e "s/^TCDIST_DEVTREE=.*/TCDIST_DEVTREE=/" \
         -e "s/^TCDIST_DEVICEHN=.*/TCDIST_DEVICEHN=x86/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 

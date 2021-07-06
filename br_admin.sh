@@ -18,8 +18,16 @@ function Interface_dn {
     sudo ip tuntap del "$1" mode tap
 }
 
+MACFILE="${TCDIST_OUTPUT}/.br_admin_mac.tmp"
+
+if [ ! -f "${MACFILE}" ]; then
+    printf "%s not found, generated a random qemu/kvm mac address: " "$MACFILE"
+    printf "52:54:00:%02X:%02X:%02X\n" $((RANDOM % 256)) $((RANDOM % 256)) $((RANDOM % 256)) | tee "${MACFILE}"
+fi
+
+MACADD=$(< "${MACFILE}")
 TAPIF="tap0"
-PIDFILE=".br_admin.pid.tmp"
+PIDFILE="${TCDIST_OUTPUT}/.br_admin.pid.tmp"
 QEMUEXE="qemu-system-x86_64"
 
 QEMUOPT=(-m 4096 -M pc -cpu host -enable-kvm)
@@ -27,7 +35,7 @@ QEMUOPT+=(-kernel "${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATF
 QEMUOPT+=(-drive "file=${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2,if=virtio,format=raw")
 QEMUOPT+=(-append "rootwait root=/dev/vda console=ttyS0")
 QEMUOPT+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on)
-QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=${TAPIF},mac=CE:11:CA:11:01:00,script=no)
+QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=${TAPIF},mac=${MACADD},script=no)
 #QEMUOPT+=(-serial stdin)
 #QEMUOPT+=(-device qemu-xhci -device usb-kbd)
 #QEMUOPT+=(-nographic)

@@ -1,0 +1,5 @@
+[gerrit]
+host=gerrit.ssrc-tre.fi
+port=29418
+project=Phone/sp_distro
+defaultbranch=main

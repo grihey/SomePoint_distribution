@@ -663,6 +663,7 @@ function Ssh_dut {
     local ip
     local ips
     local vm_id
+    local ssh_port
 
     case "$1" in
     domu)
@@ -686,6 +687,15 @@ function Ssh_dut {
         case "$TCDIST_ARCH" in
         x86)
             vm_id=${vm_id/#vm_/br_}
+
+            case "$vm_id" in
+            br_secure)
+                ssh_port=222
+            ;;
+            *)
+                ssh_port=22
+            ;;
+            esac
 
             # Check if we know VM IP address already
             if [ -f ".${vm_id}.ip.tmp" ] ; then
@@ -719,7 +729,7 @@ function Ssh_dut {
                 # and run "uname -a" on them to match our target VM name.
                 for ip in ${ips} ; do
                     echo "Trying IP: $ip"
-                    st=$(ssh -i "${vm_id}/device_id_rsa" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no "root@${ip}" uname -a | grep "${vm_id}")
+                    st=$(ssh -i "${vm_id}/device_id_rsa" -p "$ssh_port" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no "root@${ip}" uname -a | grep "${vm_id}")
                     if [ -n "$st" ] ; then
                         echo "IP $ip mapped to dut"
                         dut_ip=$ip
@@ -732,7 +742,7 @@ function Ssh_dut {
                 echo "$dut_ip" > ".${vm_id}.ip.tmp"
             fi
 
-            ssh -i "${vm_id}/device_id_rsa" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@${dut_ip}"
+            ssh -i "${vm_id}/device_id_rsa" -p "$ssh_port" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@${dut_ip}"
         ;;
         esac
     ;;

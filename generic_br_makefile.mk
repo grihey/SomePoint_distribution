@@ -47,6 +47,7 @@ $(OFIX)/$(vm_output).$(TCDIST_DEVTREE): $(LFIX)/images/$(TCDIST_DEVTREE)
 $(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/rootfs.ext2
 
 $(LFIX)/images/rootfs.ext2: $(LFIX)/.config $(OFIX)/generated_$(vm_kernel_defconfig)
+	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" source
 	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot"
 
 $(LFIX)/.config: $(IFIX)/$(vm_buildroot_config)

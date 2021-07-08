@@ -18,14 +18,15 @@ function Interface_dn {
     sudo ip tuntap del "$1" mode tap
 }
 
-MACFILE="${TCDIST_OUTPUT}/.br_admin_mac.tmp"
+MACFILE="${TCDIST_OUTPUT}/.tcdist.macs"
 
 if [ ! -f "${MACFILE}" ]; then
-    printf "%s not found, generated a random qemu/kvm mac address: " "$MACFILE"
-    printf "52:54:00:%02X:%02X:%02X\n" $((RANDOM % 256)) $((RANDOM % 256)) $((RANDOM % 256)) | tee "${MACFILE}"
+    echo "Generating macs to ${MACFILE}" >&2
+    ./genmacs.sh > "${MACFILE}"
 fi
 
-MACADD=$(< "${MACFILE}")
+# Get first mac from file
+MACADD=$(sed "1q;d" "$MACFILE")
 TAPIF="tap0"
 PIDFILE="${TCDIST_OUTPUT}/.br_admin.pid.tmp"
 QEMUEXE="qemu-system-x86_64"

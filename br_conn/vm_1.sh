@@ -3,8 +3,8 @@
 DISABLED=0
 
 if [ "$DISABLED" -ne 1 ]; then
-    MACFILE1=".vm_1.mac_1"
-    MACFILE2=".vm_1.mac_2"
+    MACFILE1="br_conn.mac_1"
+    MACFILE2="br_conn.mac_2"
 
     if [ ! -f "$MACFILE1" ]; then
         printf "%s not found, generated a random qemu/kvm mac address: " "$MACFILE1"

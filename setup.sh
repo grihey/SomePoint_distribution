@@ -698,8 +698,8 @@ function Ssh_dut {
             esac
 
             # Check if we know VM IP address already
-            if [ -f ".${vm_id}.ip.tmp" ] ; then
-                dut_ip=$(cat ".${vm_id}.ip.tmp")
+            if [ -f "${TCDIST_OUTPUT}/${vm_id}/.ip.tmp" ] ; then
+                dut_ip=$(cat "${TCDIST_OUTPUT}/${vm_id}/.ip.tmp")
                 set +e
 
                 # Check if the VM responds to ping (i.e., our IP address is still valid)
@@ -712,7 +712,7 @@ function Ssh_dut {
             fi
             if [ -z ${dut_ip} ] ; then
                 echo "No DUT IP known, exploring..."
-                rm -f ".${vm_id}.ip.tmp"
+                rm -f "${TCDIST_OUTPUT}/${vm_id}/.ip.tmp"
 
                 # Generate subnet mask for our bridge, get current IP address
                 # for it and grab first three values.
@@ -729,7 +729,7 @@ function Ssh_dut {
                 # and run "uname -a" on them to match our target VM name.
                 for ip in ${ips} ; do
                     echo "Trying IP: $ip"
-                    st=$(ssh -i "${vm_id}/device_id_rsa" -p "$ssh_port" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no "root@${ip}" uname -a | grep "${vm_id}")
+                    st=$(ssh -i "${TCDIST_OUTPUT}/${vm_id}/device_id_rsa" -p "$ssh_port" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no "root@${ip}" uname -a | grep "${vm_id}")
                     if [ -n "$st" ] ; then
                         echo "IP $ip mapped to dut"
                         dut_ip=$ip
@@ -739,10 +739,10 @@ function Ssh_dut {
 
                 # Found our target IP address, save it for later use as the
                 # VMs in most cases retain their IP address.
-                echo "$dut_ip" > ".${vm_id}.ip.tmp"
+                echo "$dut_ip" > "${TCDIST_OUTPUT}/${vm_id}/.ip.tmp"
             fi
 
-            ssh -i "${vm_id}/device_id_rsa" -p "$ssh_port" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@${dut_ip}"
+            ssh -i "${TCDIST_OUTPUT}/${vm_id}/device_id_rsa" -p "$ssh_port" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "root@${dut_ip}"
         ;;
         esac
     ;;

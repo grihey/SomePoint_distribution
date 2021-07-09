@@ -16,12 +16,13 @@ e2cp -P "$TCDIST_ADMIN_MODE" -O "$TCDIST_ADMIN_UID" -G "$TCDIST_ADMIN_UID" vmctl
 if [ "$TCDIST_SYS_TEST" = "1" ] ; then
     # Uncomment below line to enable virt tools debug
     #export LIBGUESTFS_DEBUG=1 LIBGUESTFS_TRACE=1
-    output_dir="${PWD}/output_${TCDIST_ARCH}_${TCDIST_PLATFORM}"
+    output_dir="${TCDIST_OUTPUT}/br_admin/output_${TCDIST_ARCH}_${TCDIST_PLATFORM}"
     image_dir="${output_dir}/images"
+    src_dir="${TCDIST_DIR}/br_admin"
     echo -e "\e[30;107mGenerating qcow2 image for avocado-vt use\e[0m"
     virt-make-fs --format=qcow2 "${image_dir}/rootfs.tar" "${image_dir}/CustomLinux.qcow2"
-    virt-copy-in -a "${image_dir}/CustomLinux.qcow2" "${PWD}/br2-ext/avocado-vt/cfg/interfaces" /etc/network
-    virt-copy-in -a "${image_dir}/CustomLinux.qcow2" "${PWD}/br2-ext/avocado-vt/guest-tools/*" /usr/bin/
+    virt-copy-in -a "${image_dir}/CustomLinux.qcow2" "${src_dir}/br2-ext/avocado-vt/cfg/interfaces" /etc/network
+    virt-copy-in -a "${image_dir}/CustomLinux.qcow2" "${src_dir}"/br2-ext/avocado-vt/guest-tools/* /usr/bin/
     virt-edit -a "${image_dir}/CustomLinux.qcow2" /etc/ssh/sshd_config -e 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/'
     e2mkdir "${2}:/var/lib/avocado/data/avocado-vt/"
     echo -e "\e[30;107mCopying avocado-vt bootstrap to rootfs\e[0m"

@@ -9,7 +9,7 @@ if [ "$1" == "check_script" ]; then
     exit
 fi
 
-count=${#TCDIST_VMLIST[@]}
+count=$(wc -w <<< "${TCDIST_VMLIST}")
 count=$((count + 1))
 
 # Seed randoms with current unix time in milliseconds

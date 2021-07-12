@@ -716,7 +716,7 @@ function Ssh_dut {
 
                 # Generate subnet mask for our bridge, get current IP address
                 # for it and grab first three values.
-                subnet=$(ifconfig | grep -A 1 "$TCDIST_ADMINBR" | grep -o "inet [0-9\.]*" | cut -d " " -f 2 | cut -d "." -f 1-3)
+                subnet=$(ifconfig | grep -A 1 "$TCDIST_ADMIN_BRIDGE" | grep -o "inet [0-9\.]*" | cut -d " " -f 2 | cut -d "." -f 1-3)
                 echo "Our subnet is ${subnet}.0/24"
 
                 # Scan the generated subnet for anybody home, cut first address
@@ -864,7 +864,7 @@ function Clean {
         # Keeping ${TCDIST_SETUP_SH_CONFIG}
     ;;
     *)
-        rm -f ${TCDIST_SETUP_SH_CONFIG}
+        rm -f "${TCDIST_SETUP_SH_CONFIG}"
     ;;
     esac
 }

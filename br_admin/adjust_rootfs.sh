@@ -9,11 +9,10 @@ Arfs_load_config
 Arfs_apply ${ARFS_OPTIONS} "$@"
 
 # Insert vm specific adjustments here
-set -x
-e2cp -P "$TCDIST_ADMIN_MODE" -O "$TCDIST_ADMIN_UID" -G "$TCDIST_ADMIN_UID" vmctl.sh "${2}:${TCDIST_ADMIN_DIR}"
 
 # Copy over any system testing related items
 if [ "$TCDIST_SYS_TEST" = "1" ] ; then
+	set -x
     # Uncomment below line to enable virt tools debug
     #export LIBGUESTFS_DEBUG=1 LIBGUESTFS_TRACE=1
     output_dir="${TCDIST_OUTPUT}/br_admin/output_${TCDIST_ARCH}_${TCDIST_PLATFORM}"
@@ -32,6 +31,7 @@ if [ "$TCDIST_SYS_TEST" = "1" ] ; then
     e2cp br2-ext/avocado-vt/cfg/qemu-base.cfg "${2}:/var/lib/avocado/data/avocado-vt/backends/qemu/cfg/base.cfg"
     e2cp "${image_dir}/CustomLinux.qcow2" "${2}:/var/lib/avocado/data/avocado-vt/images/"
     e2cp "${image_dir}/${TCDIST_KERNEL_IMAGE_FILE}" "${2}:/root/Image"
+	set +x
 fi
 
 if [ "${TCDIST_ARCH}_${TCDIST_PLATFORM}" == "arm64_ls1012afrwy" ]; then

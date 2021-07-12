@@ -17,9 +17,6 @@ function Arfs_interfaces {
     echo "iface default inet dhcp"
 }
 
-TCDIST_VM_INPUTS="vm_2.sh"
-TCDIST_VM_OUTPUTS="${TCDIST_VM_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2 ${TCDIST_VM_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.${TCDIST_KERNEL_IMAGE_FILE} br_secure.mac"
-
 ARFS_OPTIONS="-hostname -interfaces -ssh"
 case "${TCDIST_ARCH}_${TCDIST_PLATFORM}" in
     x86_qemu)

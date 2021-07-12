@@ -43,14 +43,14 @@ QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=${TAPIF},mac=${MACADD},script=no)
 
 case "$1" in
     up)
-        Interface_up "${TAPIF}" "${TCDIST_ADMINBR}"
+        Interface_up "${TAPIF}" "${TCDIST_ADMIN_BRIDGE}"
     ;;
     dn)
         Interface_dn "${TAPIF}"
     ;;
     start)
         set +e
-        Interface_up "${TAPIF}" "${TCDIST_ADMINBR}"
+        Interface_up "${TAPIF}" "${TCDIST_ADMIN_BRIDGE}"
 
         sudo "$QEMUEXE" "${QEMUOPT[@]}" &
         sleep 0.1s

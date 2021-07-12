@@ -89,6 +89,10 @@ function Load_config {
     TCDIST_BUILDOPT="${TCDIST_BUILDOPT,,}"
     TCDIST_SUDOTYPE="${TCDIST_SUDOTYPE,,}"
 
+    # Put admin machine name in it's own variable for convenience
+    # shellcheck disable=SC2034 # Don't complain about unused variable, it's exported
+    TCDIST_ADMIN="${TCDIST_VMLIST%% *}"
+
     # Restore a flag
     if [[ "$flags" =~ "a" ]]; then
         set -a
@@ -988,12 +992,6 @@ function Fetch_all {
 
 # Just run make (with currently loaded configuration)
 function Make {
-
-    # If running make on main level, (re)generate Makefile
-    if [ "$OPWD" == "$TCDIST_DIR" ]; then
-        Makefile > "${TCDIST_OUTPUT:?}/Makefile.def"
-    fi
-
     make -C "$OPWD" "$@"
 }
 
@@ -1001,7 +999,8 @@ function Make {
 function Amake {
     local vm
 
-    for vm in "${TCDIST_VMLIST[@]}"; do
+    # Double quotes would not work here as variable is a space separated list
+    for vm in ${TCDIST_VMLIST}; do
         make -C "$vm" "$@"
     done
 }

@@ -31,9 +31,9 @@ TCDIST_SYS_TEST=0
 # and running x86config sets it properly.
 TCDIST_LINUX_BRANCH=xen
 
-# TCDIST_VMLIST is an array which lists all selected VMs for system image
+# TCDIST_VMLIST is list of all selected VMs for system image
 # Admin is always first and connection VM second, rest can be arranged freely
-TCDIST_VMLIST=(br_admin br_conn br_secure)
+TCDIST_VMLIST="br_admin br_conn br_secure"
 
 # Internal network address, three octets
 TCDIST_INTERNAL_NET=10.10.10
@@ -43,7 +43,7 @@ TCDIST_INTERNAL_NET=10.10.10
 TCDIST_ETHDEV="eth0"
 
 # Bridge name used for bridging admin machine
-TCDIST_ADMINBR="adminbr0"
+TCDIST_ADMIN_BRIDGE="adminbr0"
 
 # TCDIST_BUILDOPT defines type of build
 # 'usb' for USB build

@@ -28,7 +28,4 @@ function Arfs_net_rc_add {
     echo "echo \"nameserver ${TCDIST_DEVICEDNS}\" > /etc/resolv.conf"
 }
 
-TCDIST_VM_INPUTS="vm_1.sh"
-TCDIST_VM_OUTPUTS="${TCDIST_VM_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2 ${TCDIST_VM_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.${TCDIST_KERNEL_IMAGE_FILE} br_conn.mac_1 br_conn.mac_2"
-
 ARFS_OPTIONS="-hostname -interfaces -ssh -inittab s -netrcadd"

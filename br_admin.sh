@@ -37,17 +37,8 @@ QEMUOPT+=(-drive "file=${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_P
 QEMUOPT+=(-append "rootwait root=/dev/vda console=ttyS0")
 QEMUOPT+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=3,disable-legacy=on)
 QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=${TAPIF},mac=${MACADD},script=no)
-#QEMUOPT+=(-serial stdin)
-#QEMUOPT+=(-device qemu-xhci -device usb-kbd)
-#QEMUOPT+=(-nographic)
 
 case "$1" in
-    up)
-        Interface_up "${TAPIF}" "${TCDIST_ADMIN_BRIDGE}"
-    ;;
-    dn)
-        Interface_dn "${TAPIF}"
-    ;;
     start)
         set +e
         Interface_up "${TAPIF}" "${TCDIST_ADMIN_BRIDGE}"
@@ -79,8 +70,24 @@ case "$1" in
         rm -f "$PIDFILE"
         Interface_dn "${TAPIF}"
     ;;
+    console)
+        set +e
+        # connect standard io to serial console of the qemu guest
+        QEMUOPT+=(-nographic)
+        # Change qemu control hotkey to CTRL-B as screen uses CTRL-A
+        QEMUOPT+=(-echr 2)
+        
+        Interface_up "${TAPIF}" "${TCDIST_ADMIN_BRIDGE}"
+        sudo "$QEMUEXE" "${QEMUOPT[@]}"
+        Interface_dn "${TAPIF}"
+    ;;
     *)
-        echo "Usage: $0 <start|stop>"
+        echo "Usage: $0 <start|stop|kill|console>"
+        echo ""
+        echo "  start - start emulation with qemu in window"
+        echo "   stop - stop emulation"
+        echo "   kill - kill all running qemus (last resort)"
+        echo "console - start qemu with serial console in stdio (CTRL-B as qemu hotkey)"
         echo ""
         exit 1
     ;;

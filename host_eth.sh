@@ -40,4 +40,8 @@ case "$1" in
             rm -f "${SYSCTLSAVE}"
         fi
     ;;
+    *)
+        echo "Usage: $0 <up|dn>" >&2
+        exit 1
+    ;;
 esac

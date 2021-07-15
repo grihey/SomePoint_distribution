@@ -11,7 +11,7 @@ all: $(OFIX)/$(vm_output).ext2 $(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE) 
 config: $(LFIX)/.config $(OFIX)/generated_$(vm_kernel_defconfig)
 
 clean:
-	if [ -d "$(LFIX)" ]; then make "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
+	if [ -d "$(LFIX)" ]; then make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
 	rm -rf "$(OFIX)/generated_$(vm_kernel_defconfig)" \
         "$(LFIX)/.config" \
         "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm" \
@@ -19,13 +19,13 @@ clean:
         "$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)"
 
 menuconfig:
-	make "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" menuconfig
+	make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" menuconfig
 
 linux-menuconfig:
-	make "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-menuconfig
+	make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-menuconfig
 
 linux-rebuild:
-	make "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-rebuild
+	make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-rebuild
 
 distclean:
 	rm -rf "$(OFIX)"/output_* "$(OFIX)/generated_$(vm_kernel_defconfig)" "$(OFIX)"/generated_buildroot_config_*

@@ -14,6 +14,7 @@ clean:
 	if [ -d "$(LFIX)" ]; then make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
 	rm -rf "$(OFIX)/generated_$(vm_kernel_defconfig)" \
         "$(LFIX)/.config" \
+        "$(LFIX)/ccache-stats.txt" \
         "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm" \
         "$(OFIX)/$(vm_output).ext2" \
         "$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)"
@@ -49,6 +50,7 @@ $(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/rootfs.ext2
 $(LFIX)/images/rootfs.ext2: $(LFIX)/.config $(OFIX)/generated_$(vm_kernel_defconfig)
 	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" source
 	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot"
+	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" ccache-stats > $(LFIX)/ccache-stats.txt
 
 $(LFIX)/.config: $(IFIX)/$(vm_buildroot_config)
 	mkdir -p $(LFIX)

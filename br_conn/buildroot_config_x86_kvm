@@ -2709,19 +2709,19 @@ BR2_PACKAGE_BITCOIN_ARCH_SUPPORTS=y
 #
 # proj needs a toolchain w/ C++, gcc >= 4.7, threads, wchar
 #
-BR2_PACKAGE_QEMU_ARCH_SUPPORTS_TARGET=y
-BR2_PACKAGE_QEMU=y
+# BR2_PACKAGE_QEMU_ARCH_SUPPORTS_TARGET is not set
+# BR2_PACKAGE_QEMU is not set
 
 #
 # Emulators selection
 #
-BR2_PACKAGE_QEMU_CUSTOM_TARGETS="x86_64-softmmu"
+# BR2_PACKAGE_QEMU_CUSTOM_TARGETS="x86_64-softmmu"
 
 #
 # Networking options
 #
-BR2_PACKAGE_QEMU_SLIRP=y
-BR2_PACKAGE_QEMU_HAS_EMULS=y
+# BR2_PACKAGE_QEMU_SLIRP is not set
+# BR2_PACKAGE_QEMU_HAS_EMULS is not set
 
 #
 # Frontends
@@ -2732,7 +2732,7 @@ BR2_PACKAGE_QEMU_HAS_EMULS=y
 # Misc. features
 #
 # BR2_PACKAGE_QEMU_FDT is not set
-BR2_PACKAGE_QEMU_TOOLS=y
+# BR2_PACKAGE_QEMU_TOOLS is not set
 
 #
 # qpdf needs a toolchain w/ C++, wchar, gcc >= 4.7

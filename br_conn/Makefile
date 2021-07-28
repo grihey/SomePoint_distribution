@@ -11,6 +11,10 @@ vm_output = $(vm_name)_$(vm_product)
 
 include ${TCDIST_DIR}/generic_br_makefile.mk
 
+ifeq ($(TCDIST_PLATFORM),qemu)
+all: $(OFIX)/br_conn.mac_1 $(OFIX)/br_conn.mac_2
+endif
+
 $(OFIX)/br_conn.mac_1: $(TCDIST_OUTPUT)/.tcdist.macs
 #   Get 2nd line from macs file, 1st is admin, 2nd and 3rd are for conn vm, 4th is for secure os
 	sed "2q;d" $< > $@

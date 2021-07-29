@@ -17,6 +17,7 @@ DISTCLEANTARGETS:=$(addsuffix .distclean,$(TCDIST_VMLIST))
 
 # Get list of all vm files
 TCDIST_VM_FILES:=
+include $(foreach vm,$(TCDIST_VMLIST),$(vm)/$(vm).mk)
 
 all: $(TCDIST_OUTPUT)/.tcdist.macs $(MAINIMAGE) $(MAINKERNEL)
 
@@ -33,10 +34,7 @@ $(MAINKERNEL): $(TCDIST_VMLIST)
 $(TCDIST_OUTPUT)/.tcdist.macs:
 	./genmacs.sh > $@
 
-%/Makefile:
-	include $@
-
-$(TCDIST_VMLIST): $(addsuffix /Makefile,$@)
+$(TCDIST_VMLIST):
 	make $(MFLAGS) -C $@ all
 
 $(CLEANTARGETS):

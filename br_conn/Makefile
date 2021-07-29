@@ -2,12 +2,6 @@ ifndef TCDIST_DIR
 $(error Environment not set up correctly, please run make via setup.sh)
 endif
 
-TCDIST_VM_FILES+=$(TCDIST_DIR)/br_conn/vm_1.sh
-TCDIST_VM_FILES+=$(TCDIST_OUTPUT)/br_conn/br_conn_$(TCDIST_ARCH)_$(TCDIST_PLATFORM).ext2
-TCDIST_VM_FILES+=$(TCDIST_OUTPUT)/br_conn/br_conn_$(TCDIST_ARCH)_$(TCDIST_PLATFORM).$(TCDIST_KERNEL_IMAGE_FILE)
-TCDIST_VM_FILES+=$(TCDIST_OUTPUT)/br_conn/br_conn.mac_1
-TCDIST_VM_FILES+=$(TCDIST_OUTPUT)/br_conn/br_conn.mac_2
-
 VM_NAME:=br_conn
 VM_PRODUCT:=$(TCDIST_ARCH)_$(TCDIST_PLATFORM)
 VM_BUILDROOT_CONFIG:=buildroot_config_$(TCDIST_ARCH)_kvm

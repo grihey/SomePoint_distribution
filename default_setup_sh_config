@@ -128,6 +128,6 @@ TCDIST_NFSDOMU=/srv/nfsdomu
 
 # ccache options
 CCACHE="$(command -v ccache || true)"
-CCACHE_DIR="$(pwd)/.ccache"
+CCACHE_DIR="${TCDIST_OUTPUT}/.ccache"
 CCACHE_MAXSIZE=10G
 

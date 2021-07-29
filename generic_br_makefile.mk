@@ -2,84 +2,84 @@ ifndef TCDIST_DIR
 $(error Environment not set up correctly, please run make via setup.sh)
 endif
 
-OFIX=$(TCDIST_OUTPUT)/$(vm_name)
-LFIX=$(OFIX)/output_$(vm_product)
-IFIX=$(TCDIST_DIR)/$(vm_name)
+VM_OFIX:=$(TCDIST_OUTPUT)/$(VM_NAME)
+VM_LFIX:=$(VM_OFIX)/output_$(VM_PRODUCT)
+VM_IFIX:=$(TCDIST_DIR)/$(VM_NAME)
 
-all: $(OFIX)/$(vm_output).ext2 $(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE) $(if $(TCDIST_DEVTREE), $(OFIX)/$(vm_output).$(TCDIST_DEVTREE), )
+all: $(VM_OFIX)/$(VM_OUTPUT).ext2 $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE) $(if $(TCDIST_DEVTREE), $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE), )
 
-config: $(LFIX)/.config $(OFIX)/generated_$(vm_kernel_defconfig)
+config: $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
 
 clean:
-	if [ -d "$(LFIX)" ]; then make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
-	rm -rf "$(OFIX)/generated_$(vm_kernel_defconfig)" \
-        "$(LFIX)/.config" \
-        "$(LFIX)/ccache-stats.txt" \
-        "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm" \
-        "$(OFIX)/$(vm_output).ext2" \
-        "$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)"
+	if [ -d "$(VM_LFIX)" ]; then make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
+	rm -rf "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" \
+        "$(VM_LFIX)/.config" \
+        "$(VM_LFIX)/ccache-stats.txt" \
+        "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm" \
+        "$(VM_OFIX)/$(VM_OUTPUT).ext2" \
+        "$(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE)"
 
 menuconfig:
-	make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" menuconfig
+	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" menuconfig
 
 linux-menuconfig:
-	make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-menuconfig
+	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-menuconfig
 
 linux-rebuild:
-	make "BR2_EXTERNAL=$(IFIX)/br2-ext" "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-rebuild
+	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-rebuild
 
 distclean:
-	rm -rf "$(OFIX)"/output_* "$(OFIX)/generated_$(vm_kernel_defconfig)" "$(OFIX)"/generated_buildroot_config_*
+	rm -rf "$(VM_OFIX)"/output_* "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" "$(VM_OFIX)"/generated_buildroot_config_*
 
 image:
 	@echo This target would get the latest working image from artifactory without building anything
 	@echo If it was implemented
 	@exit 255
 
-$(OFIX)/$(vm_output).ext2: $(LFIX)/images/rootfs.ext2 $(IFIX)/$(vm_name)_config.sh $(IFIX)/adjust_rootfs.sh
-	"$(IFIX)/adjust_rootfs.sh" "$(LFIX)/images/rootfs.ext2" "$(OFIX)/$(vm_output).ext2"
+$(VM_OFIX)/$(VM_OUTPUT).ext2: $(VM_LFIX)/images/rootfs.ext2 $(VM_IFIX)/$(VM_NAME)_config.sh $(VM_IFIX)/adjust_rootfs.sh
+	"$(VM_IFIX)/adjust_rootfs.sh" "$(VM_LFIX)/images/rootfs.ext2" "$(VM_OFIX)/$(VM_OUTPUT).ext2"
 
-$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)
-	cp -f "$(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)" "$(OFIX)/$(vm_output).$(TCDIST_KERNEL_IMAGE_FILE)"
+$(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE): $(VM_LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)
+	cp -f "$(VM_LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)" "$(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE)"
 
-$(OFIX)/$(vm_output).$(TCDIST_DEVTREE): $(LFIX)/images/$(TCDIST_DEVTREE)
-	cp -f "$(LFIX)/images/$(TCDIST_DEVTREE)" "$(OFIX)/$(vm_output).$(TCDIST_DEVTREE)"
+$(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE): $(VM_LFIX)/images/$(TCDIST_DEVTREE)
+	cp -f "$(VM_LFIX)/images/$(TCDIST_DEVTREE)" "$(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE)"
 
-$(LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(LFIX)/images/rootfs.ext2
+$(VM_LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(VM_LFIX)/images/rootfs.ext2
 
-$(LFIX)/images/rootfs.ext2: $(LFIX)/.config $(OFIX)/generated_$(vm_kernel_defconfig)
-	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" source
-	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot"
-	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" ccache-stats > $(LFIX)/ccache-stats.txt
+$(VM_LFIX)/images/rootfs.ext2: $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
+	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" source
+	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot"
+	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" ccache-stats > $(VM_LFIX)/ccache-stats.txt
 
-$(LFIX)/.config: $(IFIX)/$(vm_buildroot_config)
-	mkdir -p $(LFIX)
-	cp -f "$(IFIX)/$(vm_buildroot_config)" "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"
-	if [ -f "$(IFIX)/buildroot_config_$(vm_product)_kvm_fragment" ]; then \
-        cat "$(IFIX)/buildroot_config_$(vm_product)_kvm_fragment" >> "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"; \
+$(VM_LFIX)/.config: $(VM_IFIX)/$(VM_BUILDROOT_CONFIG)
+	mkdir -p $(VM_LFIX)
+	cp -f "$(VM_IFIX)/$(VM_BUILDROOT_CONFIG)" "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm"
+	if [ -f "$(VM_IFIX)/buildroot_config_$(VM_PRODUCT)_kvm_fragment" ]; then \
+        cat "$(VM_IFIX)/buildroot_config_$(VM_PRODUCT)_kvm_fragment" >> "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm"; \
     fi
 ifeq ($(TCDIST_SYS_TEST),1)
-	if [ -f "$(IFIX)/buildroot_config_$(vm_product)_systest_fragment" ] ; then \
-        cat "$(IFIX)/buildroot_config_$(vm_product)_systest_fragment" >> "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"; \
+	if [ -f "$(VM_IFIX)/buildroot_config_$(VM_PRODUCT)_systest_fragment" ] ; then \
+        cat "$(VM_IFIX)/buildroot_config_$(VM_PRODUCT)_systest_fragment" >> "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm"; \
     fi
 endif
-	sed -i 's/TC_BR_VM_BUILDROOT_DEFCONFIG/$(vm_name)\/buildroot_config_$(vm_product)_kvm/' "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"
-	sed -i 's/TC_BR_VM_KERNEL_DEFCONFIG/$(vm_name)\/generated_$(vm_kernel_defconfig)/' "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm"
-	cp -f "$(OFIX)/generated_buildroot_config_$(vm_product)_kvm" "$(LFIX)/.config"
-	make BR2_EXTERNAL=$(IFIX)/br2-ext "O=$(LFIX)" -C "$(TCDIST_DIR)/buildroot" olddefconfig
+	sed -i 's/TC_BR_VM_BUILDROOT_DEFCONFIG/$(VM_NAME)\/buildroot_config_$(VM_PRODUCT)_kvm/' "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm"
+	sed -i 's/TC_BR_VM_KERNEL_DEFCONFIG/$(VM_NAME)\/generated_$(VM_KERNEL_DEFCONFIG)/' "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm"
+	cp -f "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm" "$(VM_LFIX)/.config"
+	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" olddefconfig
 
-$(OFIX)/generated_$(vm_kernel_defconfig): $(IFIX)/$(vm_kernel_defconfig)
-	cp -f "$(IFIX)/$(vm_kernel_defconfig)" "$(OFIX)/generated_$(vm_kernel_defconfig)"
+$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG): $(VM_IFIX)/$(VM_KERNEL_DEFCONFIG)
+	cp -f "$(VM_IFIX)/$(VM_KERNEL_DEFCONFIG)" "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"
 ifeq ("$(TCDIST_SUB_ARCH)","amd")
-	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "$(OFIX)/generated_$(vm_kernel_defconfig)"
+	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"
 else
-	sed -i 's/CONFIG_KVM_AMD=y/CONFIG_KVM_INTEL=y/' "$(OFIX)/generated_$(vm_kernel_defconfig)"
+	sed -i 's/CONFIG_KVM_AMD=y/CONFIG_KVM_INTEL=y/' "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"
 endif
 
 # Related config fragments from ${TCDIST_DIR}/configs/linux/ could be added as dependency
-# But for now, if you change the fragments, then remove $(vm_kernel_defconfig)
-$(IFIX)/$(vm_kernel_defconfig):
+# But for now, if you change the fragments, then remove $(VM_KERNEL_DEFCONFIG)
+$(VM_IFIX)/$(VM_KERNEL_DEFCONFIG):
 	"$(TCDIST_DIR)/check_linux_branch.sh"
-	"$(TCDIST_DIR)/configs/linux/defconfig_builder.sh" -t "$(vm_kernel_config)" -k "$(TCDIST_DIR)/linux" -o "$(IFIX)"
+	"$(TCDIST_DIR)/configs/linux/defconfig_builder.sh" -t "$(VM_KERNEL_CONFIG)" -k "$(TCDIST_DIR)/linux" -o "$(VM_IFIX)"
 
 .PHONY: all clean distclean config image menuconfig linux-rebuild linux-menuconfig

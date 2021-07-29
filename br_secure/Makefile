@@ -2,19 +2,19 @@ ifndef TCDIST_DIR
 $(error Environment not set up correctly, please run make via setup.sh)
 endif
 
-vm_name = br_secure
-vm_product = ${TCDIST_ARCH}_${TCDIST_PLATFORM}
-vm_buildroot_config = buildroot_config_${TCDIST_ARCH}_kvm_secure
-vm_kernel_config = $(vm_product)_kvm_guest_secure_release
-vm_kernel_defconfig = $(vm_kernel_config)_defconfig
-vm_output = $(vm_name)_$(vm_product)
+VM_NAME:=br_secure
+VM_PRODUCT:=$(TCDIST_ARCH)_$(TCDIST_PLATFORM)
+VM_BUILDROOT_CONFIG:=buildroot_config_$(TCDIST_ARCH)_kvm_secure
+VM_KERNEL_CONFIG:=$(VM_PRODUCT)_kvm_guest_secure_release
+VM_KERNEL_DEFCONFIG:=$(VM_KERNEL_CONFIG)_defconfig
+VM_OUTPUT:=$(VM_NAME)_$(VM_PRODUCT)
 
-include ${TCDIST_DIR}/generic_br_makefile.mk
+include $(TCDIST_DIR)/generic_br_makefile.mk
 
 ifeq ($(TCDIST_PLATFORM),qemu)
-all: $(OFIX)/br_secure.mac
+all: $(VM_OFIX)/br_secure.mac
 endif
 
-$(OFIX)/br_secure.mac: $(TCDIST_OUTPUT)/.tcdist.macs
+$(VM_OFIX)/br_secure.mac: $(TCDIST_OUTPUT)/.tcdist.macs
 #   Get 4th line from macs file 1st is admin, 2nd and 3rd is for conn vm
 	sed "4q;d" $< > $@

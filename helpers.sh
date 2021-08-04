@@ -263,7 +263,7 @@ function Arm64config {
     sed -e "s/^TCDIST_HYPERVISOR=.*/TCDIST_HYPERVISOR=kvm/" \
         -e "s/^TCDIST_ARCH=.*/TCDIST_ARCH=arm64/" \
         -e "s/^TCDIST_BUILDOPT=.*/TCDIST_BUILDOPT=mmc/" \
-        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=xen/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
+        -e "s/^TCDIST_LINUX_BRANCH=.*/TCDIST_LINUX_BRANCH=tc-rpi4-5.10-sec/" < default_setup_sh_config > "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config_ls1012a {

@@ -178,6 +178,16 @@ function Load_config {
     Set_deviceipconf
 }
 
+# Function to quickly check most important settings in current config
+function Conf {
+    printf "TCDIST_OUTPUT=%s\n" "$TCDIST_OUTPUT"
+    printf "TCDIST_ARCH=%s\n" "$TCDIST_ARCH"
+    if [ "$TCDIST_ARCH" == "x86" ]; then
+        printf "TCDIST_SUB_ARCH=%s\n" "$TCDIST_SUB_ARCH"
+    fi
+    printf "TCDIST_PLATFORM=%s\n" "$TCDIST_PLATFORM"
+}
+
 # Get path to sudo binary (or empty if not available, but don't fail here)
 SUDOCMD="$(command -v sudo || true)"
 

@@ -1,2 +1,4 @@
 source "$BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH/minijail/Config.in"
 source "$BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH/alfred/Config.in"
+source "$BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH/libiw-hp/Config.in"
+source "$BR2_EXTERNAL_SECURE_OS_ADDITIONS_PATH/bmx7/Config.in"

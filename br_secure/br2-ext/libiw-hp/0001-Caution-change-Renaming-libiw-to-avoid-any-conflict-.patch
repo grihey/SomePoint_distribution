@@ -1,0 +1,28 @@
+From ba540bc178f282763562c7ef6bc40622c5d054ef Mon Sep 17 00:00:00 2001
+From: Tanel Dettenborn <tanel.dettenborn@unikie.com>
+Date: Mon, 9 Aug 2021 20:47:20 +0300
+Subject: [PATCH] Caution change: Renaming libiw to avoid any conflict with
+ buildroot IW-package
+
+---
+ wireless_tools/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/wireless_tools/Makefile b/wireless_tools/Makefile
+index 2e43159..6fd9fd3 100644
+--- a/wireless_tools/Makefile
++++ b/wireless_tools/Makefile
+@@ -46,8 +46,8 @@ WE_VERSION := $(shell sed -ne "/WE_VERSION/{s:\([^0-9]*\)::;p;q;}" < iwlib.h )
+ WEXT_HEADER = wireless.$(WE_VERSION).h
+ 
+ # Targets to build
+-STATIC=libiw.a
+-DYNAMIC=libiw.so.$(WT_VERSION)
++STATIC=libiw-hp.a
++DYNAMIC=libiw-hp.so.$(WT_VERSION)
+ PROGS= iwconfig iwlist iwpriv iwspy iwgetid iwevent ifrename
+ MANPAGES8=iwconfig.8 iwlist.8 iwpriv.8 iwspy.8 iwgetid.8 iwevent.8 ifrename.8
+ MANPAGES7=wireless.7
+-- 
+2.25.1
+

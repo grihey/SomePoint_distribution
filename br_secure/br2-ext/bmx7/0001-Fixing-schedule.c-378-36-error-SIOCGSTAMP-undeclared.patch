@@ -1,0 +1,25 @@
+From b800ef00cc1403e99aeaeedcedb87895d6f8a1f3 Mon Sep 17 00:00:00 2001
+From: Tanel Dettenborn <tanel.dettenborn@unikie.com>
+Date: Thu, 22 Jul 2021 08:17:53 +0000
+Subject: [PATCH] Fixing: schedule.c:378:36: error: 'SIOCGSTAMP' undeclared
+ (first use in this function); did you mean 'SIOCGARP'?
+
+---
+ src/schedule.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/schedule.c b/src/schedule.c
+index 8868b01..09ab248 100644
+--- a/src/schedule.c
++++ b/src/schedule.c
+@@ -23,6 +23,7 @@
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
+ #include <sys/socket.h>
++#include <linux/sockios.h>
+ 
+ 
+ #include "list.h"
+-- 
+2.25.1
+

@@ -1,0 +1,10 @@
+config BR2_PACKAGE_BMX7
+	bool "bmx7"
+	select BR2_PACKAGE_LIBIW_HP
+	select BR2_PACKAGE_ZLIB
+	select BR2_PACKAGE_LIBZLIB
+	select BR2_PACKAGE_MBEDTLS
+	help
+		BMX7 is a mesh routing protocol for Linux based operating systems.
+
+		https://github.com/bmx-routing/bmx7

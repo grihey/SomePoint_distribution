@@ -1,16 +1,22 @@
-ifndef TCDIST_DIR
-$(error Environment not set up correctly, please run make via setup.sh)
+# Set prefix only if make is run in main level
+ifdef MAINIMAGE
+VM_PREFIX:=$(VM_NAME).
+else
+VM_PREFIX:=
 endif
 
 VM_OFIX:=$(TCDIST_OUTPUT)/$(VM_NAME)
 VM_LFIX:=$(VM_OFIX)/output_$(VM_PRODUCT)
 VM_IFIX:=$(TCDIST_DIR)/$(VM_NAME)
 
-all: $(VM_OFIX)/$(VM_OUTPUT).ext2 $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE) $(if $(TCDIST_DEVTREE), $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE), )
+# Put all targets into a function so we can evaluate them
+define Generic_br_makefile
 
-config: $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
+$(VM_PREFIX)all: $(VM_OFIX)/$(VM_OUTPUT).ext2 $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE) $(if $(TCDIST_DEVTREE), $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE), )
 
-clean:
+$(VM_PREFIX)config: $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
+
+$(VM_PREFIX)clean:
 	if [ -d "$(VM_LFIX)" ]; then make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
 	rm -rf "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" \
         "$(VM_LFIX)/.config" \
@@ -19,19 +25,19 @@ clean:
         "$(VM_OFIX)/$(VM_OUTPUT).ext2" \
         "$(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE)"
 
-menuconfig:
+$(VM_PREFIX)menuconfig:
 	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" menuconfig
 
-linux-menuconfig:
+$(VM_PREFIX)linux-menuconfig:
 	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-menuconfig
 
-linux-rebuild:
+$(VM_PREFIX)linux-rebuild:
 	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-rebuild
 
-distclean:
+$(VM_PREFIX)distclean:
 	rm -rf "$(VM_OFIX)"/output_* "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" "$(VM_OFIX)"/generated_buildroot_config_*
 
-image:
+$(VM_PREFIX)image:
 	@echo This target would get the latest working image from artifactory without building anything
 	@echo If it was implemented
 	@exit 255
@@ -82,4 +88,13 @@ $(VM_IFIX)/$(VM_KERNEL_DEFCONFIG):
 	"$(TCDIST_DIR)/check_linux_branch.sh"
 	"$(TCDIST_DIR)/configs/linux/defconfig_builder.sh" -t "$(VM_KERNEL_CONFIG)" -k "$(TCDIST_DIR)/linux" -o "$(VM_IFIX)"
 
-.PHONY: all clean distclean config image menuconfig linux-rebuild linux-menuconfig
+$(VM_NAME): $(VM_PREFIX)all
+
+.PHONY: $(VM_PREFIX)all $(VM_PREFIX)clean $(VM_PREFIX)distclean $(VM_PREFIX)config $(VM_PREFIX)image $(VM_PREFIX)menuconfig \
+        $(VM_PREFIX)linux-rebuild $(VM_PREFIX)linux-menuconfig $(VM_NAME)
+
+endef # Generic_br_makefile
+
+# Eval will cause all variables in above targets and recipes to be expanded on the first pass, which is necessary for
+# these recipes to work.
+$(eval $(call Generic_br_makefile))

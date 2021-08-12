@@ -2,9 +2,6 @@
 # Generic base for rootfs adjust script
 # It is assumed that this is sourced from vm-specific rootfs adjust script
 
-ARFS_CURVM="$(pwd)"
-ARFS_CURVM="${ARFS_CURVM##*/}"
-
 # Defaults, these can be overridden in vm-specific config script
 
 function Arfs_hostname {
@@ -42,15 +39,15 @@ function Arfs_net_rc_add {
 function Arfs_load_config {
     set -e
 
-    . ../helpers.sh
-    . ../text_generators.sh
+    . ${TCDIST_DIR}/helpers.sh
+    . ${TCDIST_DIR}/text_generators.sh
 
     Load_config
 
     # Load vm specific config
     # Shellcheck doesn't know what is included here, disable complaint.
     # shellcheck disable=SC1090
-    . "./${ARFS_CURVM}_config.sh"
+    . "${TCDIST_DIR}/${TCDIST_VM_NAME}/${TCDIST_VM_NAME}_config.sh"
 }
 
 function Arfs_apply {
@@ -160,6 +157,8 @@ function Arfs_apply {
 
 if [ "$1" == "check_script" ]; then
     Arfs_load_config
-    Shellcheck_bashate ./adjust_rootfs.sh ../adjust_rootfs.sh ../helpers.sh ../text_generators.sh ../default_setup_sh_config "./${ARFS_CURVM}_config.sh"
+    Shellcheck_bashate ./adjust_rootfs.sh ${TCDIST_DIR}/adjust_rootfs.sh \
+		${TCDIST_DIR}/helpers.sh ${TCDIST_DIR}/text_generators.sh \
+		${TCDIST_DIR}/default_setup_sh_config "./${TCDIST_VM_NAME}_config.sh"
     exit
 fi

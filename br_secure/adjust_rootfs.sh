@@ -1,7 +1,9 @@
 #!/bin/bash
 
+TCDIST_VM_NAME="br_secure"
+
 # Include generic rootfs adjustment functions
-. ../adjust_rootfs.sh "$1"
+. ${TCDIST_DIR}/adjust_rootfs.sh "$1"
 
 Arfs_load_config
 # Variable purposefully unquoted, it contains list of space separated options

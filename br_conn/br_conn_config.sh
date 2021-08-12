@@ -1,8 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2034 # disable unused variable warnings
 
-TCDIST_VM_NAME="br_conn"
-
 function Arfs_interfaces {
     echo "auto lo"
     echo "iface lo inet loopback"

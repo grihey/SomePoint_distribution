@@ -2,8 +2,6 @@
 # shellcheck disable=SC2034 # disable unused variable warnings
 # Configuration for buildroot secure-os
 
-TCDIST_VM_NAME="br_secure"
-
 function Arfs_interfaces {
     echo "auto lo"
     echo "iface lo inet loopback"

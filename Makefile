@@ -15,13 +15,13 @@ VMFILETARGETS:=$(addsuffix .files,$(TCDIST_VMLIST))
 CLEANTARGETS:=$(addsuffix .clean,$(TCDIST_VMLIST))
 DISTCLEANTARGETS:=$(addsuffix .distclean,$(TCDIST_VMLIST))
 
-# Get list of all vm files
+all: $(MAINIMAGE) $(MAINKERNEL)
+
+# Empty file list (will be filled in Makefiles of vms)
 TCDIST_VM_FILES:=
-include $(foreach vm,$(TCDIST_VMLIST),$(vm)/$(vm).mk)
+include $(foreach vm,$(TCDIST_VMLIST),$(vm)/Makefile)
 
-all: $(TCDIST_OUTPUT)/.tcdist.macs $(MAINIMAGE) $(MAINKERNEL)
-
-copyandresize:
+copyandresize: $(ADMINIMAGE)
 	cp -f $(ADMINIMAGE) $(MAINIMAGE)
 	resize2fs $(MAINIMAGE) $(shell ./size_calc.sh $(ADMINIMAGE) $(TCDIST_VM_FILES))
 
@@ -37,19 +37,10 @@ $(MAINKERNEL): $(TCDIST_VMLIST)
 $(TCDIST_OUTPUT)/.tcdist.macs:
 	./genmacs.sh > $@
 
-$(TCDIST_VMLIST):
-	make $(MFLAGS) -C $@ all
-
-$(CLEANTARGETS):
-	make $(MFLAGS) -C $(basename $@) clean
-
-$(DISTCLEANTARGETS):
-	make $(MFLAGS) -C $(basename $@) distclean
-
 clean: $(CLEANTARGETS)
 	rm -rf $(TCDIST_OUTPUT)/*.ext2 $(TCDIST_OUTPUT)/*Image
 
-distclean: clean $(DISTCLEANTARGETS)
-	rm -rf $(TCDIST_OUTPUT)/.setup_sh_config $(TCDIST_OUTPUT)/.tcdist_macs
+distclean: $(DISTCLEANTARGETS)
+	rm -rf $(TCDIST_OUTPUT)/*.ext2 $(TCDIST_OUTPUT)/*Image $(TCDIST_OUTPUT)/.setup_sh_config $(TCDIST_OUTPUT)/.tcdist_macs
 
-.PHONY: all copyandresize clean distclean $(TCDIST_VMLIST) $(CLEANTARGETS) $(DISTCLEANTARGETS)
+.PHONY: all copyandresize clean distclean

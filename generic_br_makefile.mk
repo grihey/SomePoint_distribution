@@ -42,7 +42,7 @@ $(VM_PREFIX)image:
 	@echo If it was implemented
 	@exit 255
 
-$(VM_OFIX)/$(VM_OUTPUT).ext2: $(VM_LFIX)/images/rootfs.ext2 $(VM_IFIX)/$(VM_NAME)_config.sh $(VM_IFIX)/adjust_rootfs.sh
+$(VM_OFIX)/$(VM_OUTPUT).ext2: $(VM_LFIX)/images/rootfs.ext2 $(VM_IFIX)/$(VM_NAME)_config.sh
 	"$(VM_IFIX)/adjust_rootfs.sh" "$(VM_LFIX)/images/rootfs.ext2" "$(VM_OFIX)/$(VM_OUTPUT).ext2"
 
 $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_KERNEL_IMAGE_FILE): $(VM_LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE)

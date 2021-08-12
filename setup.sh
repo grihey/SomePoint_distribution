@@ -919,6 +919,7 @@ function Show_help {
     echo "    xenconfig                         Create new ${TCDIST_SETUP_SH_CONFIG} for xen"
     echo "    kvmconfig                         Create new ${TCDIST_SETUP_SH_CONFIG} for kvm"
     echo "    x86config                         Create new ${TCDIST_SETUP_SH_CONFIG} for x86"
+    echo "    x86config_upxtreme                Create new ${TCDIST_SETUP_SH_CONFIG} for x86 upXtreme"
     echo "    arm64config                       Create new ${TCDIST_SETUP_SH_CONFIG} for raspi4"
     echo "    arm64config_ls1012a               Create new ${TCDIST_SETUP_SH_CONFIG} for nxp ls1012a-frwy"
     echo "    clone                             Clone the required subrepositories"

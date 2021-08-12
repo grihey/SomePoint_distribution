@@ -3,5 +3,8 @@ classification: Release_Defconfigs type: x86_qemu_kvm_release defconfig: x86_64_
 classification: Release_Defconfigs type: x86_qemu_kvm_guest_release defconfig: x86_64_defconfig config_file: None extra_configs: prune.cfg kvm.cfg kvm_guest.cfg x86_extra.cfg vsock_guest.cfg
 classification: Release_Defconfigs type: x86_qemu_kvm_secure_release defconfig: x86_64_defconfig config_file: None extra_configs: prune.cfg kvm.cfg secure_os.cfg kvm_guest.cfg x86_extra.cfg vsock_host.cfg docker.cfg
 classification: Release_Defconfigs type: x86_qemu_kvm_guest_secure_release defconfig: x86_64_defconfig config_file: None extra_configs: prune.cfg kvm.cfg secure_os.cfg kvm_guest.cfg x86_extra.cfg vsock_guest.cfg docker.cfg
+
+classification: Release_Defconfigs type: x86_upxtreme_kvm_release defconfig: x86_64_defconfig config_file: None extra_configs: prune.cfg kvm.cfg secure_os.cfg kvm_guest.cfg x86_extra.cfg vsock_host.cfg docker.cfg upxtreme.cfg
+
 # Debug Defconfigs
 classification: Debug_Defconfigs type: x86_qemu_debug defconfig: x86_64_defconfig config_file: None extra_configs: prune.cfg kvm.cfg secure_os.cfg kvm_guest.cfg debug_options.cfg x86_extra.cfg

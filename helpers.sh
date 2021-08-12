@@ -132,6 +132,9 @@ function Load_config {
         ls1012afrwy)
             # Options ok
         ;;
+        upxtreme)
+            # Options ok
+        ;;
         qemu)
             # Options ok
         ;;
@@ -256,6 +259,12 @@ function X86config {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for x86 qemu" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_x86 "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
+}
+
+function X86config_upxtreme {
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} for x86 upXtreme" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
+    cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_x86_upxtreme "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config {

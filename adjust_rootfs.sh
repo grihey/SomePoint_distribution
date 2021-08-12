@@ -25,6 +25,9 @@ function Arfs_inittab {
     fi
     if [[ "$1" =~ v ]]; then
         echo "tty1::respawn:/sbin/getty -L tty1 0 vt100 # VGA console"
+        echo "tty2::respawn:/sbin/getty -L tty2 0 vt100 # VGA console"
+        echo "tty3::respawn:/sbin/getty -L tty3 0 vt100 # VGA console"
+        echo "tty4::respawn:/sbin/getty -L tty4 0 vt100 # VGA console"
     fi
 
     cat "${TCDIST_DIR}/configs/inittab.post"

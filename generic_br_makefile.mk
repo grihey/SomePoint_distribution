@@ -90,6 +90,10 @@ $(VM_IFIX)/$(VM_KERNEL_DEFCONFIG):
 
 $(VM_NAME): $(VM_PREFIX)all
 
+ifeq ($(TCDIST_PLATFORM),qemu)
+$(VM_PREFIX)all: $(VM_OFIX)/$(VM_NAME).mac
+endif
+
 .PHONY: $(VM_PREFIX)all $(VM_PREFIX)clean $(VM_PREFIX)distclean $(VM_PREFIX)config $(VM_PREFIX)image $(VM_PREFIX)menuconfig \
         $(VM_PREFIX)linux-rebuild $(VM_PREFIX)linux-menuconfig $(VM_NAME)
 

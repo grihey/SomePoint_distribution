@@ -10,3 +10,7 @@ VM_KERNEL_DEFCONFIG:=$(VM_KERNEL_CONFIG)_defconfig
 VM_OUTPUT:=$(VM_NAME)_$(VM_PRODUCT)
 
 include $(TCDIST_DIR)/generic_br_makefile.mk
+
+$(VM_OFIX)/br_admin.mac: $(TCDIST_OUTPUT)/.tcdist.macs
+#   Get 1st line from macs file, 1st is admin, 2nd and 3rd are for conn vm, 4th is for secure os
+	sed "1q;d" $< > $@

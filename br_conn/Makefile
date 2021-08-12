@@ -15,6 +15,8 @@ ifeq ($(TCDIST_PLATFORM),qemu)
 all: $(VM_OFIX)/br_conn.mac_1 $(VM_OFIX)/br_conn.mac_2
 endif
 
+$(VM_OFIX)/br_conn.mac: $(VM_OFIX)/br_conn.mac_1 $(VM_OFIX)/br_conn.mac_2
+
 $(VM_OFIX)/br_conn.mac_1: $(TCDIST_OUTPUT)/.tcdist.macs
 #   Get 2nd line from macs file, 1st is admin, 2nd and 3rd are for conn vm, 4th is for secure os
 	sed "2q;d" $< > $@

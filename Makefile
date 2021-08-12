@@ -25,6 +25,10 @@ copyandresize:
 	cp -f $(ADMINIMAGE) $(MAINIMAGE)
 	resize2fs $(MAINIMAGE) $(shell ./size_calc.sh $(ADMINIMAGE) $(TCDIST_VM_FILES))
 
+ifeq ($(TCDIST_PLATFORM),qemu)
+$(MAINIMAGE): $(TCDIST_OUTPUT)/.tcdist.macs
+endif
+
 $(MAINIMAGE): $(TCDIST_VMLIST) copyandresize $(VMFILETARGETS)
 
 $(MAINKERNEL): $(TCDIST_VMLIST)

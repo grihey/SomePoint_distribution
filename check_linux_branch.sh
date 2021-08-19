@@ -12,7 +12,7 @@ cd "$SDIR"
 Load_config
 
 if [ "$1" == "check_script" ]; then
-    Shellcheck_bashate check_linux_branch.sh helpers.sh default_setup_sh_config
+    Shellcheck_bashate check_linux_branch.sh helpers.sh ${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT}
     exit
 fi
 

@@ -79,7 +79,7 @@ while [ "$#" -gt 0 ]; do
         shift # past argument
     ;;
     check_script)
-        Shellcheck_bashate repart.sh helpers.sh default_setup_sh_config
+        Shellcheck_bashate repart.sh helpers.sh ${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT}
         exit $?
     ;;
     *)    # device name and invalid argument

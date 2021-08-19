@@ -494,7 +494,7 @@ function Deploy {
 }
 
 function Check_script {
-    Shellcheck_bashate xen_imager.sh select_target.sh helpers.sh text_generators.sh default_setup_sh_config
+    Shellcheck_bashate xen_imager.sh select_target.sh helpers.sh text_generators.sh ${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT}
 }
 
 # Convert command to all lower case and then convert first letter to upper case

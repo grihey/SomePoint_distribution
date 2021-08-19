@@ -908,7 +908,7 @@ function Shell {
 }
 
 function Check_script {
-    Shellcheck_bashate setup.sh helpers.sh text_generators.sh default_setup_sh_config tests/secure_os_tests.sh
+    Shellcheck_bashate setup.sh helpers.sh text_generators.sh ${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT} tests/secure_os_tests.sh
 }
 
 function Show_help {

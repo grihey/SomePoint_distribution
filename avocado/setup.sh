@@ -101,7 +101,7 @@ function Updatefs {
 }
 
 function Check_script {
-    Shellcheck_bashate setup.sh ../helpers.sh ../default_setup_sh_config docker/docker.sh host-tools/* guest-tools/*
+    Shellcheck_bashate setup.sh ../helpers.sh ${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT} docker/docker.sh host-tools/* guest-tools/*
 }
 
 function Show_help {

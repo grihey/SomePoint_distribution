@@ -693,7 +693,7 @@ function Ssh_dut {
                 ssh_port=222
             ;;
             *)
-                ssh_port=22
+                ssh_port=2222
             ;;
             esac
 
@@ -735,6 +735,13 @@ function Ssh_dut {
                         dut_ip=$ip
                     fi
                 done
+
+                # Attempt localhost in case qemu is using slirp network
+                st=$(ssh -i "${TCDIST_OUTPUT}/${vm_id}/device_id_rsa" -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PasswordAuthentication=no "root@localhost" uname -a | grep "${vm_id}")
+                if [ -n "$st" ] ; then
+                    echo "IP localhost mapped to dut"
+                    dut_ip="localhost"
+                fi
                 set -e
 
                 # Found our target IP address, save it for later use as the

@@ -12,6 +12,11 @@ function Arfs_interfaces {
     echo "    netmask 255.255.255.0"
     echo "    gateway ${TCDIST_INTERNAL_NET}.1"
     echo ""
+    echo "# SSH interface"
+    echo "auto eth1"
+    echo "iface eth1 inet dhcp"
+    echo "    up ifmetric eth1 100"
+    echo ""
     echo "iface default inet dhcp"
 }
 

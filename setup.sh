@@ -656,6 +656,81 @@ function Kernel_config_change {
     fi
 }
 
+function Ssh_config_item {
+    local vm_name
+    local identity_file
+    local port
+    local username
+    local host
+
+    vm_name=$1
+    identity_file=$2
+    port=$3
+    username=$4
+    host=$5
+
+    echo ""
+    echo "Host ${vm_name}"
+    echo "    HostName               ${host}"
+    echo "    User                   ${username}"
+    echo "    IdentityFile           ${identity_file}"
+    echo "    Port                   ${port}"
+    echo "    UserKnownHostsFile     /dev/null"
+    echo "    StrictHostKeyChecking  no"
+    echo "    PasswordAuthentication no"
+    if [[ "${vm_name}" == "br_conn" || "${vm_name}" == "br_secure" ]]
+    then
+        echo "    ProxyJump              br_admin"
+    fi
+}
+
+function Ssh_config {
+    local vm
+    local ssh_port
+    local target_file
+
+    target_file="${TCDIST_OUTPUT}/ssh_config"
+
+    {
+    echo "# Generated configuration to connect SecureOS machines"
+    echo "# To use, add the following to your ~/.ssh/config:"
+    echo "#    Include ${target_file}"
+    echo "# or ssh -F ${TCDIST_OUTPUT}/ssh_config br_admin"
+    } > "${target_file}"
+
+    for vm in $TCDIST_VMLIST; do
+        case "$vm" in
+        br_conn)
+            ssh_port=2301
+        ;;
+        br_secure)
+            ssh_port=2302
+        ;;
+        *)
+            ssh_port=2222
+        esac
+
+        Ssh_config_item "${vm}" "${TCDIST_OUTPUT}/${vm}/device_id_rsa" \
+            "${ssh_port}" root localhost \
+            >> "$target_file"
+    done
+
+    echo "SSH config created to ${target_file}"
+
+    # Just check if ssh config has mention of the filename
+    # -- don't mind if it's commented out or so
+    if ! grep -Fq "${target_file}" ~/.ssh/config
+    then
+        echo "Config NOT IN USE"
+        echo "Please add following to your ~/.ssh/config:"
+        echo ""
+        echo "Include ${target_file}"
+        echo ""
+        echo "(or run)"
+        echo "echo \"Include ${target_file}\" >> ~/.ssh/config"
+    fi
+}
+
 function Ssh_dut {
     local dut_ip
     local subnet
@@ -948,6 +1023,7 @@ function Show_help {
     echo "    check_script                      Check setup.sh script (and sourced scripts) with"
     echo "                                      shellcheck and bashate"
     echo "    install_completion                Install bash completion for setup.sh commands"
+    echo "    ssh_config                        Create ssh configuration"
     echo ""
     exit 0
 }

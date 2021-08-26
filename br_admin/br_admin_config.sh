@@ -10,6 +10,9 @@ function Arfs_interfaces {
     echo "iface eth0 inet dhcp"
     echo ""
     echo "iface default inet dhcp"
+    echo ""
+    echo "source /etc/network/interfaces.d/*"
+    echo ""
 }
 
 ARFS_OPTIONS="-hostname -interfaces -ssh -inittab sv"

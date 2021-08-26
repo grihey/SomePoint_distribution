@@ -1,0 +1,2 @@
+auto eno1
+iface eno1 inet dhcp

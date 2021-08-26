@@ -2029,7 +2029,6 @@ CONFIG_PROC_PAGE_MONITOR=n
 CONFIG_DEVPORT=n
 
 # Disable debugfs, this exposes wide range of debug data
-CONFIG_DEBUG_FS=n
 
 # Disable framebuffer to prevent direct memory access to graphics devices
 CONFIG_FB=m
@@ -2149,3 +2148,7 @@ CONFIG_BATMAN_ADV_DAT=y
 CONFIG_BATMAN_ADV_MCAST=y
 # CONFIG_BATMAN_ADV_DEBUG is not set
 CONFIG_BATMAN_ADV_SYSFS=y
+
+# batctl uses debugfs
+CONFIG_DEBUG_FS=y
+CONFIG_DEBUG_FS_ALLOW_ALL=y

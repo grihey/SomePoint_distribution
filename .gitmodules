@@ -15,6 +15,3 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = ../buildroot
-[submodule "flutter-shim"]
-	path = flutter-shim
-	url = ../flutter-shim

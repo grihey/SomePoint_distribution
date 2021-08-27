@@ -69,10 +69,6 @@ function Prepare_compile_env {
 
     sudo chroot "${ROOTFS_DIR}" apt-get -y install chromium-browser
 
-    # App dependencies
-    sudo chroot "${ROOTFS_DIR}" apt-get -y install libgtk-3-dev # For Flutter
-    sudo chroot "${ROOTFS_DIR}" apt-get -y install libsqlite3-dev libolm-dev # For Fluffychat (needs libolm3)
-
     Umount_chroot_devs "$ROOTFS_DIR"
     Umount_image "$ROOTFS_DIR"
 

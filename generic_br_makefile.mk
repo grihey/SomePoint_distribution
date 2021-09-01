@@ -73,7 +73,8 @@ $(VM_LFIX)/images/rootfs.ext2: $(VM_PREFIX)selinux $(VM_LFIX)/.config $(VM_OFIX)
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot"
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" ccache-stats > $(VM_LFIX)/ccache-stats.txt
 
-$(VM_LFIX)/.config: $(VM_IFIX)/$(VM_BUILDROOT_CONFIG)
+# All the targets don't have fragments so use wildcard buildroot_*_fragment
+$(VM_LFIX)/.config: $(VM_IFIX)/$(VM_BUILDROOT_CONFIG) $(wildcard $(VM_IFIX)/buildroot_*_fragment)
 	mkdir -p $(VM_LFIX)
 	cp -f "$(VM_IFIX)/$(VM_BUILDROOT_CONFIG)" "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm"
 	if [ -f "$(VM_IFIX)/buildroot_config_$(VM_PRODUCT)_kvm_fragment" ]; then \

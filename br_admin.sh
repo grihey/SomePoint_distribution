@@ -32,9 +32,7 @@ case "$1" in
         set +e
 
         "$QEMUEXE" "${QEMUOPT[@]}" &
-        sleep 0.1s
-        CPID="$(ps --ppid $! -o pid=)"
-        echo "$CPID" > "$PIDFILE"
+        echo "$!" > "$PIDFILE"
     ;;
     stop)
         if [ ! -f "$PIDFILE" ]; then
@@ -44,7 +42,7 @@ case "$1" in
 
         CPID=$(< "$PIDFILE")
 
-        if sudo kill "$CPID"; then
+        if kill "$CPID"; then
             rm -f "$PIDFILE"
         else
             echo "Stop failed" >&2
@@ -53,7 +51,7 @@ case "$1" in
     kill)
         set +e
         # Yes, this is slightly dangerous, use only as last resort if stop does not work
-        sudo killall "$QEMUEXE"
+        killall "$QEMUEXE"
         rm -f "$PIDFILE"
     ;;
     console)
@@ -62,8 +60,8 @@ case "$1" in
         QEMUOPT+=(-nographic)
         # Change qemu control hotkey to CTRL-B as screen uses CTRL-A
         QEMUOPT+=(-echr 2)
-        
-        sudo "$QEMUEXE" "${QEMUOPT[@]}"
+
+        "$QEMUEXE" "${QEMUOPT[@]}"
     ;;
     *)
         echo "Usage: $0 <start|stop|kill|console>"

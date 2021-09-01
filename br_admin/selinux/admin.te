@@ -1,0 +1,38 @@
+policy_module(admin, 1.0);
+
+#============= chkpwd_t ==============
+allow chkpwd_t device_t:chr_file { read write };
+allow chkpwd_t proc_t:filesystem getattr;
+allow chkpwd_t sysctl_kernel_t:dir search;
+allow chkpwd_t sysctl_kernel_t:file { open read };
+allow chkpwd_t tmpfs_t:dir search;
+
+#============= getty_t ==============
+allow getty_t proc_t:filesystem getattr;
+allow getty_t sysctl_kernel_t:dir search;
+allow getty_t sysctl_kernel_t:file { open read };
+allow getty_t sysctl_t:dir search;
+allow getty_t tmpfs_t:file { create open read write lock };
+
+#============= ifconfig_t ==============
+allow ifconfig_t device_t:chr_file { ioctl open read write };
+allow ifconfig_t proc_t:filesystem getattr;
+allow ifconfig_t self:tun_socket create;
+allow ifconfig_t sysctl_kernel_t:dir search;
+allow ifconfig_t sysctl_kernel_t:file { open read };
+
+#============= local_login_t ==============
+#!!!! This avc can be allowed using the boolean 'allow_polyinstantiation'
+allow local_login_t tmpfs_t:dir { add_name write };
+allow local_login_t tmpfs_t:file { create lock open read write };
+
+#============= sysadm_t ==============
+allow sysadm_t device_t:chr_file { ioctl lock open read write };
+allow sysadm_t ifconfig_t:tun_socket relabelfrom;
+allow sysadm_t node_t:tcp_socket node_bind;
+allow sysadm_t self:packet_socket { bind create read setopt write };
+allow sysadm_t self:rawip_socket { create ioctl };
+allow sysadm_t self:tun_socket relabelto;
+allow sysadm_t unreserved_port_t:tcp_socket name_bind;
+allow sysadm_t usr_t:file { execute execute_no_trans };
+allow sysadm_t sysadm_t:tun_socket relabelfrom;

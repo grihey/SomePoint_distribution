@@ -1,0 +1,4 @@
+policy_module(conn, 1.0);
+
+#============= iptables_t ==============
+allow iptables_t device_t:chr_file { read write };

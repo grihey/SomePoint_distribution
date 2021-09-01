@@ -1,0 +1,56 @@
+policy_module(base, 1.0)
+
+#============= audisp_t ==============
+allow audisp_t device_t:chr_file { open read write };
+allow audisp_t proc_t:filesystem getattr;
+allow audisp_t sysctl_kernel_t:dir search;
+allow audisp_t sysctl_kernel_t:file { open read };
+allow audisp_t sysctl_t:dir search;
+
+#============= auditd_t ==============
+allow auditd_t device_t:chr_file { open read write };
+allow auditd_t tmpfs_t:dir { add_name search write };
+allow auditd_t tmpfs_t:file { create open write };
+allow auditd_t var_t:lnk_file read;
+
+#============= getty_t ==============
+allow getty_t device_t:chr_file { getattr ioctl open read setattr write };
+allow getty_t tmpfs_t:dir { add_name search write };
+allow getty_t tmpfs_t:file create;
+allow getty_t var_t:lnk_file read;
+
+#============= ifconfig_t ==============
+allow ifconfig_t device_t:chr_file { read write };
+
+#============= initrc_t ==============
+allow initrc_t sysadm_t:process transition;
+
+#============= iptables_t ==============
+allow iptables_t tmpfs_t:dir { add_name search write };
+allow iptables_t tmpfs_t:file { create lock open read };
+
+#============= local_login_t ==============
+allow local_login_t device_t:chr_file { ioctl open read relabelfrom relabelto write };
+allow local_login_t proc_t:filesystem getattr;
+
+#============= klogd_t ==============
+allow klogd_t device_t:chr_file { read write };
+
+#============= restorecond_t ==============
+allow restorecond_t device_t:chr_file { open read write };
+allow restorecond_t etc_t:dir watch;
+allow restorecond_t file_context_t:file { open read };
+allow restorecond_t selinux_config_t:file watch;
+allow restorecond_t tmpfs_t:dir watch;
+allow restorecond_t tmpfs_t:file { open write };
+allow restorecond_t user_home_dir_t:dir watch;
+allow restorecond_t user_home_t:dir watch;
+
+#============= sysadm_t ==============
+allow sysadm_t device_t:chr_file { ioctl open read write };
+
+#============= syslogd_t ==============
+allow syslogd_t device_t:chr_file { read write };
+allow syslogd_t var_t:lnk_file read;
+allow syslogd_t tmpfs_t:dir { search write add_name };
+allow syslogd_t tmpfs_t:file { append getattr open create };

@@ -23,8 +23,8 @@ if [ "$DISABLED" -ne 1 ]; then
     QEMUOPT+=(-drive file=br_conn.ext2,if=virtio,format=raw)
     QEMUOPT+=(-append "rootwait root=/dev/vda console=ttyS0")
     QEMUOPT+=(-device vhost-vsock-pci,id=vhost-vsock-pci0,guest-cid=4,disable-legacy=on)
-    QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=tap0,mac=${MACADD1},script=no)
-    QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=tap1,mac=${MACADD2},script=no)
+    QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=tap0,vhost=on,mac=${MACADD1},script=no)
+    QEMUOPT+=(-nic tap,model=virtio-net-pci,ifname=tap1,vhost=on,mac=${MACADD2},script=no)
     QEMUOPT+=(-netdev user,id=virtio-net-pci0,net=10.0.3.0/24,hostfwd=tcp::2301-:22) # SSH network interface
     QEMUOPT+=(-device virtio-net-pci,netdev=virtio-net-pci0)
     #QEMUOPT+=(-serial stdio)

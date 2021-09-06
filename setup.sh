@@ -342,7 +342,7 @@ function Root_fs {
     chmod 755 "${rootfs}/etc/init.d/S10mdev"
     cp buildroot/package/busybox/mdev.conf "${rootfs}/etc/mdev.conf"
 
-    if [ "$TCDIST_PLATFORM" == "raspi4" ] ; then
+    if [ "$TCDIST_PLATFORM" == "raspi4" ] || [ "$TCDIST_PLATFORM" == "cm4io" ]; then
         cp "$rootfs/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${rootfs}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
     fi
     Inittab dom0 > "${rootfs}/etc/inittab"
@@ -456,7 +456,7 @@ function Root_fs_e2tools {
     e2cp buildroot/package/busybox/S10mdev "${rootfs}/etc/init.d/S10mdev" -P 755 -G 0 -O 0
     e2cp buildroot/package/busybox/mdev.conf "${rootfs}/etc/mdev.conf" -P 755 -G 0 -O 0
 
-    if [ "$TCDIST_PLATFORM" == "raspi4" ] ; then
+    if [ "$TCDIST_PLATFORM" == "raspi4" ] || [ "$TCDIST_PLATFORM" == "cm4io" ] ; then
         e2cp "$rootfs/lib/firmware/brcm/brcmfmac43455-sdio.txt" "${rootfs}/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
     fi
     Inittab dom0 > tmpfile
@@ -997,6 +997,7 @@ function Show_help {
     echo "    x86config_upxtreme                Create new ${TCDIST_SETUP_SH_CONFIG} for x86 upXtreme"
     echo "    arm64config                       Create new ${TCDIST_SETUP_SH_CONFIG} for raspi4"
     echo "    arm64config_ls1012a               Create new ${TCDIST_SETUP_SH_CONFIG} for nxp ls1012a-frwy"
+    echo "    arm64config_cm4io                 Create new ${TCDIST_SETUP_SH_CONFIG} for cm4io"
     echo "    clone                             Clone the required subrepositories"
     echo "    mount [device|image_file]         Mount given device or image file"
     echo "    umount [mark]                     Unmount and optionally mark partitions"
@@ -1084,7 +1085,7 @@ esac
 shift
 
 case "$CMD" in
-    Xenconfig|Kvmconfig|X86config|Arm64config|Arm64config_ls1012a)
+    Xenconfig|Kvmconfig|X86config|Arm64config|Arm64config_ls1012a|Arm64config_cm4io)
         set -a
         TCDIST_SETUP_SH_CONFIG=".setup_sh_config${TCDIST_PRODUCT}"
         set +a

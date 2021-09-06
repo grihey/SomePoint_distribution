@@ -129,6 +129,9 @@ function Load_config {
         raspi4)
             # Options ok
         ;;
+        cm4io)
+            # Options ok
+        ;;
         ls1012afrwy)
             # Options ok
         ;;
@@ -271,6 +274,12 @@ function Arm64config {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_arm64 "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
+}
+
+function Arm64config_cm4io {
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64 cm4io" >&2
+    mkdir -p "${TCDIST_OUTPUT:?}"
+    cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_arm64_cm4io "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config_ls1012a {

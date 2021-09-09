@@ -2,6 +2,8 @@ ifndef TCDIST_DIR
 $(error Environment not set up correctly, please run make via setup.sh)
 endif
 
+SHELL:=/bin/bash
+
 VM_NAME:=br_admin
 VM_PRODUCT:=$(TCDIST_ARCH)_$(TCDIST_PLATFORM)
 VM_BUILDROOT_CONFIG:=buildroot_config_$(TCDIST_ARCH)_kvm

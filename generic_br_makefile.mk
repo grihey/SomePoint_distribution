@@ -20,6 +20,7 @@ $(VM_PREFIX)clean:
 	if [ -d "$(VM_LFIX)" ]; then make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" clean; fi
 	rm -rf "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" \
         "$(VM_LFIX)/.config" \
+        "$(VM_LFIX)/selinux" \
         "$(VM_LFIX)/ccache-stats.txt" \
         "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm" \
         "$(VM_OFIX)/$(VM_OUTPUT).ext2" \
@@ -43,8 +44,10 @@ $(VM_PREFIX)image:
 	@exit 255
 
 $(VM_PREFIX)selinux:
-	cp -a $(TCDIST_DIR)/selinux	$(VM_LFIX)
-	cp -r $(VM_IFIX)/selinux	$(VM_LFIX)
+	rm -rf "$(VM_LFIX)/selinux"
+	mkdir -p "$(VM_LFIX)/selinux"
+	cp -af "$(TCDIST_DIR)/selinux" "$(VM_LFIX)"
+	cp -rf "$(VM_IFIX)/selinux" "$(VM_LFIX)"
 
 $(VM_OFIX)/$(VM_OUTPUT).ext2: $(VM_LFIX)/images/rootfs.ext2 $(VM_IFIX)/$(VM_NAME)_config.sh
 	"$(VM_IFIX)/adjust_rootfs.sh" "$(VM_LFIX)/images/rootfs.ext2" "$(VM_OFIX)/$(VM_OUTPUT).ext2"
@@ -57,7 +60,7 @@ $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE): $(VM_LFIX)/images/$(TCDIST_DEVTREE)
 
 $(VM_LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(VM_LFIX)/images/rootfs.ext2
 
-$(VM_LFIX)/images/rootfs.ext2: $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG) $(VM_PREFIX)selinux
+$(VM_LFIX)/images/rootfs.ext2: $(VM_PREFIX)selinux $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" source
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot"
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" ccache-stats > $(VM_LFIX)/ccache-stats.txt

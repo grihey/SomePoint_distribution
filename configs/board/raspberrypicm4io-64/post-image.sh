@@ -7,6 +7,13 @@ BOARD_NAME="$(basename ${BOARD_DIR})"
 GENIMAGE_CFG="${BOARD_DIR}/genimage-${BOARD_NAME}.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 
+# copy board specific config.txt as baseline
+cp -f "${TCDIST_DIR}"/configs/board/"$BOARD_NAME"/config.txt "${BINARIES_DIR}/rpi-firmware/config.txt"
+
+# copy linux build overlay files to boot partition overlay.  rpi-firmware versions are not in sync.
+cp -f "${BASE_DIR}"/build/linux-"${TCDIST_LINUX_BRANCH}"/arch/arm/boot/dts/overlays/*.dtbo \
+          "${BINARIES_DIR}/rpi-firmware/overlays/"
+
 for arg in "$@"
 do
 	case "${arg}" in
@@ -38,6 +45,15 @@ __EOF__
 
 done
 
+# overwrites buildroot/package/rpi-firmware version of cmdline.txt:
+if [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ] && [ -f "${TCDIST_DIR}/br_secure/arm64_cm4io_kvm_guest_secure_release_defconfig" ]; then
+	echo "Change Kernel cmdline to match cm4io defconfig."
+	cmdline=$(sed -n -e 's/^CONFIG_CMDLINE="\(.*\)"/\1/p' "${TCDIST_DIR}"/br_secure/arm64_cm4io_kvm_guest_secure_release_defconfig)
+	cat << __EOF__ > "${BINARIES_DIR}/rpi-firmware/cmdline.txt"
+$cmdline
+__EOF__
+fi
+
 # Pass an empty rootpath. genimage makes a full copy of the given rootpath to
 # ${GENIMAGE_TMP}/root so passing TARGET_DIR would be a waste of time and disk
 # space. We don't rely on genimage to build the rootfs image, just to insert a
@@ -56,4 +72,5 @@ genimage \
 	--config "${GENIMAGE_CFG}"
 
 exit $?
+
 

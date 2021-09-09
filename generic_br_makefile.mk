@@ -21,6 +21,7 @@ $(VM_PREFIX)clean:
 	rm -rf "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" \
         "$(VM_LFIX)/.config" \
         "$(VM_LFIX)/selinux" \
+        "$(VM_LFIX)/.brsourced" \
         "$(VM_LFIX)/ccache-stats.txt" \
         "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm" \
         "$(VM_OFIX)/$(VM_OUTPUT).ext2" \
@@ -60,8 +61,12 @@ $(VM_OFIX)/$(VM_OUTPUT).$(TCDIST_DEVTREE): $(VM_LFIX)/images/$(TCDIST_DEVTREE)
 
 $(VM_LFIX)/images/$(TCDIST_KERNEL_IMAGE_FILE): $(VM_LFIX)/images/rootfs.ext2
 
-$(VM_LFIX)/images/rootfs.ext2: $(VM_PREFIX)selinux $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
+$(VM_LFIX)/.brsourced: $(VM_LFIX)/.config
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" source
+	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-extract
+	touch $(VM_LFIX)/.brsourced
+
+$(VM_LFIX)/images/rootfs.ext2: $(VM_PREFIX)selinux $(VM_LFIX)/.config $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot"
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" ccache-stats > $(VM_LFIX)/ccache-stats.txt
 
@@ -81,19 +86,16 @@ endif
 	cp -f "$(VM_OFIX)/generated_buildroot_config_$(VM_PRODUCT)_kvm" "$(VM_LFIX)/.config"
 	make BR2_EXTERNAL=$(VM_IFIX)/br2-ext "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" olddefconfig
 
-$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG): $(VM_IFIX)/$(VM_KERNEL_DEFCONFIG)
-	cp -f "$(VM_IFIX)/$(VM_KERNEL_DEFCONFIG)" "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"
+# Kernel defconfig will be regenerated if any of kernel config fragments has changed (even if the changed one is not used in this setup)
+$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG): $(VM_LFIX)/.brsourced $(wildcard $(TCDIST_DIR)/configs/linux/*.cfg) $(wildcard $(TCDIST_DIR)/configs/linux/*_map.txt)
+	source <(grep BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION $(VM_LFIX)/.config); \
+    "$(TCDIST_DIR)/configs/linux/defconfig_builder.sh" -t "$(VM_KERNEL_CONFIG)" -k "$(VM_LFIX)/build/linux-$$$${BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION}" -o "$(VM_OFIX)"
+	mv -f $(VM_OFIX)/$(VM_KERNEL_DEFCONFIG) $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
 ifeq ("$(TCDIST_SUB_ARCH)","amd")
 	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"
 else
 	sed -i 's/CONFIG_KVM_AMD=y/CONFIG_KVM_INTEL=y/' "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"
 endif
-
-# Related config fragments from ${TCDIST_DIR}/configs/linux/ could be added as dependency
-# But for now, if you change the fragments, then remove $(VM_KERNEL_DEFCONFIG)
-$(VM_IFIX)/$(VM_KERNEL_DEFCONFIG):
-	"$(TCDIST_DIR)/check_linux_branch.sh"
-	"$(TCDIST_DIR)/configs/linux/defconfig_builder.sh" -t "$(VM_KERNEL_CONFIG)" -k "$(TCDIST_DIR)/linux" -o "$(VM_IFIX)"
 
 $(VM_NAME): $(VM_PREFIX)all
 

@@ -21,14 +21,4 @@ function Arfs_interfaces {
     echo "iface default inet dhcp"
 }
 
-function Arfs_net_rc_add {
-    echo "#!/bin/bash"
-    echo ""
-    echo "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
-    echo "iptables -t nat -A PREROUTING -p tcp --dport 222 -j DNAT --to-destination ${TCDIST_INTERNAL_NET}.2:22"
-    echo "echo \"1\" > /proc/sys/net/ipv4/ip_forward"
-    echo ""
-    echo "echo \"nameserver ${TCDIST_DEVICEDNS}\" > /etc/resolv.conf"
-}
-
-ARFS_OPTIONS="-hostname -interfaces -ssh -inittab s -netrcadd"
+ARFS_OPTIONS="-hostname -interfaces -ssh -inittab s"

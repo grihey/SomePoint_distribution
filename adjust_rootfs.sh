@@ -33,12 +33,6 @@ function Arfs_inittab {
     cat "${TCDIST_DIR}/configs/inittab.post"
 }
 
-function Arfs_net_rc_add {
-    echo "#!/bin/bash"
-    echo ""
-    echo "echo \"nameserver ${TCDIST_DEVICEDNS}\" > /etc/resolv.conf"
-}
-
 function Arfs_load_config {
     local sdir
 
@@ -67,7 +61,6 @@ function Arfs_apply {
     local inittab
     local inittab_opt
     local interfaces
-    local netrcadd
     local ssh
 
     while [ "${1:0:1}" == "-" ]; do
@@ -85,9 +78,6 @@ function Arfs_apply {
                 inittab=1
                 inittab_opt="$2"
                 shift
-            ;;
-            -netrcadd)
-                netrcadd=1
             ;;
             --)
                 # explicit end of options

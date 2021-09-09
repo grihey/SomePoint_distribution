@@ -23,6 +23,6 @@ function Arfs_interfaces {
 ARFS_OPTIONS="-hostname -interfaces -ssh"
 case "${TCDIST_ARCH}_${TCDIST_PLATFORM}" in
     x86_qemu)
-        ARFS_OPTIONS+=" -inittab s -netrcadd"
+        ARFS_OPTIONS+=" -inittab s"
     ;;
 esac

@@ -14,3 +14,6 @@ arm_64bit=1
 
 # Enable audio (loads snd_bcm2835)
 dtparam=audio=on
+
+# Wifi QCA988x needs 32bit dma to work
+dtoverlay=pcie-32bit-dma

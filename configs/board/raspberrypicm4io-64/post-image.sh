@@ -45,13 +45,10 @@ __EOF__
 
 done
 
-# overwrites buildroot/package/rpi-firmware version of cmdline.txt:
-if [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ] && [ -f "${TCDIST_DIR}/br_secure/arm64_cm4io_kvm_guest_secure_release_defconfig" ]; then
-	echo "Change Kernel cmdline to match cm4io defconfig."
-	cmdline=$(sed -n -e 's/^CONFIG_CMDLINE="\(.*\)"/\1/p' "${TCDIST_DIR}"/br_secure/arm64_cm4io_kvm_guest_secure_release_defconfig)
-	cat << __EOF__ > "${BINARIES_DIR}/rpi-firmware/cmdline.txt"
-$cmdline
-__EOF__
+# Clear buildroot/package/rpi-firmware version of cmdline.txt:
+if [ -f "${BINARIES_DIR}/rpi-firmware/cmdline.txt" ]; then
+	echo "Clear Kernel cmdline.txt and use CONFIG_CMDLINE from kernel"
+	> "${BINARIES_DIR}/rpi-firmware/cmdline.txt"
 fi
 
 # Pass an empty rootpath. genimage makes a full copy of the given rootpath to

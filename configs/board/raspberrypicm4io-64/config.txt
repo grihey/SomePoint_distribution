@@ -17,3 +17,6 @@ dtparam=audio=on
 
 # Wifi QCA988x needs 32bit dma to work
 dtoverlay=pcie-32bit-dma
+
+# Enable I2C bus
+dtparam=i2c_vc=on

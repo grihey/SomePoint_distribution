@@ -20,3 +20,7 @@ dtoverlay=pcie-32bit-dma
 
 # Enable I2C bus
 dtparam=i2c_vc=on
+
+# Cypress CYW43455 radio antenna selection.
+# ant1=internal, ant2=external
+dtparam=ant1

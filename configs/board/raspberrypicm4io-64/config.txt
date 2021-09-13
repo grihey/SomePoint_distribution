@@ -24,3 +24,6 @@ dtparam=i2c_vc=on
 # Cypress CYW43455 radio antenna selection.
 # ant1=internal, ant2=external
 dtparam=ant1
+
+# Enable USB bus
+dtoverlay=dwc2,dr_mode=host

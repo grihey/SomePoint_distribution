@@ -27,3 +27,6 @@ dtparam=ant1
 
 # Enable USB bus
 dtoverlay=dwc2,dr_mode=host
+
+# Enable RTC support
+dtoverlay=i2c-rtc,pcf85063a,i2c_csi_dsi

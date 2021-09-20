@@ -139,53 +139,23 @@ function Build_guest_kernels {
     esac
 }
 
-function Gen_configs {
-    local os_opt
-
-    case "$TCDIST_SECUREOS" in
-    1)
-        os_opt="_secure"
-    ;;
-    *)
-        os_opt=""
-    ;;
-    esac
-
-    case "$TCDIST_HYPERVISOR" in
-    kvm)
-        configs/linux/defconfig_builder.sh -t "${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}_guest${os_opt}_release" -k linux
-        if [ "$TCDIST_ARCH" = "x86" ] && [ "$TCDIST_SUB_ARCH" = "amd" ] ; then
-            sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}_guest${os_opt}_release_defconfig"
-        fi
-    ;;
-    *)
-    ;;
-    esac
-
-    configs/linux/defconfig_builder.sh -t "${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}_release" -k linux
-    cp "configs/buildroot_config_${TCDIST_ARCH}_${TCDIST_PLATFORM}_${TCDIST_HYPERVISOR}${os_opt}" buildroot/.config
-    if [ "$TCDIST_ARCH" = "x86" ] && [ "$TCDIST_SUB_ARCH" = "amd" ] ; then
-        sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "linux/arch/x86/configs/${TCDIST_ARCH}_${TCDIST_HYPERVISOR}${os_opt}_release_defconfig"
-    fi
-}
-
 function Clone {
     git submodule init
     git submodule update -f
-    cp ~/.gitconfig docker/gitconfig
-
-    cp ubuntu_20.10-config-5.8.0-1007-raspi linux/arch/arm64/configs/ubuntu2010_defconfig
-    cat xen_kernel_configs >> linux/arch/arm64/configs/ubuntu2010_defconfig
+    if [ -f ~/.gitconfig ]; then
+        cp ~/.gitconfig docker/gitconfig
+    else
+        echo "~/.gitconfig not found. Please copy your .gitconfig to ./docker/gitconfig manually." >&2
+    fi
 
     # Make sure all branches are available in linux repo
     Fetch_all linux
 
     # Checkout the default branch
-    pushd linux
-    git checkout "${TCDIST_LINUX_BRANCH}"
-    popd
-
-    Gen_configs
+    (
+        cd linux
+        git checkout "${TCDIST_LINUX_BRANCH}"
+    )
 }
 
 function Uboot_script {

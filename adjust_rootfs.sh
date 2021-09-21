@@ -43,7 +43,6 @@ function Arfs_load_config {
     set -e
 
     . ${TCDIST_DIR}/helpers.sh
-    . ${TCDIST_DIR}/text_generators.sh
 
     Load_config
 
@@ -161,7 +160,7 @@ function Arfs_apply {
 if [ "$1" == "check_script" ]; then
     Arfs_load_config
     Shellcheck_bashate ./adjust_rootfs.sh ${TCDIST_DIR}/adjust_rootfs.sh \
-		${TCDIST_DIR}/helpers.sh ${TCDIST_DIR}/text_generators.sh \
+		${TCDIST_DIR}/helpers.sh \
 		${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT} "./${TCDIST_VM_NAME}_config.sh"
     exit
 fi

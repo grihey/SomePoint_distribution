@@ -45,16 +45,6 @@ TCDIST_ETHDEV="eth0"
 # Bridge name used for bridging admin machine
 TCDIST_ADMIN_BRIDGE="adminbr0"
 
-# TCDIST_BUILDOPT defines type of build
-# 'usb' for USB build
-# 'mmc' for MMC/SD build
-# 'dhcp' for dynamic network configuration tftp/nfsroot build
-# 'static' for static network configuration tftp/nfsroot build
-TCDIST_BUILDOPT=mmc
-
-# TCDIST_SECUREOS defines if we are building a secure-os or not
-TCDIST_SECUREOS=0
-
 # TCDIST_SUDOTYPE selects the way sudo command/function is used
 # 'standard' will use standard sudo executable as it is
 # 'showonpassword' will show command to be run when password is prompted
@@ -62,20 +52,8 @@ TCDIST_SECUREOS=0
 # 'confirm' will show and confirm all sudoed commands
 TCDIST_SUDOTYPE=showonpassword
 
-# Update bootfs/rootfs/domufs only, do not wipe (rm -rf) contents
-TCDIST_FS_UPDATE_ONLY=0
-
-# Automount sd/usb if not mounted when doing e.g. rootfs (0=off, 1=on)
-TCDIST_AUTOMOUNT=0
-
-# Default device for mount operations
-TCDIST_DEFDEV=/dev/sda
-
 # Device tree used
 TCDIST_DEVTREE=fsl-ls1012a-frwy.dtb
-
-# 0 = load device tree in u-boot, 1 = use firmware provided device tree
-TCDIST_FWFDT=0
 
 # API key for downloading binaries etc. from Artifactory
 # Generate key from JFrog and place it into the .setup_sh_config file
@@ -84,47 +62,17 @@ TCDIST_ARTIFACTORY_API_KEY=
 # Path where downloads are cached. If empty cache is not used.
 TCDIST_DL_CACHE_DIR="$(pwd)/.download_cache"
 
-# Directories where partitions are mounted
-TCDIST_MNT_DIR="$(pwd)/mnt"
-TCDIST_BOOTMNT="$TCDIST_MNT_DIR/bootfs"
-TCDIST_ROOTMNT="$TCDIST_MNT_DIR/rootfs"
-TCDIST_DOMUMNT="$TCDIST_MNT_DIR/domufs"
-
-# Where guest kernels are built by default
-TCDIST_GKBUILD="$(pwd)/images"
-
-# Where filesystem dirs are generated to and where disk image is placed
-TCDIST_IMGBUILD="$(pwd)/images/genimage"
-
 # Temporary directory
 TCDIST_TMPDIR="$(pwd)/images/tmp"
 
 # kernel image filename usually: bzImage | Image
 TCDIST_KERNEL_IMAGE_FILE=Image
 
-# Where buildroot is storing images
-TCDIST_IMAGES="$(pwd)/buildroot/output/images"
-TCDIST_KERNEL_IMAGE="${TCDIST_IMAGES}/${TCDIST_KERNEL_IMAGE_FILE}"
-
-# Xen cpu and memory options
-TCDIST_XEN_DOM0_CPUCOUNT=2
-TCDIST_XEN_DOM0_MEMORY=4G
-
-# RasPi dom0 static IP Configuration
+# Device IP address
 TCDIST_DEVICEIP=192.168.1.170
-TCDIST_DEVICENM=255.255.255.0
-TCDIST_DEVICEGW=192.168.1.1
 
 # These settings should be valid both in DHCP and static IP configurations
 TCDIST_DEVICEDNS=1.1.1.1
-TCDIST_DEVICEHN=raspi
-
-# TFTP and NFS server settings
-TCDIST_TFTPSERVER=192.168.1.145
-TCDIST_TFTPPATH=/srv/tftp
-TCDIST_NFSSERVER="$TCDIST_TFTPSERVER"
-TCDIST_NFSDOM0=/srv/nfsdom0
-TCDIST_NFSDOMU=/srv/nfsdomu
 
 # ccache options
 CCACHE="$(command -v ccache || true)"

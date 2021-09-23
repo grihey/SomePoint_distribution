@@ -1,0 +1,104 @@
+From 4906e77d5957a78df3181a0c8a1b5f0e55ce44da Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
+Date: Wed, 15 Sep 2021 16:06:20 +0300
+Subject: [PATCH] package/iptables: add init script
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This patch will add an init script that allows
+to set a ruleset in /etc/iptables.conf to be loaded
+on boot, or flushed on stop, as well as a saving
+command to generate a new file.
+
+Signed-off-by: José Pekkarinen <jose.pekkarinen@unikie.com>
+[Arnout: change handling of readonly filesystem]
+Signed-off-by: Arnout Vandecappelle (Essensium/Mind) <arnout@mind.be>
+---
+ package/iptables/S35iptables | 58 ++++++++++++++++++++++++++++++++++++
+ package/iptables/iptables.mk |  6 ++++
+ 2 files changed, 64 insertions(+)
+ create mode 100644 package/iptables/S35iptables
+
+diff --git a/package/iptables/S35iptables b/package/iptables/S35iptables
+new file mode 100644
+index 0000000000..ff3f51a2ba
+--- /dev/null
++++ b/package/iptables/S35iptables
+@@ -0,0 +1,58 @@
++#!/bin/sh
++
++DAEMON="iptables"
++
++IPTABLES_ARGS=""
++
++start() {
++	printf 'Starting %s: ' "$DAEMON"
++	iptables-restore < /etc/iptables.conf
++	status=$?
++	if [ "$status" -eq 0 ]; then
++		echo "OK"
++	else
++		echo "FAIL"
++	fi
++	return "$status"
++}
++
++stop() {
++	printf 'Stopping %s: ' "$DAEMON"
++	iptables -F
++	status=$?
++	if [ "$status" -eq 0 ]; then
++		echo "OK"
++	else
++		echo "FAIL"
++	fi
++	return "$status"
++}
++
++restart() {
++	stop
++	sleep 1
++	start
++}
++
++save() {
++	printf 'Saving %s: ' "$DAEMON"
++	iptables-save > /etc/iptables.conf
++	status=$?
++	if [ "$status" -eq 0 ]; then
++		echo "OK"
++	else
++		echo "SKIP (read-only file system detected)"
++	fi
++	return "$status"
++}
++
++case "$1" in
++	start|stop|restart|save)
++		"$1";;
++	reload)
++		# Restart, since there is no true "reload" feature.
++		restart;;
++	*)
++		echo "Usage: $0 {start|stop|restart|reload}"
++		exit 1
++esac
+diff --git a/package/iptables/iptables.mk b/package/iptables/iptables.mk
+index ca8178425e..555bb384fd 100644
+--- a/package/iptables/iptables.mk
++++ b/package/iptables/iptables.mk
+@@ -57,4 +57,10 @@ define IPTABLES_LINUX_CONFIG_FIXUPS
+ 	$(call KCONFIG_ENABLE_OPT,CONFIG_NETFILTER_XTABLES)
+ endef
+ 
++define IPTABLES_INSTALL_INIT_SYSV
++	$(INSTALL) -m 0755 -D package/iptables/S35iptables \
++		$(TARGET_DIR)/etc/init.d/S35iptables
++	touch $(TARGET_DIR)/etc/iptables.conf
++endef
++
+ $(eval $(autotools-package))
+-- 
+2.25.1
+

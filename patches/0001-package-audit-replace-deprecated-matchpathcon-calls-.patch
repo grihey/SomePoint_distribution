@@ -1,0 +1,38 @@
+From 90dd1d6178b01f6da3e59e43d0c7efdf984a72d8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
+Date: Fri, 23 Jul 2021 12:51:13 +0300
+Subject: [PATCH] package/audit: replace deprecated matchpathcon calls from
+ init script
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This patch replace matchpathcon calls in the auditd init script by
+calls to selabel_lookup. Indeed, matchpathcon is now deprecated, and
+this causes warning during the boot process.
+
+Signed-off-by: José Pekkarinen <jose.pekkarinen@unikie.com>
+Signed-off-by: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+---
+ package/audit/S02auditd | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/package/audit/S02auditd b/package/audit/S02auditd
+index 2ecf0f1df9..0eef881cee 100644
+--- a/package/audit/S02auditd
++++ b/package/audit/S02auditd
+@@ -18,9 +18,9 @@ start(){
+ 
+ 	# Create dir to store log files in if one doesn't exist. Create
+ 	# the directory with SELinux permissions if possible
+-	command -v matchpathcon >/dev/null 2>&1
++	command -v selabel_lookup >/dev/null 2>&1
+ 	if [ $? = 0 ]; then
+-		mkdir -p /var/log/audit -Z `matchpathcon -n /var/log/audit`
++		mkdir -p /var/log/audit -Z `selabel_lookup -b file -k /var/log/audit`
+ 	else
+ 		mkdir -p /var/log/audit
+ 	fi
+-- 
+2.25.1
+

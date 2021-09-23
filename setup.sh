@@ -41,6 +41,10 @@ function Clone {
         cd linux
         git checkout "${TCDIST_LINUX_BRANCH}"
     )
+    # Patch builroot
+    for patch in "${TCDIST_DIR}"/patches/*.patch; do
+        git -C "${TCDIST_DIR}"/buildroot am "$patch"
+    done
 }
 
 function Ssh_config_item {

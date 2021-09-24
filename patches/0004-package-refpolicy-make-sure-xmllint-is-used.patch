@@ -1,0 +1,54 @@
+From: Antoine Tenart <atenart@kernel.org>
+To: buildroot@buildroot.org
+Cc: Antoine Tenart <atenart@kernel.org>,
+	=?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
+Subject: [PATCH] package/refpolicy: make sure xmllint is used
+Date: Thu, 23 Sep 2021 11:21:36 +0200
+Message-Id: <20210923092136.141553-1-atenart@kernel.org>
+X-Mailer: git-send-email 2.31.1
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When parsing and adding modules the refpolicy build system checks their
+validity using xmllint. By default the host system version is used and
+if not found an error is displayed but the build is not stopped. This
+leads to interesting issues where modules are not added correctly to
+modules.conf[1] (other possible issues are likely).
+
+Fix this by adding a dependency on host-libxml2 and explicitly use the
+xmllint binary built by Buildroot.
+
+[1] https://lore.kernel.org/buildroot/20210830114531.2285178-1-jose.pekkarinen@unikie.com/
+
+Tested-by: José Pekkarinen <jose.pekkarinen@unikie.com>
+Signed-off-by: Antoine Tenart <atenart@kernel.org>
+---
+ package/refpolicy/refpolicy.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/package/refpolicy/refpolicy.mk b/package/refpolicy/refpolicy.mk
+index eb345d0f98c9..975c3b584c42 100644
+--- a/package/refpolicy/refpolicy.mk
++++ b/package/refpolicy/refpolicy.mk
+@@ -14,7 +14,8 @@ REFPOLICY_DEPENDENCIES = \
+ 	host-policycoreutils \
+ 	host-python3 \
+ 	host-setools \
+-	host-gawk
++	host-gawk \
++	host-libxml2
+ 
+ ifeq ($(BR2_PACKAGE_REFPOLICY_CUSTOM_GIT),y)
+ REFPOLICY_VERSION = $(call qstrip,$(BR2_PACKAGE_REFPOLICY_CUSTOM_REPO_VERSION))
+@@ -30,6 +31,7 @@ endif
+ # Cannot use multiple threads to build the reference policy
+ REFPOLICY_MAKE = \
+ 	PYTHON=$(HOST_DIR)/usr/bin/python3 \
++	XMLLINT=$(LIBXML2_HOST_BINARY) \
+ 	TEST_TOOLCHAIN=$(HOST_DIR) \
+ 	$(TARGET_MAKE_ENV) \
+ 	$(MAKE1)
+-- 
+2.31.1
+

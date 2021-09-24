@@ -37,10 +37,8 @@ function Clone {
     Fetch_all linux
 
     # Checkout the default branch
-    (
-        cd linux
-        git checkout "${TCDIST_LINUX_BRANCH}"
-    )
+    git -C "${TCDIST_DIR}/linux" checkout "${TCDIST_LINUX_BRANCH}"
+
     # Patch builroot
     for patch in "${TCDIST_DIR}"/patches/*.patch; do
         git -C "${TCDIST_DIR}"/buildroot am "$patch"

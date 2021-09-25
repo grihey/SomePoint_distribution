@@ -141,6 +141,9 @@ function Load_config {
         ls1012afrwy)
             # Options ok
         ;;
+        imx8qxpc0mek)
+            # Options ok
+        ;;
         upxtreme)
             # Options ok
         ;;
@@ -275,6 +278,11 @@ function Arm64config_ls1012a {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64 ls1012afrwy" >&2
     mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_arm64_ls1012afrwy "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
+}
+
+function Arm64config_imx8qxpc0mek {
+    echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64 imx8qxpc0mek" >&2
+    cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_arm64_imx8qxpc0mek "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 

@@ -262,6 +262,7 @@ function Show_help {
     echo "    arm64config                       Create new ${TCDIST_SETUP_SH_CONFIG} for raspi4"
     echo "    arm64config_ls1012a               Create new ${TCDIST_SETUP_SH_CONFIG} for nxp ls1012a-frwy"
     echo "    arm64config_cm4io                 Create new ${TCDIST_SETUP_SH_CONFIG} for cm4io"
+    echo "    arm64config_imx8qxpc0mek          Create new ${TCDIST_SETUP_SH_CONFIG} for nxp imx8qxpc0mek"
     echo "    clone                             Clone the required subrepositories"
     echo "    ssh_dut [domu]                    Open ssh session with target device"
     echo "    shell                             Open docker shell"
@@ -302,7 +303,7 @@ esac
 shift
 
 case "$CMD" in
-    Xenconfig|Kvmconfig|X86config|Arm64config|Arm64config_ls1012a|Arm64config_cm4io)
+    Xenconfig|Kvmconfig|X86config|Arm64config|Arm64config_ls1012a|Arm64config_cm4io|Arm64config_imx8qxpc0mek)
         set -a
         TCDIST_SETUP_SH_CONFIG=".setup_sh_config${TCDIST_PRODUCT}"
         set +a

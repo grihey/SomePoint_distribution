@@ -6,12 +6,17 @@ SHELL:=/bin/bash
 
 VM_NAME:=br_admin
 VM_PRODUCT:=$(TCDIST_ARCH)_$(TCDIST_PLATFORM)
+VM_PRODUCTMK:=$(TCDIST_DIR)/$(VM_NAME)/$(VM_PRODUCT).mk
 VM_BUILDROOT_CONFIG:=buildroot_config_$(TCDIST_ARCH)_kvm
 VM_KERNEL_CONFIG:=$(VM_PRODUCT)_kvm_release
 VM_KERNEL_DEFCONFIG:=$(VM_KERNEL_CONFIG)_defconfig
 VM_OUTPUT:=$(VM_NAME)_$(VM_PRODUCT)
 
 include $(TCDIST_DIR)/generic_br_makefile.mk
+
+ifneq (, $(wildcard $(VM_PRODUCTMK)))
+	include $(VM_PRODUCTMK)
+endif
 
 # Add extra files to the list, so size requirements can be calculated on main level
 TCDIST_VM_FILES+=$(TCDIST_DIR)/br_admin/vmctl.sh

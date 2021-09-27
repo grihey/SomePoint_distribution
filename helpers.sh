@@ -235,38 +235,32 @@ function sudo {
 
 function Xenconfig {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} with xen configuration" >&2
-    mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_xen "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Kvmconfig {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} with kvm configuration" >&2
-    mkdir -p "${TCDIST_OUTPUT:?}"
     # Change TCDIST_HYPERVISOR option to kvm
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_kvm "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function X86config {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for x86 qemu" >&2
-    mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_x86 "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function X86config_upxtreme {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for x86 upXtreme" >&2
-    mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_x86_upxtreme "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64" >&2
-    mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_arm64 "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 
 function Arm64config_cm4io {
     echo "Creating ${TCDIST_SETUP_SH_CONFIG} for arm64 cm4io" >&2
-    mkdir -p "${TCDIST_OUTPUT:?}"
     cp -f  "${TCDIST_DIR}"/configs/default_setup_sh_config_arm64_cm4io "${TCDIST_OUTPUT:?}/${TCDIST_SETUP_SH_CONFIG}"
 }
 

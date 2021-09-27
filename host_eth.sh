@@ -5,7 +5,7 @@
 . ./helpers.sh
 Load_config
 
-SYSCTLSAVE=".sysctl.save.tmp"
+SYSCTLSAVE="${TCDIST_OUTPUT}/.sysctl.save.tmp"
 
 function Bridge_up {
     sudo ip link add name "$1" type bridge

@@ -305,6 +305,8 @@ case "$CMD" in
         TCDIST_SETUP_SH_CONFIG=".setup_sh_config${TCDIST_PRODUCT}"
         set +a
         Min_config
+        # Make sure output dir exists
+        mkdir -p "${TCDIST_OUTPUT:?}"
     ;;
     Clean|Distclean)
         # Do not check config if cleaning
@@ -312,6 +314,9 @@ case "$CMD" in
     ;;
     *)
         Load_config
+        # Make sure output dirs exist
+        mkdir -p "${TCDIST_OUTPUT:?}"
+        mkdir -p "${TCDIST_TMPDIR:?}"
     ;;
 esac
 

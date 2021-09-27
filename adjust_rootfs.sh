@@ -123,36 +123,36 @@ function Arfs_apply {
     # Set hostname if requested
     if [ -n "$hostname" ]; then
         set -x
-        Arfs_hostname > hostname.tmp
-        e2cp -P 644 -O 0 -G 0 hostname.tmp "${2}:/etc/hostname"
-        rm -f hostname.tmp
+        Arfs_hostname > "${TCDIST_TMPDIR}"/hostname.tmp
+        e2cp -P 644 -O 0 -G 0 "${TCDIST_TMPDIR}"/hostname.tmp "${2}:/etc/hostname"
+        rm -f "${TCDIST_TMPDIR}"/hostname.tmp
         set +x
     fi
 
     # Set network interfaces if requested
     if [ -n "$interfaces" ]; then
         set -x
-        Arfs_interfaces > interfaces.tmp
-        e2cp -P 644 -O 0 -G 0 interfaces.tmp "${2}:/etc/network/interfaces"
-        rm -f interfaces.tmp
+        Arfs_interfaces > "${TCDIST_TMPDIR}"/interfaces.tmp
+        e2cp -P 644 -O 0 -G 0 "${TCDIST_TMPDIR}"/interfaces.tmp "${2}:/etc/network/interfaces"
+        rm -f "${TCDIST_TMPDIR}"/interfaces.tmp
         set +x
     fi
 
     # Set inittab if requested
     if [ -n "$inittab" ]; then
         set -x
-        Arfs_inittab "$inittab_opt" > inittab.tmp
-        e2cp -P 644 -O 0 -G 0 inittab.tmp "${2}:/etc/inittab"
-        rm -f inittab.tmp
+        Arfs_inittab "$inittab_opt" > "${TCDIST_TMPDIR}"/inittab.tmp
+        e2cp -P 644 -O 0 -G 0 "${TCDIST_TMPDIR}"/inittab.tmp "${2}:/etc/inittab"
+        rm -f "${TCDIST_TMPDIR}"/inittab.tmp
         set +x
     fi
 
     # Set net additions if requested
     if [ -n "$netrcadd" ]; then
         set -x
-        Arfs_net_rc_add > net_rc_add.tmp
-        e2cp -P 744 -O 0 -G 0 net_rc_add.tmp "${2}:/etc/init.d/S41netadditions"
-        rm -f net_rc_add.tmp
+        Arfs_net_rc_add > "${TCDIST_TMPDIR}"/net_rc_add.tmp
+        e2cp -P 744 -O 0 -G 0 "${TCDIST_TMPDIR}"/net_rc_add.tmp "${2}:/etc/init.d/S41netadditions"
+        rm -f "${TCDIST_TMPDIR}"/net_rc_add.tmp
         set +x
     fi
 }

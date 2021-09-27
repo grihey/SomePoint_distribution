@@ -14,10 +14,10 @@ Arfs_apply ${ARFS_OPTIONS} "$@"
 
 # upXtreme extras
 if [ "${TCDIST_ARCH}_${TCDIST_PLATFORM}" == "x86_upxtreme" ]; then
-    e2cp "${2}:/etc/fstab" fstab.tmp
-    echo "debugfs    /sys/kernel/debug      debugfs  defaults  0 0" >> fstab.tmp
-    e2cp fstab.tmp "${2}:/etc/fstab"
-    rm fstab.tmp
+    e2cp "${2}:/etc/fstab" "${TCDIST_TMPDIR}"/fstab.tmp
+    echo "debugfs    /sys/kernel/debug      debugfs  defaults  0 0" >> "${TCDIST_TMPDIR}"/fstab.tmp
+    e2cp "${TCDIST_TMPDIR}"/fstab.tmp "${2}:/etc/fstab"
+    rm -f "${TCDIST_TMPDIR}"/fstab.tmp
 fi
 
 # Copy over any system testing related items

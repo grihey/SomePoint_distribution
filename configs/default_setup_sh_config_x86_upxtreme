@@ -63,7 +63,7 @@ TCDIST_ARTIFACTORY_API_KEY=
 TCDIST_DL_CACHE_DIR="$(pwd)/.download_cache"
 
 # Temporary directory
-TCDIST_TMPDIR="$(pwd)/images/tmp"
+TCDIST_TMPDIR="${TCDIST_OUTPUT}/tmp"
 
 # kernel image filename usually: bzImage | Image
 TCDIST_KERNEL_IMAGE_FILE=bzImage

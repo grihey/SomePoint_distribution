@@ -4,19 +4,15 @@
 # Select serial connection from qemu window to access
 # It is assumed that adminbr0 bridge is set up earlier with e.g. host_eth.sh
 
-. ./helpers.sh
+# Get actual directory of this bash script
+SDIR="$(dirname "${BASH_SOURCE[0]}")"
+SDIR="$(realpath "$SDIR")"
+
+# Disable warning about shellcheck not able to follow variable path
+# shellcheck disable=SC1090
+. "${SDIR}/helpers.sh"
 Load_config
 
-MACFILE="${TCDIST_OUTPUT}/.tcdist.macs"
-
-if [ ! -f "${MACFILE}" ]; then
-    echo "Generating macs to ${MACFILE}" >&2
-    ./genmacs.sh > "${MACFILE}"
-fi
-
-# Get first mac from file
-MACADD=$(sed "1q;d" "$MACFILE")
-TAPIF="tap0"
 PIDFILE="${TCDIST_OUTPUT}/.br_admin.pid.tmp"
 QEMUEXE="qemu-system-x86_64"
 
@@ -24,8 +20,8 @@ QEMUOPT=(-m 4096 -M pc -cpu host -enable-kvm)
 QEMUOPT+=(-kernel "${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.bzImage")
 QEMUOPT+=(-drive "file=${TCDIST_OUTPUT}/${TCDIST_NAME}_${TCDIST_ARCH}_${TCDIST_PLATFORM}.ext2,if=virtio,format=raw")
 QEMUOPT+=(-append "rootwait root=/dev/vda console=ttyS0")
-QEMUOPT+=(-netdev user,id=virtio-net-pci0,hostfwd=tcp::2222-:22)
-QEMUOPT+=(-device virtio-net-pci,netdev=virtio-net-pci0)
+QEMUOPT+=(-netdev "user,id=virtio-net-pci0,hostfwd=tcp::2222-:22")
+QEMUOPT+=(-device "virtio-net-pci,netdev=virtio-net-pci0")
 
 case "$1" in
     start)
@@ -62,6 +58,9 @@ case "$1" in
         QEMUOPT+=(-echr 2)
 
         "$QEMUEXE" "${QEMUOPT[@]}"
+    ;;
+    check_script)
+        Shellcheck_bashate "${BASH_SOURCE[0]}" "${SDIR}/helpers.sh"
     ;;
     *)
         echo "Usage: $0 <start|stop|kill|console>"

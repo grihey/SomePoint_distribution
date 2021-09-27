@@ -40,16 +40,26 @@ function Arfs_net_rc_add {
 }
 
 function Arfs_load_config {
+    local sdir
+
+    # Get actual directory of this bash script
+    sdir="$(dirname "${BASH_SOURCE[0]}")"
+    sdir="$(realpath "$sdir")"
+
     set -e
 
-    . ${TCDIST_DIR}/helpers.sh
+    # Shellcheck doesn't know what is included here, disable complaint.
+    # shellcheck disable=SC1090
+    . "${sdir}/helpers.sh"
 
     Load_config
 
-    # Load vm specific config
-    # Shellcheck doesn't know what is included here, disable complaint.
-    # shellcheck disable=SC1090
-    . "${TCDIST_DIR}/${TCDIST_VM_NAME}/${TCDIST_VM_NAME}_config.sh"
+    if [ -n "${TCDIST_VM_NAME}" ]; then
+        # Load vm specific config
+        # Shellcheck doesn't know what is included here, disable complaint.
+        # shellcheck disable=SC1090
+        . "${TCDIST_DIR}/${TCDIST_VM_NAME}/${TCDIST_VM_NAME}_config.sh"
+    fi
 }
 
 function Arfs_apply {
@@ -157,10 +167,26 @@ function Arfs_apply {
     fi
 }
 
-if [ "$1" == "check_script" ]; then
+function Check_script {
+    local scriptlist
+
     Arfs_load_config
-    Shellcheck_bashate ./adjust_rootfs.sh ${TCDIST_DIR}/adjust_rootfs.sh \
-		${TCDIST_DIR}/helpers.sh \
-		${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT} "./${TCDIST_VM_NAME}_config.sh"
+
+    scriptlist="./adjust_rootfs.sh"
+    scriptlist+=" ${TCDIST_DIR}/adjust_rootfs.sh"
+    scriptlist+=" ${TCDIST_DIR}/helpers.sh"
+    scriptlist+=" ${TCDIST_OUTPUT}/.setup_sh_config${TCDIST_PRODUCT}"
+
+    if [ -n "${TCDIST_VM_NAME}" ]; then
+        scriptlist+=" ${TCDIST_DIR}/${TCDIST_VM_NAME}/${TCDIST_VM_NAME}_config.sh"
+    fi
+
+    # scriptlist is space separated list of files, purposefully unquoted
+    # shellcheck disable=SC2086
+    Shellcheck_bashate $scriptlist
     exit
+}
+
+if [ "$1" == "check_script" ]; then
+    Check_script
 fi

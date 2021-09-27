@@ -1,9 +1,15 @@
 #!/bin/bash
 
-TCDIST_VM_NAME="br_conn"
+export TCDIST_VM_NAME="br_conn"
+
+# Get actual directory of this bash script
+SDIR="$(dirname "${BASH_SOURCE[0]}")"
+SDIR="$(realpath "$SDIR")"
 
 # Include generic rootfs adjustment functions
-. ${TCDIST_DIR}/adjust_rootfs.sh "$1"
+# Disable shellcheck warning about variable source name
+# shellcheck disable=SC1090
+. "${SDIR}/../adjust_rootfs.sh" "$1"
 
 Arfs_load_config
 # Variable purposefully unquoted, it contains list of space separated options

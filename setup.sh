@@ -30,6 +30,8 @@ function Clone {
     if [ -f ~/.gitconfig ]; then
         cp ~/.gitconfig docker/gitconfig
     else
+        # Disable warning about tilde not expanding, it does not need to expand here.
+        # shellcheck disable=SC2088
         echo "~/.gitconfig not found. Please copy your .gitconfig to ./docker/gitconfig manually." >&2
     fi
 
@@ -67,8 +69,7 @@ function Ssh_config_item {
     echo "    UserKnownHostsFile     /dev/null"
     echo "    StrictHostKeyChecking  no"
     echo "    PasswordAuthentication no"
-    if [[ "${vm_name}" == "br_conn" || "${vm_name}" == "br_secure" ]]
-    then
+    if [[ "${vm_name}" == "br_conn" || "${vm_name}" == "br_secure" ]]; then
         echo "    ProxyJump              br_admin"
     fi
 }
@@ -245,7 +246,7 @@ function Shell {
 }
 
 function Check_script {
-    Shellcheck_bashate setup.sh helpers.sh ${TCDIST_OUTPUT}/.setup_sh_config_${TCDIST_PRODUCT}
+    Shellcheck_bashate setup.sh helpers.sh "${TCDIST_OUTPUT}/.setup_sh_config${TCDIST_PRODUCT}"
 }
 
 function Show_help {

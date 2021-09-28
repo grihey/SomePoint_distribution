@@ -1,0 +1,2 @@
+# nRF52
+ATTRS{idVendor}=="1915", ATTRS{idProduct}=="520f", SYMLINK+="nrf0"

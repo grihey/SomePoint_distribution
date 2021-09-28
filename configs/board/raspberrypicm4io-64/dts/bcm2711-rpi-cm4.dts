@@ -661,3 +661,29 @@ cam0_reg: &cam1_reg {
 			   <&spi0>, "dmas:8=", <&dma40>;
 	};
 };
+
+/* ### CM4IO Sleeve Changes ### */
+
+&i2c_csi_dsi {  /* same as i2c10 */
+	ina209@40 {
+		compatible = "ti,ina209";
+		reg = <0x40>;
+		shunt-resistor = <5000>;
+	};
+
+	ina209@45 {
+		compatible = "ti,ina209";
+		reg = <0x45>;
+		shunt-resistor = <5000>;
+	};
+
+	tmp100@48 {
+		compatible = "ti,tmp100";
+		reg = <0x48>;
+	};
+
+	tmp100@4c {
+		compatible = "ti,tmp100";
+		reg = <0x4c>;
+	};
+};

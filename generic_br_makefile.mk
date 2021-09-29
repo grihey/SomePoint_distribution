@@ -36,6 +36,9 @@ $(VM_PREFIX)linux-menuconfig:
 $(VM_PREFIX)linux-rebuild:
 	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" linux-rebuild
 
+$(VM_PREFIX)sdk:
+	make "BR2_EXTERNAL=$(VM_IFIX)/br2-ext" "O=$(VM_LFIX)" -C "$(TCDIST_DIR)/buildroot" sdk
+
 $(VM_PREFIX)distclean:
 	rm -rf "$(VM_OFIX)"/output_* "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)" "$(VM_OFIX)"/generated_buildroot_config_*
 

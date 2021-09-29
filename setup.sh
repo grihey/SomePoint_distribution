@@ -239,7 +239,8 @@ function Distclean {
 }
 
 function Shell {
-    if [ ! -f docker/gitconfig ]; then
+    docker image inspect rpi4_kernel_build_env:latest > /dev/null
+    if [ $? -eq 1 ]; then
         make -C docker build_env
     fi
     make -C docker shell

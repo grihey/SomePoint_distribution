@@ -686,4 +686,23 @@ cam0_reg: &cam1_reg {
 		compatible = "ti,tmp100";
 		reg = <0x4c>;
 	};
+
+	bq25890@6a {
+		compatible = "ti,bq25890";
+		reg = <0x6a>;
+
+		interrupt-parent = <&gpio>;
+		interrupts = <4 2>; /* IRQ_TYPE_EDGE_FALLING */
+
+		ti,battery-regulation-voltage = <4208000>;
+		ti,charge-current = <2048000>;
+		ti,termination-current = <256000>;
+		ti,precharge-current = <128000>;
+		ti,minimum-sys-voltage = <3500000>;
+		ti,boost-voltage = <5000000>;
+		ti,boost-max-current = <1000000>;
+
+		ti,use-ilim-pin;
+		ti,thermal-regulation-threshold = <120>;
+	};
 };

@@ -33,7 +33,7 @@ TCDIST_LINUX_BRANCH=tc-rpi4-5.10-sec
 
 # TCDIST_VMLIST is list of all selected VMs for system image
 # Admin is always first and connection VM second, rest can be arranged freely
-TCDIST_VMLIST="br_admin br_conn br_secure"
+TCDIST_VMLIST="br_secure"
 
 # Internal network address, three octets
 TCDIST_INTERNAL_NET=10.10.10

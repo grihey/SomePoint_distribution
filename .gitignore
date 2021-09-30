@@ -1,22 +1,5 @@
-# These will be removed on distclean
-.ccache/
-images/
-mnt/
-.mountimg
 .buildroot-ccache/
-.setup_sh_config*
-.download_cache/
 avocado/tests/tmp_*
-tmpfile
-*.tmp
-*.bzImage
-*.Image
-*.ext2
-*/output_*
-*/generated_*
 .tcdist_output
-*/*.dtb
-*/*.tmp*
-*/*.merge_tmp*
 ci_build*
 output/

@@ -4,6 +4,7 @@
 #include "../../../arm/boot/dts/bcm2835-rpi.dtsi"
 
 #include <dt-bindings/reset/raspberrypi,firmware-reset.h>
+#include <dt-bindings/thermal/thermal.h>
 
 / {
 	compatible = "raspberrypi,4-compute-module", "brcm,bcm2711";
@@ -665,6 +666,18 @@ cam0_reg: &cam1_reg {
 /* ### CM4IO Sleeve Changes ### */
 
 &i2c_csi_dsi {  /* same as i2c10 */
+	fanctrl: emc2301@2f {
+		compatible = "microchip,emc2301";
+		reg = <0x2f>;
+
+		#cooling-cells = <0x02>;
+
+		fan@0 {
+			min-rpm = /bits/ 16 <50>;
+			max-rpm = /bits/ 16 <5500>;
+		};
+	};
+
 	ina209@40 {
 		compatible = "ti,ina209";
 		reg = <0x40>;
@@ -704,5 +717,32 @@ cam0_reg: &cam1_reg {
 
 		ti,use-ilim-pin;
 		ti,thermal-regulation-threshold = <120>;
+	};
+};
+
+&cpu_thermal {
+	trips {
+		fanmid0: fanmid0 {
+			temperature = <60000>;
+			hysteresis = <2000>;
+			type = "active";
+		};
+		fanmax0: fanmax0 {
+			temperature = <70000>;
+			hysteresis = <2000>;
+			type = "active";
+		};
+	};
+
+	cooling-maps {
+		map0 {
+			trip = <&fanmid0>;
+			cooling-device = <&fanctrl 2 6>;
+		};
+
+		map1 {
+			trip = <&fanmax0>;
+			cooling-device = <&fanctrl 7 THERMAL_NO_LIMIT>;
+		};
 	};
 };

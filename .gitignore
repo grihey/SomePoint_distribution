@@ -19,3 +19,4 @@ tmpfile
 */*.tmp*
 */*.merge_tmp*
 ci_build*
+output/

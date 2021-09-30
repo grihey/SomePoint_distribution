@@ -35,9 +35,16 @@ function Min_config {
                 exit 1
             fi
         else
-            # Use main source dir
-            TCDIST_OUTPUT="$TCDIST_DIR"
+            # Use a dir in main source dir
+            TCDIST_OUTPUT="${TCDIST_DIR}/output"
         fi
+    fi
+
+    TCDIST_OUTPUT="$(Sanity_check "$TCDIST_OUTPUT" non_existing)"
+
+    if [ "$TCDIST_OUTPUT" == "$TCDIST_DIR" ]; then
+        echo "\$TCDIST_OUTPUT can no longer be the same directory as \$TCDIST_DIR, please change your output directory settings" >&2
+        exit 2
     fi
 
     # Restore a flag

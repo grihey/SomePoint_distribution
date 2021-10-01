@@ -1,0 +1,46 @@
+From: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
+To: buildroot@buildroot.org
+Cc: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
+Subject: [PATCH] package/audit: Fix type output on log folder creation
+Date: Fri,  1 Oct 2021 09:20:52 +0300
+Message-Id: <20211001062052.770583-1-jose.pekkarinen@unikie.com>
+X-Mailer: git-send-email 2.25.1
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Testing buildroot 2021.05 I observed that after first
+boot I was having the following folders:
+
+/context:
+/system_u:object_r:auditd_log_t
+
+The root of this problem turned to be a difference in the
+output of $(selabel_lookup -b file -k /var/log/audit) called
+by S02auditd that from this verison on looks like:
+
+$ selabel_lookup -b file -k /var/log/audit
+Default context: system_u:object_r:auditd_log_t
+
+This patch will cut it to retrieve the type piece only.
+
+Signed-off-by: José Pekkarinen <jose.pekkarinen@unikie.com>
+---
+ package/audit/S02auditd | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package/audit/S02auditd b/package/audit/S02auditd
+index 0eef881cee..dd3dc22d6d 100644
+--- a/package/audit/S02auditd
++++ b/package/audit/S02auditd
+@@ -20,7 +20,7 @@ start(){
+ 	# the directory with SELinux permissions if possible
+ 	command -v selabel_lookup >/dev/null 2>&1
+ 	if [ $? = 0 ]; then
+-		mkdir -p /var/log/audit -Z `selabel_lookup -b file -k /var/log/audit`
++		mkdir -p /var/log/audit -Z `selabel_lookup -b file -k /var/log/audit | cut -d ' ' -f 3`
+ 	else
+ 		mkdir -p /var/log/audit
+ 	fi
+--
+2.25.1

@@ -1,0 +1,8 @@
+allow-hotplug wwan0
+iface wwan0 inet manual
+     pre-up for _ in $(seq 1 20); do /bin/test -c /dev/cdc-wdm0 && break; /bin/sleep 1; done
+     pre-up for _ in $(seq 1 20); do /bin/qmicli -d /dev/cdc-wdm0 --nas-get-signal-strength && break; /bin/sleep 1; done
+     pre-up /bin/qmicli -d /dev/cdc-wdm0 --wds-start-network="ip-type=4,apn=internet"
+     pre-up /bin/qmi-network /dev/cdc-wdm0 start
+     pre-up udhcpc -i wwan0
+     post-down /bin/qmi-network /dev/cdc-wdm0 stop

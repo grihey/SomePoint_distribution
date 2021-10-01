@@ -18,6 +18,9 @@ function Arfs_interfaces {
     echo "    up ifmetric eth1 100"
     echo ""
     echo "iface default inet dhcp"
+    echo ""
+    echo "source /etc/network/interfaces.d/*"
+    echo ""
 }
 
 ARFS_OPTIONS="-hostname -interfaces -ssh"

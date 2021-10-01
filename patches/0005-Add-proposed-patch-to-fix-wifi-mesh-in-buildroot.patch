@@ -1,73 +1,40 @@
-From 73b2db231a8f6957c15f71c1410e5d25e144d178 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
-Date: Mon, 27 Sep 2021 08:19:01 +0300
-Subject: [PATCH] Add proposed patch to fix wifi mesh in buildroot
+To: buildroot@buildroot.org
+Cc: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
+Subject: [PATCH v2] package/wpa_supplicant: Allow mesh configuration
+Date: Wed, 22 Sep 2021 14:38:20 +0300
+Message-Id: <20210922113820.3628-1-jose.pekkarinen@unikie.com>
+X-Mailer: git-send-email 2.25.1
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-This is the current proposed patch for buildroot that
-allows configuration of wifi mesh networking in wpa_supplicant
-side. As of 2021.05 buildroot only enables a path to
-disable it, while the default from wpa_supplicant is
-to have it disabled.
+wpa_supplicant defconfig doesn't enable CONFIG_MESH
+by default, and currently there is only a path to
+disable it in buildroot. This patch will restore
+the logic to enable it.
 
-Jira-Id: SP-608
-Tested-by: Mika Joenperä <mika.joenpera@unikie.com>
 Signed-off-by: José Pekkarinen <jose.pekkarinen@unikie.com>
-Change-Id: I275e224344512fd5aa9a7682913da671c4f03e46
 ---
- ..._supplicant-allow-mesh-configuration.patch | 41 +++++++++++++++++++
- 1 file changed, 41 insertions(+)
- create mode 100644 patches/0006-package-wpa_supplicant-allow-mesh-configuration.patch
+[ v1 -> v2 ] s/CONFIG__MESH/CONFIG_MESH/
 
-diff --git a/patches/0006-package-wpa_supplicant-allow-mesh-configuration.patch b/patches/0006-package-wpa_supplicant-allow-mesh-configuration.patch
-new file mode 100644
-index 0000000..90b6369
---- /dev/null
-+++ b/patches/0006-package-wpa_supplicant-allow-mesh-configuration.patch
-@@ -0,0 +1,41 @@
-+From: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
-+To: buildroot@buildroot.org
-+Cc: =?UTF-8?q?Jos=C3=A9=20Pekkarinen?= <jose.pekkarinen@unikie.com>
-+Subject: [PATCH v2] package/wpa_supplicant: Allow mesh configuration
-+Date: Wed, 22 Sep 2021 14:38:20 +0300
-+Message-Id: <20210922113820.3628-1-jose.pekkarinen@unikie.com>
-+X-Mailer: git-send-email 2.25.1
-+MIME-Version: 1.0
-+Content-Type: text/plain; charset=UTF-8
-+Content-Transfer-Encoding: 8bit
-+
-+wpa_supplicant defconfig doesn't enable CONFIG_MESH
-+by default, and currently there is only a path to
-+disable it in buildroot. This patch will restore
-+the logic to enable it.
-+
-+Signed-off-by: José Pekkarinen <jose.pekkarinen@unikie.com>
-+---
-+[ v1 -> v2 ] s/CONFIG__MESH/CONFIG_MESH/
-+
-+ package/wpa_supplicant/wpa_supplicant.mk | 4 +++-
-+ 1 file changed, 3 insertions(+), 1 deletion(-)
-+
-+diff --git a/package/wpa_supplicant/wpa_supplicant.mk b/package/wpa_supplicant/wpa_supplicant.mk
-+index e9078b9f89..3c0b0c1dfc 100644
-+--- a/package/wpa_supplicant/wpa_supplicant.mk
-++++ b/package/wpa_supplicant/wpa_supplicant.mk
-+@@ -104,7 +104,9 @@ else
-+ WPA_SUPPLICANT_CONFIG_DISABLE += CONFIG_WIFI_DISPLAY
-+ endif
-+ 
-+-ifeq ($(BR2_PACKAGE_WPA_SUPPLICANT_MESH_NETWORKING),)
-++ifeq ($(BR2_PACKAGE_WPA_SUPPLICANT_MESH_NETWORKING),y)
-++WPA_SUPPLICANT_CONFIG_ENABLE += CONFIG_MESH
-++else
-+ WPA_SUPPLICANT_CONFIG_DISABLE += CONFIG_MESH
-+ endif
-+ 
-+-- 
-+2.25.1
-+
--- 
+ package/wpa_supplicant/wpa_supplicant.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/package/wpa_supplicant/wpa_supplicant.mk b/package/wpa_supplicant/wpa_supplicant.mk
+index e9078b9f89..3c0b0c1dfc 100644
+--- a/package/wpa_supplicant/wpa_supplicant.mk
++++ b/package/wpa_supplicant/wpa_supplicant.mk
+@@ -104,7 +104,9 @@ else
+ WPA_SUPPLICANT_CONFIG_DISABLE += CONFIG_WIFI_DISPLAY
+ endif
+
+-ifeq ($(BR2_PACKAGE_WPA_SUPPLICANT_MESH_NETWORKING),)
++ifeq ($(BR2_PACKAGE_WPA_SUPPLICANT_MESH_NETWORKING),y)
++WPA_SUPPLICANT_CONFIG_ENABLE += CONFIG_MESH
++else
+ WPA_SUPPLICANT_CONFIG_DISABLE += CONFIG_MESH
+ endif
+
+--
 2.25.1
-

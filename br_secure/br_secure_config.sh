@@ -23,7 +23,7 @@ function Arfs_interfaces {
     echo ""
 }
 
-ARFS_OPTIONS="-hostname -interfaces -ssh"
+ARFS_OPTIONS="-interfaces -ssh"
 case "${TCDIST_ARCH}_${TCDIST_PLATFORM}" in
     x86_qemu)
         ARFS_OPTIONS+=" -inittab s"

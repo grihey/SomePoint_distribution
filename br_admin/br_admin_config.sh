@@ -15,4 +15,4 @@ function Arfs_interfaces {
     echo ""
 }
 
-ARFS_OPTIONS="-hostname -interfaces -ssh -inittab sv"
+ARFS_OPTIONS="-interfaces -ssh -inittab sv"

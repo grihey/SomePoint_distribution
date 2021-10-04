@@ -4,10 +4,6 @@
 
 # Defaults, these can be overridden in vm-specific config script
 
-function Arfs_hostname {
-    echo "${TCDIST_VM_NAME}"
-}
-
 function Arfs_interfaces {
     echo "auto lo"
     echo "iface lo inet loopback"
@@ -57,7 +53,6 @@ function Arfs_load_config {
 }
 
 function Arfs_apply {
-    local hostname
     local inittab
     local inittab_opt
     local interfaces
@@ -65,9 +60,6 @@ function Arfs_apply {
 
     while [ "${1:0:1}" == "-" ]; do
         case "$1" in
-            -hostname)
-                hostname=1
-            ;;
             -interfaces)
                 interfaces=1
             ;;
@@ -117,15 +109,6 @@ function Arfs_apply {
 
         e2mkdir "${2}:/root/.ssh" -P 700 -G 0 -O 0
         e2cp "${TCDIST_OUTPUT}/${TCDIST_VM_NAME}/device_id_rsa.pub" "${2}:/root/.ssh/authorized_keys" -P 700 -G 0 -O 0
-        set +x
-    fi
-
-    # Set hostname if requested
-    if [ -n "$hostname" ]; then
-        set -x
-        Arfs_hostname > "${TCDIST_TMPDIR}"/hostname.tmp
-        e2cp -P 644 -O 0 -G 0 "${TCDIST_TMPDIR}"/hostname.tmp "${2}:/etc/hostname"
-        rm -f "${TCDIST_TMPDIR}"/hostname.tmp
         set +x
     fi
 

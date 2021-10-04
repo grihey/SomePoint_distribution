@@ -21,4 +21,4 @@ function Arfs_interfaces {
     echo "iface default inet dhcp"
 }
 
-ARFS_OPTIONS="-hostname -interfaces -ssh -inittab s"
+ARFS_OPTIONS="-interfaces -ssh -inittab s"

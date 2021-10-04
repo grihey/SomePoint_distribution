@@ -1,0 +1,7 @@
+config BR2_PACKAGE_OPENSC
+	bool "opensc"
+	depends on BR2_PACKAGE_LIBOPENSSL && BR2_PACKAGE_PCSC_LITE
+	help
+		OpenSC provides a set of libraries and utilities to work with smart cards.
+
+		https://github.com/OpenSC/OpenSC.git

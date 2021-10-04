@@ -1,0 +1,8 @@
+config BR2_PACKAGE_SOFTHSM2
+	bool "softhsm2"
+	depends on BR2_PACKAGE_LIBOPENSSL
+	select BR2_PACKAGE_LIBTOOL
+	help
+		SoftHSM is an implementation of a cryptographic store accessible through a PKCS\#11 interface. You can use it to explore PKCS\#11 without having a Hardware Security Module.
+
+		https://github.com/opendnssec/SoftHSMv2

@@ -110,7 +110,6 @@ BR2_LINUX_KERNEL_VERSION="tc-x86-5.10-sec"
 BR2_TARGET_ROOTFS_EXT2_4=y
 
 # Docker support
-# not sure if these are required for Docker
 BR2_PACKAGE_CA_CERTIFICATES=y
 BR2_PACKAGE_SQLITE=y
 

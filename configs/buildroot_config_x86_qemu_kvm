@@ -88,7 +88,7 @@ BR2_BZCAT="bzcat"
 BR2_XZCAT="xzcat"
 BR2_LZCAT="lzip -d -c"
 BR2_TAR_OPTIONS=""
-BR2_DEFCONFIG="/usr/src/buildroot/configs/qemu_x86_64_defconfig"
+BR2_DEFCONFIG="$(TCDIST_DIR)/buildroot/configs/qemu_x86_64_defconfig"
 BR2_DL_DIR="$(TOPDIR)/dl"
 BR2_HOST_DIR="$(BASE_DIR)/host"
 
@@ -103,7 +103,7 @@ BR2_LUAROCKS_MIRROR="http://rocks.moonscript.org"
 BR2_CPAN_MIRROR="http://cpan.metacpan.org"
 BR2_JLEVEL=0
 BR2_CCACHE=y
-BR2_CCACHE_DIR="/usr/src/.buildroot-ccache"
+BR2_CCACHE_DIR="$(TCDIST_OUTPUT)/.buildroot-ccache"
 BR2_CCACHE_INITIAL_SETUP=""
 BR2_CCACHE_USE_BASEDIR=y
 # BR2_ENABLE_DEBUG is not set
@@ -430,7 +430,7 @@ BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_GIT=y
 # BR2_LINUX_KERNEL_CUSTOM_HG is not set
 # BR2_LINUX_KERNEL_CUSTOM_SVN is not set
-BR2_LINUX_KERNEL_CUSTOM_REPO_URL="/usr/src/linux/.git"
+BR2_LINUX_KERNEL_CUSTOM_REPO_URL="$(TCDIST_DIR)/linux/.git"
 BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="tc-x86-5.10-dev"
 BR2_LINUX_KERNEL_VERSION="tc-x86-5.10-dev"
 BR2_LINUX_KERNEL_PATCH=""

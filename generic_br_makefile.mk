@@ -93,7 +93,8 @@ endif
 # Kernel defconfig will be regenerated if any of kernel config fragments has changed (even if the changed one is not used in this setup)
 $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG): $(VM_LFIX)/.brsourced $(wildcard $(TCDIST_DIR)/configs/linux/*.cfg) $(wildcard $(TCDIST_DIR)/configs/linux/*_map.txt)
 	source <(grep BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION $(VM_LFIX)/.config); \
-    "$(TCDIST_DIR)/configs/linux/defconfig_builder.sh" -t "$(VM_KERNEL_CONFIG)" -k "$(VM_LFIX)/build/linux-$$$${BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION}" -o "$(VM_OFIX)"
+    "$(TCDIST_DIR)/scripts/defconfig_builder.sh" -t "$(VM_KERNEL_CONFIG)" -k "$(VM_LFIX)/build/linux-$$$${BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION}" \
+        -f $(TCDIST_DIR)/scripts/fragments -m $(TCDIST_DIR)/scripts/maps -o "$(VM_OFIX)"
 	mv -f $(VM_OFIX)/$(VM_KERNEL_DEFCONFIG) $(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)
 ifeq ("$(TCDIST_SUB_ARCH)","amd")
 	sed -i 's/CONFIG_KVM_INTEL=y/CONFIG_KVM_AMD=y/' "$(VM_OFIX)/generated_$(VM_KERNEL_DEFCONFIG)"

@@ -37,7 +37,7 @@ set_working_directory() {
 		if [ -f $(pwd)/MAINTAINERS ]; then
 			KERNEL_PATH=$(pwd)
 		else
-			KERNEL_PATH=$SCRIPT_PATH/../../linux/
+			KERNEL_PATH=$SCRIPT_PATH/../linux/
 		fi
 	fi
 
@@ -75,7 +75,7 @@ check_for_config_existance() {
 				CONFIG_FRAG="$CONFIG_FRAGMENT_FILE"
 			else
 				# Assume it is present in working path
-				CONFIG_FRAG="$SCRIPT_PATH/$CONFIG_FRAGMENT_FILE"
+				CONFIG_FRAG="$FRAGMENTS_PATH/$CONFIG_FRAGMENT_FILE"
 			fi
 			if [ ! -e "$CONFIG_FRAG" ]; then
 				CONFIG_FRAGMENTS="N/A"
@@ -262,7 +262,7 @@ get_build_details() {
 			CONFIG_FRAG="$CONFIG_FRAGMENT_FILE"
 		else
 			# Assume it is present in working path
-			CONFIG_FRAG="$SCRIPT_PATH/$CONFIG_FRAGMENT_FILE"
+			CONFIG_FRAG="$FRAGMENTS_PATH/$CONFIG_FRAGMENT_FILE"
 		fi
 		if [ -e "$CONFIG_FRAG" ]; then
 			EXTRA_CONFIG_FILE="$EXTRA_CONFIG_FILE $CONFIG_FRAG"
@@ -431,15 +431,19 @@ EOF
 #########################################
 # Script Start
 #########################################
-while getopts "?k:w:t:o:l" OPTION
+while getopts "?f:?k:?m:w:t:o:l" OPTION
 do
 	case $OPTION in
+		f)
+			FRAGMENTS_PATH=$OPTARG;;
 		k|w)
 			KERNEL_PATH=$OPTARG;;
 		t)
 			CHOSEN_BUILD_TYPE=$OPTARG;;
 		l)
 			LIST_TARGETS="y";;
+		m)
+			MAPS_PATH=$OPTARG;;
 		o)
 			DEFCONFIG_OUT=$OPTARG;;
 		?)
@@ -452,9 +456,17 @@ trap prepare_for_exit SIGHUP EXIT SIGINT SIGTERM
 
 set_working_directory
 
+if [ -z ${FRAGMENTS_PATH+x} ]; then
+    FRAGMENTS_PATH=$SCRIPT_PATH
+fi
+
+if [ -z ${MAPS_PATH+x} ]; then
+    MAPS_PATH=$SCRIPT_PATH
+fi
+
 SUPPORTED_ARCH=(
-"v8 ARM Architecture" "$KERNEL_PATH/arch/arm64/configs" "$SCRIPT_PATH/defconfig_map.txt"
-"x86 Architecture" "$KERNEL_PATH/arch/x86/configs" "$SCRIPT_PATH/x86_defconfig_map.txt")
+"v8 ARM Architecture" "$KERNEL_PATH/arch/arm64/configs" "$MAPS_PATH/defconfig_map.txt"
+"x86 Architecture" "$KERNEL_PATH/arch/x86/configs" "$MAPS_PATH/x86_defconfig_map.txt")
 
 BUILD_TYPE_FILE=$(mktemp -t $TMP_TEMPLATE)
 

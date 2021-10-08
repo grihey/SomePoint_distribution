@@ -11,7 +11,7 @@ function Arfs_interfaces {
     echo ""
     echo "iface default inet dhcp"
     echo ""
-    echo "source /etc/network/interfaces.d/*"
+    echo "source-directory /etc/network/interfaces.d"
     echo ""
 }
 
